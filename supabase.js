@@ -20,18 +20,11 @@ async function supabaseRequest(path, { method = "GET", body, token, representati
   return result;
 }
 
-function readSignInRedirect() {
+function discardLegacySignInRedirect() {
   const params = new URLSearchParams(location.hash.slice(1));
-  if (!params.has("access_token") && !params.has("error_code")) return null;
-  history.replaceState(history.state, "", location.pathname + location.search + "#visao");
-  return {
-    type: params.get("type"),
-    error: params.get("error_code"),
-    access_token: params.get("access_token"),
-    refresh_token: params.get("refresh_token"),
-    expires_at: Number(params.get("expires_at")) || undefined,
-    expires_in: Number(params.get("expires_in")) || 0,
-  };
+  if (params.has("access_token") || params.has("error_code")) {
+    history.replaceState(history.state, "", location.pathname + location.search + "#visao");
+  }
 }
 
 function storeSession(result) {
@@ -66,33 +59,6 @@ async function accessToken() {
   await refreshInFlight;
   if (!session) throw new Error("Entre para acessar o painel.");
   return session.access_token;
-}
-
-async function sendAccessCode(email) {
-  await supabaseRequest("/auth/v1/otp", { method: "POST", body: { email, create_user: false } });
-}
-
-async function verifyAccessCode(email, token) {
-  let body = { email, token, type: "email" };
-  if (!/^\d{6,10}$/.test(token)) {
-    let link;
-    try { link = new URL(token); } catch { throw new Error("Cole o código ou o link completo enviado pelo Supabase."); }
-    const type = link.searchParams.get("type");
-    const tokenHash = link.searchParams.get("token");
-    if (link.origin !== supabaseConfig.url || link.pathname !== "/auth/v1/verify"
-      || !["email", "magiclink"].includes(type) || !/^[a-zA-Z0-9_-]+$/.test(tokenHash || "")) {
-      throw new Error("O link precisa ser o link de login enviado por este projeto Supabase.");
-    }
-    body = { token_hash: tokenHash, type };
-  }
-  try {
-    storeSession(await supabaseRequest("/auth/v1/verify", { method: "POST", body }));
-  } catch (error) {
-    if (error.code === "otp_expired" || error.status === 403) {
-      throw new Error("O código ou link é inválido, já foi usado ou expirou. Peça um novo e-mail.");
-    }
-    throw error;
-  }
 }
 
 async function signInWithPassword(email, password) {

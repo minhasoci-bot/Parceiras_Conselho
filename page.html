@@ -148,15 +148,11 @@
 
   <dialog id="auth-dialog" aria-labelledby="auth-heading">
     <form id="auth-form" class="dialog-form">
-      <div class="section-header"><div><h2 id="auth-heading">Entrar no painel</h2><p>Use sua conta autorizada no Supabase.</p></div><button class="icon-button" type="button" data-close="auth-dialog" aria-label="Fechar">×</button></div>
-      <label>E-mail <input name="email" autocomplete="email" type="email" required></label>
+      <div class="section-header"><div><h2 id="auth-heading">Entrar no painel</h2><p>Use o e-mail e a senha da sua conta.</p></div><button class="icon-button" type="button" data-close="auth-dialog" aria-label="Fechar">×</button></div>
+      <label>E-mail <input name="email" autocomplete="username" type="email" required></label>
       <label class="auth-field">Senha <input name="password" autocomplete="current-password" type="password" required></label>
-      <label class="auth-field" hidden>Código ou link recebido por e-mail <input name="code" autocomplete="one-time-code" maxlength="3000" disabled></label>
-      <p class="inline-note auth-field" id="auth-help" hidden></p>
       <p class="form-error auth-field" role="alert" hidden></p>
       <div class="form-footer">
-        <button class="text-link" type="button" id="auth-use-existing" hidden>Já tenho um código ou link</button>
-        <button class="text-link" type="button" id="auth-switch">Usar código por e-mail</button>
         <button class="button primary" type="submit" id="auth-submit">Entrar</button>
       </div>
     </form>

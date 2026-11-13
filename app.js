@@ -29,8 +29,6 @@ let editingScenario = null;
 let scenarioDirty = false;
 let catalogMode = "services";
 let activeView = "";
-let authMode = "password";
-let loginEmail = "";
 
 function notice(message, error = false) {
   const box = $("#notice");
@@ -56,28 +54,18 @@ async function loadState() {
 }
 
 async function save(change) {
+  if (!session) throw new Error("Entre com e-mail e senha para salvar alterações.");
   if (!ready || busy) throw new Error("Aguarde o carregamento do painel e tente novamente.");
   const next = structuredClone(data);
   change(next);
   if (!validState(next)) throw new Error("Revise os campos preenchidos e tente novamente.");
   busy = true;
   try {
-    if (shared) {
-      revision = await saveSharedDashboard(revision, next);
-    } else {
-      const latest = JSON.parse(localStorage.getItem(storageKey) || "null");
-      if ((latest?.revision ?? 0) !== revision) {
-        const error = new Error("O painel foi atualizado em outra aba. Reabra o formulário para tentar novamente.");
-        error.conflict = true;
-        throw error;
-      }
-      localStorage.setItem(storageKey, JSON.stringify({ revision: revision + 1, data: next }));
-      revision += 1;
-    }
+    revision = await saveSharedDashboard(revision, next);
     data = next;
     render();
   } catch (error) {
-    if (shared && [401, 403].includes(error.status)) disconnect();
+    if ([401, 403].includes(error.status)) disconnect();
     if (error.conflict) {
       await loadState();
       render();
@@ -91,34 +79,11 @@ async function save(change) {
   }
 }
 
-function setAuthMode(mode) {
-  authMode = mode;
-  const passwords = mode === "password";
-  const checkingCode = mode === "verify";
-  const password = field(authForm, "password");
-  const code = field(authForm, "code");
-  field(authForm, "email").readOnly = checkingCode;
-  password.closest("label").hidden = !passwords;
-  password.required = passwords;
-  password.disabled = !passwords;
-  code.closest("label").hidden = !checkingCode;
-  code.required = checkingCode;
-  code.disabled = !checkingCode;
-  $("#auth-submit").textContent = passwords ? "Entrar" : checkingCode ? "Confirmar acesso" : "Enviar e-mail";
-  $("#auth-switch").textContent = passwords ? "Entrar por e-mail" : checkingCode ? "Pedir outro e-mail" : "Usar senha";
-  $("#auth-use-existing").hidden = mode !== "send";
-  $("#auth-help").hidden = passwords;
-  $("#auth-help").textContent = checkingCode
-    ? "Abra o link no e-mail ou digite o código recebido. Você também pode colar o endereço de um link novo aqui."
-    : "Enviaremos um link ou código para o seu e-mail cadastrado.";
-  formError(authForm, "");
-}
-
-function openAuth(message = "") {
+function openAuth() {
+  if (authDialog.open) return;
   authForm.reset();
-  setAuthMode("send");
-  formError(authForm, message);
-  if (!authDialog.open) authDialog.showModal();
+  formError(authForm, "");
+  authDialog.showModal();
 }
 
 function disconnect() {
@@ -142,8 +107,9 @@ async function connect() {
 }
 
 function requireAccess() {
-  if (ready) return true;
-  if (shared && !session) openAuth();
+  if (ready && session) return true;
+  if (!shared) notice("Configure o acesso ao painel para salvar alterações.", true);
+  else if (!session) openAuth();
   else notice("Aguarde o carregamento dos dados do painel.", true);
   return false;
 }
@@ -428,32 +394,11 @@ simForm.addEventListener("submit", async (event) => {
   }
 });
 
-$("#auth-switch").addEventListener("click", () => {
-  setAuthMode(authMode === "password" || authMode === "verify" ? "send" : "password");
-});
-function useExistingAccessCode(email) {
-  loginEmail = email;
-  setAuthMode("verify");
-  field(authForm, "code").focus();
-}
-
-$("#auth-use-existing").addEventListener("click", () => {
-  const email = field(authForm, "email");
-  if (email.reportValidity()) useExistingAccessCode(email.value.trim());
-});
-
-function authErrorMessage(error, mode) {
-  if (mode === "send" && error.code === "over_email_send_rate_limit") {
-    return "O Supabase atingiu o limite de envio de e-mails do projeto. Use um código ou link já recebido ou tente mais tarde.";
-  }
-  if (mode === "send" && error.code === "email_address_not_authorized") {
-    return "O serviço de e-mail do projeto ainda não envia links para este endereço. Use sua senha, se já tiver uma.";
-  }
+function authErrorMessage(error) {
+  if (error.code === "invalid_credentials") return "E-mail ou senha incorretos.";
+  if (error.code === "email_not_confirmed") return "Confirme o e-mail da sua conta para entrar.";
   if (error.status === 429) return "O Supabase limitou temporariamente esta solicitação. Aguarde antes de tentar novamente.";
-  if (mode === "send") return "Não foi possível enviar o e-mail. Verifique seu cadastro e tente novamente.";
-  if (!error.status || error.status === 403) return error.message;
-  if (mode === "verify") return "Código ou link inválido ou expirado.";
-  return "Não foi possível entrar. Verifique os dados da sua conta.";
+  return error.message;
 }
 
 authForm.addEventListener("submit", async (event) => {
@@ -461,29 +406,21 @@ authForm.addEventListener("submit", async (event) => {
   const button = $("#auth-submit");
   if (button.disabled) return;
   button.disabled = true;
-  $("#auth-switch").disabled = true;
-  $("#auth-use-existing").disabled = true;
   formError(authForm, "");
+  const password = field(authForm, "password");
   try {
     const email = field(authForm, "email").value.trim();
-    if (authMode === "send") {
-      await sendAccessCode(email);
-      useExistingAccessCode(email);
-      return;
-    }
-    if (authMode === "password") await signInWithPassword(email, field(authForm, "password").value);
-    else await verifyAccessCode(loginEmail, field(authForm, "code").value.trim());
+    await signInWithPassword(email, password.value);
     await connect();
     authForm.reset();
     authDialog.close();
     notice("");
   } catch (error) {
     if (session) disconnect();
-    formError(authForm, authErrorMessage(error, authMode));
+    formError(authForm, authErrorMessage(error));
   } finally {
+    password.value = "";
     button.disabled = false;
-    $("#auth-switch").disabled = false;
-    $("#auth-use-existing").disabled = false;
   }
 });
 
@@ -536,6 +473,7 @@ document.addEventListener("click", async (event) => {
     return showScenario(data.scenarios.find((item) => item.id === id));
   }
   if (action === "delete-scenario") {
+    if (!requireAccess()) return;
     if (!window.confirm("Excluir este cenário?")) return;
     const saved = await submit(simForm, button, (next) => {
       next.scenarios = next.scenarios.filter((item) => item.id !== id);
@@ -595,6 +533,7 @@ $("#services-options").innerHTML = [...catalog.map(([, title]) => title), ...pro
   .map((title) => `<option value="${esc(title)}"></option>`).join("");
 $("#category-filter").insertAdjacentHTML("beforeend", [...new Set(catalog.map(([category]) => category))]
   .map((category) => `<option>${esc(category)}</option>`).join(""));
+if (shared) discardLegacySignInRedirect();
 route();
 renderCatalog();
 updateItems();
@@ -604,21 +543,15 @@ if (shared) {
   $("#storage-label").textContent = "Aguardando acesso";
   initializeSharedAccess();
 } else {
-  loadState().then(() => { ready = true; render(); }).catch((error) => {
+  loadState().then(render).catch((error) => {
     $("#storage-label").textContent = "Dados indisponíveis";
     notice(error.message, true);
   });
 }
 
 async function initializeSharedAccess() {
-  const redirect = readSignInRedirect();
-  if (redirect?.error) {
-    openAuth("O link é inválido, já foi usado ou expirou. Peça um novo e-mail.");
-    return;
-  }
   try {
-    if (redirect && ["magiclink", "email"].includes(redirect.type)) storeSession(redirect);
-    else if (!restoreSession()) return;
+    if (!restoreSession()) return;
     await connect();
   } catch (error) {
     disconnect();

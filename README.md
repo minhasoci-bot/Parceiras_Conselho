@@ -11,11 +11,11 @@ node build.mjs
 node preview.mjs
 ```
 
-Abra [o painel local](http://127.0.0.1:4188/) e escolha **Entrar**. Use sua conta autorizada no Supabase. Para entrar na prévia local por e-mail, cole o endereço de um link novo no formulário ou digite o código recebido. Na versão da Vercel, o link também abre o painel diretamente. Contas com senha podem usá-la em ambas as versões.
+Abra o painel local e escolha **Entrar**. Use o e-mail e a senha de uma conta autorizada no Supabase. [Painel local](http://127.0.0.1:4188/)
 
 ## Acesso da equipe
 
-1. Cadastre as contas da equipe em **Authentication → Users** no Supabase.
+1. Cadastre as contas da equipe com e-mail e senha em **Authentication → Users** no Supabase.
 2. Autorize cada conta inserindo o seu ID em `public.mutirao_mentoria_members` no editor SQL. Substitua o exemplo abaixo pelo ID da conta.
 
    ```sql
@@ -31,7 +31,6 @@ As contas autorizadas acessam o mesmo caixa coletivo. O registro de vendas cont�
 1. Importe o repositório com o **Root Directory** padrão. O arquivo `vercel.json` configura o build e o diretório de saída.
 2. Em **Settings → Environment Variables**, adicione `SUPABASE_URL` com a URL do projeto e `SUPABASE_PUBLISHABLE_KEY` com a chave `sb_publishable_…`. Selecione **Production** e, se for usar as prévias com esse mesmo banco, **Preview**.
 3. Faça o deploy. Se adicionar ou alterar as variáveis depois, gere um novo deploy.
-4. No Supabase, defina o endereço da Vercel em **Authentication → URL Configuration → Site URL** para que os links de acesso retornem ao painel publicado.
 
 ## Configuração
 
@@ -44,4 +43,4 @@ O arquivo local `supabase.config.json` contém a URL do projeto e sua chave **pu
 }
 ```
 
-As variáveis de ambiente têm prioridade sobre esse arquivo. Sem configuração, o build local salva os registros no navegador. Na Vercel, as duas variáveis são obrigatórias.
+As variáveis de ambiente têm prioridade sobre esse arquivo. Sem configuração, a prévia local permite consulta e simulação. Para salvar alterações, configure o Supabase e entre com uma conta autorizada. Na Vercel, as duas variáveis são obrigatórias.
