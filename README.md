@@ -22,8 +22,8 @@ O sistema possui cadastro e login com e-mail e senha integrados ao Supabase, com
 
 1. **Cadastro, Login e Recuperação de Senha**:
    - Qualquer pessoa do grupo clica em **Entrar** no topo da página.
-   - Se ainda não tiver conta, clica em **Criar conta**, insere seu e-mail, define uma senha e abre o link de confirmação enviado pelo Supabase.
-   - Se esqueceu a senha, clica em **Esqueci minha senha**, digita seu e-mail e recebe o link de redefinição para cadastrar uma nova senha.
+   - Se ainda não tiver conta, clica em **Criar conta**, insere seu e-mail e define uma senha. O painel envia a solicitação ao administrador.
+   - **Esqueci minha senha** depende do serviço de e-mail configurado no Supabase. Sem SMTP próprio, participantes de fora da equipe do projeto devem falar com o administrador.
    - Ao fazer login, o perfil do usuário fica visível no topo (avatar, e-mail, papel de acesso e botão de logout), além de destacar seu nome com a etiqueta **Você** na lista da equipe.
    - Se a conta ainda não foi aprovada, o sistema envia automaticamente a solicitação e exibe a mensagem **"Aguardando aprovação do administrador"**.
    - A tela do usuário verifica periodicamente e desbloqueia em tempo real assim que for aprovada.
@@ -32,7 +32,7 @@ O sistema possui cadastro e login com e-mail e senha integrados ao Supabase, com
    - O administrador faz login com sua conta autorizada.
    - No topo e no card **Equipe do mutirão**, surgirá o botão com o contador de solicitações pendentes (ex.: **Equipe (2)**).
    - Ao clicar, o administrador abre o modal de gerenciamento e pode:
-     - **Aprovar** com 1 clique (o usuário entra imediatamente como participante).
+     - Conferir por um canal conhecido que a solicitação é da pessoa esperada e clicar em **Aprovar**. O usuário entra imediatamente como participante.
      - **Recusar** uma solicitação pendente.
      - **Ver e remover** participantes aprovados na aba *Participantes aprovados*.
 
@@ -68,7 +68,9 @@ Pronto! Ao entrar com essa conta, você terá privilégios de administrador para
 
 ### 3. Configurar os e-mails
 
-Em **Authentication → Emails → SMTP Settings**, conecte um serviço de envio de e-mail. O serviço padrão do Supabase é para testes, tem limite baixo e não envia para endereços fora da equipe do projeto. A confirmação e a recuperação de senha para participantes dependem de [SMTP próprio](https://supabase.com/docs/guides/auth/auth-smtp). Mantenha **Allow new users to sign up** e **Confirm Email** ativos em **Sign In / Providers**. Em **URL Configuration**, informe a URL do painel publicado como **Site URL**.
+Em **Authentication → Sign In / Providers**, deixe **Allow new users to sign up** ligado e **Confirm email** desligado para usar aprovação manual sem confirmação por e-mail. O administrador deve conferir quem solicitou acesso antes de aprovar.
+
+Em **URL Configuration**, informe a URL do painel publicado como **Site URL**. Para enviar redefinições de senha aos participantes, configure [SMTP próprio](https://supabase.com/docs/guides/auth/auth-smtp) em **Authentication → Emails → SMTP Settings**.
 
 ---
 

@@ -112,7 +112,7 @@ function setAuthMode(mode) {
     password.autocomplete = "new-password";
     password.minLength = 8;
     heading.textContent = "Criar conta";
-    desc.textContent = "Escolha uma senha de pelo menos 8 caracteres. Confirme seu e-mail para solicitar acesso ao painel.";
+    desc.textContent = "Escolha uma senha de pelo menos 8 caracteres. Seu acesso depende da aprovação do administrador.";
     submitBtn.textContent = "Criar conta";
     authModeBtn.textContent = "Já tenho conta";
     if (authForgotBtn) authForgotBtn.hidden = true;
@@ -723,9 +723,9 @@ function authErrorMessage(error) {
   if (error.code === "invalid_credentials") return "E-mail ou senha incorretos.";
   if (error.code === "email_not_confirmed") return "Confirme o e-mail da sua conta para entrar.";
   if (error.code === "signup_disabled") return "O cadastro está desativado. Fale com a pessoa responsável pelo mutirão.";
-  if (error.code === "email_address_not_authorized") return "O envio de confirmação para este endereço está indisponível. Fale com a pessoa responsável pelo mutirão.";
+  if (error.code === "email_address_not_authorized") return "O envio para este endereço está indisponível. Fale com a pessoa responsável pelo mutirão.";
   if (error.code === "user_already_exists" || error.code === "email_exists") return "Já existe uma conta com este e-mail. Volte para Entrar ou use Esqueci minha senha.";
-  if (error.code === "over_email_send_rate_limit") return "O serviço de e-mail do painel atingiu o limite de envio. Se já tem conta, entre com sua senha.";
+  if (error.code === "over_email_send_rate_limit") return "O serviço de e-mail do painel atingiu o limite de envio. Aguarde antes de pedir um novo link.";
   if (error.status === 429) return "O Supabase limitou temporariamente esta solicitação. Aguarde antes de tentar novamente.";
   if (error.status === 401 || error.code === "bad_jwt") return "O link de recuperação expirou ou já foi utilizado. Solicite um novo link.";
   return error.message || "Não foi possível concluir a operação.";
