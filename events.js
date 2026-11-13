@@ -86,6 +86,7 @@
       const date = new Date(eventDay + offset * DAY).toISOString().split("T")[0];
       return isDate(date) ? date : "";
     };
+    const launchDate = dateBR(eventDate);
     const tasks = [
       ["Definir objetivo, metas, narrativa e oferta", "captura", "estrategia", -12],
       ["Criar identidade visual, peças e materiais", "captura", "design", -11],
@@ -102,7 +103,7 @@
     ].map(([title, phase, team, offset]) => item("task", title, phase, { team, date: dateAt(offset) }));
 
     const groupMessages = [
-      ["Convite inicial", "captura", -9, "18:00", "Oi! No dia [data], vou mostrar como [benefício]. Garanta sua vaga em [link da inscrição]."],
+      ["Convite inicial", "captura", -9, "18:00", `Oi! No dia ${launchDate}, vou mostrar como [benefício]. Garanta sua vaga em [link da inscrição].`],
       ["Para quem é o evento", "captura", -8, "12:00", "Se você quer [objetivo] e trava em [dificuldade], este encontro foi feito para você. Inscreva-se em [link]."],
       ["Antes e depois", "captura", -7, "12:00", "O que muda quando você [ação]? Vou comparar os dois caminhos com um exemplo ao vivo. Inscreva-se em [link]."],
       ["Dúvida frequente", "captura", -6, "12:00", "Muita gente me pergunta [dúvida]. No encontro, vou mostrar como resolver isso. Reserve sua vaga em [link]."],
@@ -112,7 +113,7 @@
       ["Amanhã é o evento", "captura", -1, "12:00", "Amanhã, às [hora], começa [evento]. Se ainda precisa se inscrever, use [link]."],
       ["Inscrições no dia do evento", "captura", 0, "12:00", "É hoje! [Evento] começa às [hora]. Sua inscrição é feita em [link]."],
       ["Última chamada para inscrições", "captura", 0, "18:00", "Começamos às [hora]. Se ainda quiser participar, faça sua inscrição em [link]."],
-      ["Boas-vindas ao grupo do evento", "aquecimento", -3, "12:00", "Bem-vinda ao grupo de [evento]! Salve [data e hora] e conte pra gente qual é sua maior dúvida sobre [tema]."],
+      ["Boas-vindas ao grupo do evento", "aquecimento", -3, "12:00", `Bem-vinda ao grupo de [evento]! Salve ${launchDate} às [hora] e conte pra gente qual é sua maior dúvida sobre [tema].`],
       ["Faltam dois dias", "aquecimento", -2, "12:00", "Faltam dois dias para [evento]. Conte como podemos ajudar respondendo à pesquisa em [link]."],
       ["Lembrete da véspera", "aquecimento", -1, "12:00", "Nosso encontro é amanhã às [hora]. Deixe o link [transmissão] salvo para entrar na hora."],
       ["Áudio de boas-vindas", "evento", 0, "12:00", "Grave um áudio curto com a promessa do encontro, o horário e o que levar. Envie [link da transmissão] na mesma mensagem."],
@@ -153,23 +154,25 @@
       ["Apresentação da oferta", 10, "Explique entregáveis, investimento, bônus, garantia e prazo."],
       ["Perguntas e respostas", 10, "Responda às dúvidas da transmissão e repita o próximo passo."],
       ["Encerramento e próximos passos", 5, "Informe como acessar o replay ou a oferta e onde pedir suporte."],
-    ].map(([title, duration, notes], index) => item("agenda", title, "evento", { order: index + 1, duration, notes }));
+    ].map(([title, duration, notes], index) => item("agenda", title, "evento", {
+      order: index + 1, date: eventDate, duration, notes,
+    }));
 
     const links = [
-      ["Página de captura", "captura", "Valide inscrição, integração e redirecionamento no celular."],
-      ["Página de obrigado", "captura", "Confirme a inscrição e mostre como entrar no grupo."],
-      ["Grupo do evento no WhatsApp", "aquecimento", "Confira o convite, a descrição e as permissões do grupo."],
-      ["Pesquisa com inscritos", "aquecimento", "Teste o formulário e a gravação das respostas."],
-      ["WhatsApp comercial", "aquecimento", "Teste o contato e a mensagem inicial de atendimento."],
-      ["Transmissão", "evento", "Confira o acesso de participantes e os recursos do anfitrião."],
-      ["Página de vendas", "vendas", "Revise preço, prazos, bônus, garantia e botões de compra."],
-      ["Checkout à vista", "vendas", "Confira produto, valor e meios de pagamento."],
-      ["Boleto de entrada", "vendas", "Preencha se houver essa modalidade na oferta."],
-      ["Boleto do saldo", "vendas", "Confira valor restante e condições de vencimento."],
-      ["Checkout de upgrade de 6 meses", "vendas", "Preencha se a oferta incluir essa opção."],
-      ["Checkout de upgrade de 1 ano", "vendas", "Preencha se a oferta incluir essa opção."],
-      ["Replay", "pos", "Teste o acesso e confirme a data de retirada."],
-    ].map(([title, phase, notes]) => item("link", title, phase, { notes }));
+      ["Página de captura", "captura", -10, "Valide inscrição, integração e redirecionamento no celular."],
+      ["Página de obrigado", "captura", -10, "Confirme a inscrição e mostre como entrar no grupo."],
+      ["Grupo do evento no WhatsApp", "aquecimento", -10, "Confira o convite, a descrição e as permissões do grupo."],
+      ["Pesquisa com inscritos", "aquecimento", -3, "Teste o formulário e a gravação das respostas."],
+      ["WhatsApp comercial", "aquecimento", -3, "Teste o contato e a mensagem inicial de atendimento."],
+      ["Transmissão", "evento", -1, "Confira o acesso de participantes e os recursos do anfitrião."],
+      ["Página de vendas", "vendas", -1, "Revise preço, prazos, bônus, garantia e botões de compra."],
+      ["Checkout à vista", "vendas", -1, "Confira produto, valor e meios de pagamento."],
+      ["Boleto de entrada", "vendas", -1, "Preencha se houver essa modalidade na oferta."],
+      ["Boleto do saldo", "vendas", -1, "Confira valor restante e condições de vencimento."],
+      ["Checkout de upgrade de 6 meses", "vendas", -1, "Preencha se a oferta incluir essa opção."],
+      ["Checkout de upgrade de 1 ano", "vendas", -1, "Preencha se a oferta incluir essa opção."],
+      ["Replay", "pos", 1, "Teste o acesso e confirme a data de retirada."],
+    ].map(([title, phase, offset, notes]) => item("link", title, phase, { date: dateAt(offset), notes }));
 
     return {
       brief: {
@@ -355,14 +358,14 @@
     } else if (kind === "new" || kind === "brief") {
       $("#event-dialog-heading").textContent = kind === "new" ? "Novo evento" : "Editar planejamento";
       fields.innerHTML = input("title", "Nome do evento", "text", "required maxlength=120")
-        + pair(input("event_date", "Data do evento", "date"), status(eventStates))
+        + pair(input("event_date", "Data de lançamento do evento", "date"), status(eventStates))
         + (kind === "new"
           ? select("template", "Começar com", { launch: "Modelo de lançamento", blank: "Evento em branco" })
-            + '<p class="event-template-hint">No modelo de lançamento, a data informada ao criar o evento preenche as datas sugeridas de tarefas e mensagens.</p>'
+            + '<p class="event-template-hint">Informe o dia do evento. O modelo usa essa data para montar o cronograma de tarefas, mensagens, roteiro e validação de links.</p>'
           : briefFields.map(([key, label]) => area(key, label)).join(""));
     } else {
       $("#event-dialog-heading").textContent = (item ? "Editar " : "Adicionar ") + names[kind];
-      const date = input("date", kind === "task" ? "Prazo" : "Data", "date");
+      const date = input("date", kind === "task" ? "Prazo" : kind === "link" ? "Prazo para validar o link" : "Data", "date");
       const time = input("time", "Horário", "time");
       const owners = { "": "Sem responsável", ...Object.fromEntries(currentMembers.filter((m) => m.user_id).map((m) => [m.user_id, m.email])) };
       if (item?.owner && !Object.hasOwn(owners, item.owner)) owners[item.owner] = item.ownerLabel || "Participante removido";
@@ -371,8 +374,8 @@
         task: pair(date, select("team", "Área", { "": "Sem área", ...teams })) + owner,
         message: pair(date, time) + pair(select("channel", "Canal", channels), input("code", "Código", "text", "maxlength=40")) + owner,
         agenda: pair(input("order", "Ordem", "number", "required min=1 max=999"), input("duration", "Duração em minutos", "number", "required min=1 max=1440"))
-          + pair(time, owner),
-        link: owner,
+          + pair(date, time) + owner,
+        link: pair(date, owner),
       };
       fields.innerHTML = input("title", kind === "message" ? "Assunto" : "Título", "text", "required maxlength=120")
         + pair(select("phase", "Fase", phases), status(panel[kind].states)) + extra[kind]
@@ -386,7 +389,19 @@
     }
     if (kind === "agenda" && !item) {
       field(form, "phase").value = "evento";
+      field(form, "date").value = event.event_date || "";
       field(form, "order").value = Math.max(0, ...itemsFor(event, "agenda").map((row) => Number(row.order) || 0)) + 1;
+    }
+    if (kind === "new") {
+      const template = field(form, "template");
+      const launchDate = field(form, "event_date");
+      const hint = $(".event-template-hint", fields);
+      const updateDateRequirement = () => {
+        launchDate.required = template.value === "launch";
+        hint.hidden = !launchDate.required;
+      };
+      template.addEventListener("change", updateDateRequirement);
+      updateDateRequirement();
     }
     $("#event-remove-item").hidden = !editor.item;
     const saveButton = $("#event-save");
@@ -475,6 +490,9 @@
         return;
       }
       if (kind === "new" || kind === "brief") {
+        if (kind === "new" && values.template === "launch" && !isDate(values.event_date)) {
+          throw new Error("Informe uma data de lançamento válida para montar o cronograma.");
+        }
         const plan = kind === "new"
           ? (values.template === "launch" ? templatePlan(values.event_date) : { brief: {}, items: [] })
           : { ...current.plan, brief: Object.fromEntries(briefFields.map(([key]) => [key, values[key]])) };
