@@ -277,6 +277,10 @@ async function loadPublicDashboardSummary() {
   return supabaseRequest("/rest/v1/rpc/mutirao_mentoria_dashboard_summary");
 }
 
+async function loadPublicScenarios() {
+  return supabaseRequest("/rest/v1/rpc/mutirao_mentoria_public_scenarios");
+}
+
 async function loadSharedScenario(scenarioId) {
   return supabaseRequest("/rest/v1/rpc/mutirao_mentoria_shared_scenario", {
     method: "POST", body: { scenario_id: scenarioId },

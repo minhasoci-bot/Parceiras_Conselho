@@ -235,6 +235,9 @@ async function updatePendingBadge() {
 let currentMembers = [];
 let publicSummary;
 let publicSummaryUnavailable = false;
+let publicScenarios = [];
+// Sem login, os cenários vêm da lista pública (só leitura).
+const visibleScenarios = () => (shared && !ready ? publicScenarios : data.scenarios);
 let membersRefresh = 0;
 
 function getPlanCounts() {
@@ -325,9 +328,13 @@ async function refreshConfirmedMembers() {
       currentMembers = list;
       if (activeView === "equipe" && membersChanged) renderMembersList();
     } else {
-      const summary = await loadPublicDashboardSummary();
+      const [summary, scenarios] = await Promise.all([
+        loadPublicDashboardSummary(),
+        loadPublicScenarios().catch(() => null),
+      ]);
       if (request !== membersRefresh || ready) return;
       publicSummary = summary;
+      if (Array.isArray(scenarios)) publicScenarios = scenarios.filter(validScenario);
       publicSummaryUnavailable = false;
     }
     render();
@@ -432,7 +439,7 @@ async function syncScenarioRoute(id, fromHashChange) {
     return;
   }
   if (scenarioDialog.open && shownScenario?.id === id) return;
-  const known = data.scenarios.find((item) => item.id === id);
+  const known = visibleScenarios().find((item) => item.id === id);
   if (known) return openScenarioDetails(known);
   if (!shared) return scenarioNotFound();
   let scenario = null;
@@ -461,7 +468,7 @@ scenarioDialog.addEventListener("close", () => {
 });
 
 async function shareScenario(button, id) {
-  const scenario = shownScenario?.id === id ? shownScenario : data.scenarios.find((item) => item.id === id);
+  const scenario = shownScenario?.id === id ? shownScenario : visibleScenarios().find((item) => item.id === id);
   const url = scenarioUrl(id);
   const label = button.textContent;
   try {
@@ -651,9 +658,12 @@ function renderProjection() {
 function renderScenarios() {
   const today = todayAt();
   const target = getTeamTarget();
-  const baselineTarget = target > 0 ? target : COURSE_PLANS[data?.default_plan || DEFAULT_PLAN].price;
+  const defaultPlan = (shared && !ready ? publicSummary?.defaultPlan : data.default_plan) || DEFAULT_PLAN;
+  const baselineTarget = target > 0 ? target : COURSE_PLANS[defaultPlan].price;
+  const scenarios = visibleScenarios();
+  const canEdit = !shared || ready;
   const gallery = $("#saved-scenarios");
-  gallery.innerHTML = data.scenarios.length ? data.scenarios.map((scenario) => {
+  gallery.innerHTML = scenarios.length ? scenarios.map((scenario) => {
     const items = scenarioItems(scenario);
     const { byDeadline, quantity, lateItems } = projectScenario(items, baselineTarget, today);
     const offerRows = items.slice(0, 3).map((item) => `<li><span>${esc(item.title)}</span><strong>${decimal.format(item.quantity)}×</strong></li>`);
@@ -680,8 +690,8 @@ function renderScenarios() {
       <footer class="scenario-actions">
         <a class="button scenario-card-open" href="#${scenarioRoutePrefix}${esc(encodeURIComponent(scenario.id))}" aria-label="Ver detalhes de ${title}">Ver detalhes</a>
         <button class="text-link" type="button" data-action="share-scenario" data-id="${id}" aria-label="Copiar link de ${title}">Copiar link</button>
-        <button class="text-link" type="button" data-action="edit-scenario" data-id="${id}" aria-label="Editar cenário ${title}">Editar</button>
-        <button class="text-link danger" type="button" data-action="delete-scenario" data-id="${id}" aria-label="Excluir cenário ${title}">Excluir</button>
+        ${canEdit ? `<button class="text-link" type="button" data-action="edit-scenario" data-id="${id}" aria-label="Editar cenário ${title}">Editar</button>
+        <button class="text-link danger" type="button" data-action="delete-scenario" data-id="${id}" aria-label="Excluir cenário ${title}">Excluir</button>` : ""}
       </footer>
     </article>`;
   }).join("") : empty("Nenhum cenário salvo. Salve uma combinação no simulador para vê-la aqui.");
