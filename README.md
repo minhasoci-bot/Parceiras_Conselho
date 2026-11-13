@@ -11,7 +11,7 @@ node build.mjs
 node preview.mjs
 ```
 
-Abra [o painel local](http://127.0.0.1:4188/) e escolha **Entrar**. Use sua conta autorizada no projeto Supabase. É possível solicitar um código por e-mail ou copiar o endereço do link recebido e colá-lo no formulário. Contas com senha também podem usá-la.
+Abra [o painel local](http://127.0.0.1:4188/) e escolha **Entrar**. Use sua conta autorizada no Supabase. Para entrar na prévia local por e-mail, cole o endereço de um link novo no formulário ou digite o código recebido. Na versão da Vercel, o link também abre o painel diretamente. Contas com senha podem usá-la em ambas as versões.
 
 ## Acesso da equipe
 
@@ -24,13 +24,14 @@ Abra [o painel local](http://127.0.0.1:4188/) e escolha **Entrar**. Use sua cont
    on conflict do nothing;
    ```
 
-Os nomes dos 15 participantes aparecem como Pessoa 01 a Pessoa 15 até serem editados no painel. A lista de nomes e a lista de contas autorizadas são configuradas separadamente.
+As contas autorizadas acessam o mesmo caixa coletivo. O registro de vendas contém os valores, as datas e o status de cada transação.
 
 ## Hospedar na Vercel
 
 1. Importe o repositório com o **Root Directory** padrão. O arquivo `vercel.json` configura o build e o diretório de saída.
 2. Em **Settings → Environment Variables**, adicione `SUPABASE_URL` com a URL do projeto e `SUPABASE_PUBLISHABLE_KEY` com a chave `sb_publishable_…`. Selecione **Production** e, se for usar as prévias com esse mesmo banco, **Preview**.
 3. Faça o deploy. Se adicionar ou alterar as variáveis depois, gere um novo deploy.
+4. No Supabase, defina o endereço da Vercel em **Authentication → URL Configuration → Site URL** para que os links de acesso retornem ao painel publicado.
 
 ## Configuração
 

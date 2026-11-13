@@ -21,17 +21,37 @@ const catalog = [
   ["Gestão", "Head de conteúdo", [["Iniciante", 2000, 3000], ["Experiente", 3500, 8000]], "Estratégia, projetos e funis", "/ mês"],
 ];
 
-const ideas = [
-  { title: "Diagnóstico + plano de 30 dias", price: 55000, quantity: 15, days: 7, fee: 0, cost: 0,
-    audience: "Pequenos negócios que publicam sem um plano",
-    promise: "Sair com prioridades para o perfil e um mês de conteúdos planejado.",
-    delivery: "Análise de perfil experiente (R$ 400) + calendário de um mês (R$ 150)." },
-  { title: "VSL pronta para publicar", price: 160000, quantity: 6, days: 10, fee: 0, cost: 0,
-    audience: "Infoprodutores com oferta definida e gravação disponível",
-    promise: "Transformar a oferta e o material gravado em um vídeo de vendas.",
-    delivery: "Copy avulsa de VSL (R$ 400) + edição de até 40 minutos (R$ 1.200)." },
-  { title: "Workshop com kit de conteúdo", price: 9700, quantity: 45, days: 10, fee: 0, cost: 0,
+const products = [
+  { title: "Kit de planejamento de conteúdo", category: "Kit de templates", price: 3700,
+    delivery: "Calendário editável, checklist e modelo de briefing para planejar posts." },
+  { title: "Workshop com kit de conteúdo", category: "Workshop", price: 9700,
     audience: "Profissionais autônomos que precisam planejar a semana",
     promise: "Planejar a próxima semana de posts durante uma oficina prática.",
-    delivery: "Workshop em grupo + modelo editável de calendário + checklist. R$ 97 é uma hipótese de preço de entrada." },
+    delivery: "Encontro em grupo com calendário editável e checklist de publicação." },
+  { title: "Minicurso de estratégia de conteúdo", category: "Minicurso", price: 19700,
+    delivery: "Aulas curtas e exercícios para definir temas, formatos e frequência de publicação." },
+  { title: "Guia de oferta e precificação", category: "Guia digital", price: 4700,
+    delivery: "Passo a passo e planilha para calcular custos, montar uma oferta e testar preços." },
+];
+
+function fixedPrice(ranges) {
+  const total = ranges.reduce((sum, [, low, high = low]) => sum + (low + high) / 2, 0);
+  return Math.round(total / ranges.length);
+}
+
+function exampleService(title, quantity, days) {
+  const [, , ranges] = catalog.find((entry) => entry[1] === title);
+  return { type: "servico", title, price: fixedPrice(ranges) * 100, quantity, days };
+}
+
+const ideas = [
+  { title: "Diagnóstico + plano de 30 dias", delivery: "15 análises de perfil e 15 calendários de conteúdo.",
+    items: [exampleService("Análise de perfil", 15, 7), exampleService("Calendário de conteúdos", 15, 7)] },
+  { title: "VSL pronta para publicar", delivery: "6 copys para VSL e 6 edições de vídeo de até 40 minutos.",
+    items: [exampleService("Copy de VSL", 6, 10), exampleService("Edição de VSL", 6, 10)] },
+  { title: "Diagnóstico + workshop", delivery: "10 análises de perfil e 45 vagas no workshop com kit de conteúdo.",
+    items: [
+      exampleService("Análise de perfil", 10, 7),
+      { ...products[1], type: "infoproduto", quantity: 45, days: 10 },
+    ] },
 ];

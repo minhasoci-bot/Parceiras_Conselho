@@ -29,14 +29,31 @@ function stats(data) {
   return { received, pipeline, late };
 }
 
-function project(scenario, remaining, today = todayAt()) {
-  const gross = scenario.price * scenario.quantity;
-  const net = Math.max(0, Math.round(gross * (10000 - scenario.fee) / 10000) - scenario.cost * scenario.quantity);
-  const unitNet = scenario.price * (10000 - scenario.fee) / 10000 - scenario.cost;
-  const need = unitNet > 0 ? Math.ceil((remaining - .5) / unitNet) : null;
+const OFFER_TYPES = { servico: "Serviço", infoproduto: "Infoproduto" };
+const MAX_SCENARIO_ITEMS = 30;
+
+function scenarioItems(scenario) {
+  if (scenario.items) return scenario.items;
+  const { id, ...offer } = scenario;
+  return [{ ...offer, type: "servico" }];
+}
+
+function projectScenario(items, remaining, today = todayAt()) {
   const available = countDays(today, DEADLINE);
-  const within = scenario.days <= available;
-  return { gross, net, need, within, perDay: scenario.quantity / scenario.days, coverage: remaining ? net / remaining * 100 : 0 };
+  const lines = items.map((item) => {
+    const gross = item.price * item.quantity;
+    const net = Math.round(gross * (10000 - item.fee) / 10000) - item.cost * item.quantity;
+    return { gross, net, within: item.days <= available, quantity: item.quantity, perDay: item.quantity / item.days };
+  });
+  const totals = { gross: 0, net: 0, byDeadline: 0, quantity: 0, lateItems: 0 };
+  for (const line of lines) {
+    totals.gross += line.gross;
+    totals.net += line.net;
+    totals.quantity += line.quantity;
+    if (line.within) totals.byDeadline += line.net;
+    else totals.lateItems += 1;
+  }
+  return { ...totals, lines, coverage: remaining ? Math.max(0, totals.byDeadline / remaining * 100) : 0 };
 }
 
 const isText = (value, max, required = false) => typeof value === "string" && value.length <= max && (!required || value.trim().length > 0);
@@ -44,18 +61,29 @@ const isInt = (value, min, max) => Number.isSafeInteger(value) && value >= min &
 const isDate = (value) => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
   && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
 
+function validOffer(item) {
+  return item && isText(item.title, 120, true)
+    && isText(item.audience, 180) && isText(item.promise, 240) && isText(item.delivery, 500)
+    && isInt(item.price, 1, 100000000) && isInt(item.quantity, 1, 10000) && isInt(item.days, 1, 365)
+    && isInt(item.fee, 0, 10000) && isInt(item.cost, 0, 100000000);
+}
+
+function validScenario(scenario) {
+  if (!scenario || !isText(scenario.id, 50, true) || !isText(scenario.title, 120, true)) return false;
+  if (!Object.hasOwn(scenario, "items")) return validOffer(scenario);
+  return Array.isArray(scenario.items) && scenario.items.length > 0 && scenario.items.length <= MAX_SCENARIO_ITEMS
+    && scenario.items.every((item) => validOffer(item) && Object.hasOwn(OFFER_TYPES, item.type));
+}
+
 function validState(data) {
   return data && Array.isArray(data.people) && data.people.length === TEAM_SIZE
     && data.people.every((name) => isText(name, 70, true))
     && Array.isArray(data.sales) && data.sales.length <= 2000
     && data.sales.every((sale) => sale && isText(sale.id, 50, true) && isText(sale.title, 120, true)
-      && isText(sale.client, 100) && isInt(sale.person, 0, TEAM_SIZE - 1) && isInt(sale.amount, 1, 100000000)
+      && isText(sale.client, 100) && isInt(sale.amount, 1, 100000000)
       && STATUSES.includes(sale.status) && isDate(sale.date))
     && new Set(data.sales.map((sale) => sale.id)).size === data.sales.length
     && Array.isArray(data.scenarios) && data.scenarios.length <= 100
-    && data.scenarios.every((item) => item && isText(item.id, 50, true) && isText(item.title, 120, true)
-      && isText(item.audience, 180) && isText(item.promise, 240) && isText(item.delivery, 500)
-      && isInt(item.price, 1, 100000000) && isInt(item.quantity, 1, 10000) && isInt(item.days, 1, 365)
-      && isInt(item.fee, 0, 10000) && isInt(item.cost, 0, 100000000))
+    && data.scenarios.every(validScenario)
     && new Set(data.scenarios.map((item) => item.id)).size === data.scenarios.length;
 }

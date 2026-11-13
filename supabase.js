@@ -14,9 +14,24 @@ async function supabaseRequest(path, { method = "GET", body, token, representati
   if (!response.ok) {
     const error = new Error("O Supabase não concluiu a operação.");
     error.status = response.status;
+    error.code = result?.error_code ?? result?.code;
     throw error;
   }
   return result;
+}
+
+function readSignInRedirect() {
+  const params = new URLSearchParams(location.hash.slice(1));
+  if (!params.has("access_token") && !params.has("error_code")) return null;
+  history.replaceState(history.state, "", location.pathname + location.search + "#visao");
+  return {
+    type: params.get("type"),
+    error: params.get("error_code"),
+    access_token: params.get("access_token"),
+    refresh_token: params.get("refresh_token"),
+    expires_at: Number(params.get("expires_at")) || undefined,
+    expires_in: Number(params.get("expires_in")) || 0,
+  };
 }
 
 function storeSession(result) {
@@ -70,7 +85,14 @@ async function verifyAccessCode(email, token) {
     }
     body = { token_hash: tokenHash, type };
   }
-  storeSession(await supabaseRequest("/auth/v1/verify", { method: "POST", body }));
+  try {
+    storeSession(await supabaseRequest("/auth/v1/verify", { method: "POST", body }));
+  } catch (error) {
+    if (error.code === "otp_expired" || error.status === 403) {
+      throw new Error("O código ou link é inválido, já foi usado ou expirou. Peça um novo e-mail.");
+    }
+    throw error;
+  }
 }
 
 async function signInWithPassword(email, password) {

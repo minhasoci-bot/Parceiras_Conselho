@@ -100,11 +100,8 @@ progress::-moz-progress-bar { background:var(--lime); border-radius:30px; }
 .team-count { display:flex; gap:10px; align-items:center; color:var(--muted); font-size:14px; }
 .team-count strong { color:var(--green); font-family:"Instrument Sans","DM Sans",system-ui,sans-serif; font-size:34px; letter-spacing:-.05em; }
 .empty { border:1px dashed #dbe4d7; border-radius:9px; padding:14px; color:var(--muted); font-size:13px; line-height:1.5; background:#fbfcf9; }
-.team-list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
-.person { min-width:0; display:flex; gap:10px; padding:11px; border:1px solid var(--line); border-radius:9px; align-items:center; }
-.avatar { flex:none; display:grid; place-items:center; width:32px; height:32px; border-radius:7px; background:var(--mint); color:#26533c; font-size:11px; font-weight:800; }
-.person-copy { flex:1; min-width:0; }
-.person-copy h3 { font-size:13px; overflow-wrap:anywhere; }
+.catalog-switch { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+.catalog-switch [aria-pressed="true"] { background:var(--green); border-color:var(--green); color:#fff; }
 .ledger,.ideas-section { margin-top:16px; }
 .filters { display:flex; align-items:end; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
 .filters label { min-width:130px; }
@@ -127,6 +124,16 @@ details label,details a { margin-top:11px; }
 details a { display:inline-block; }
 .form-footer { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; margin-top:14px; }
 .projection { background:#eaf2e5; border-color:#dee9da; }
+.scenario-items { display:grid; gap:12px; margin:14px 0; }
+.scenario-item { margin:0; min-inline-size:0; padding:10px 12px 12px; border:1px solid var(--line); border-radius:10px; }
+.scenario-item legend { color:var(--green); padding:0 5px; font-size:13px; font-weight:800; }
+.offer-header,.scenario-tools { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; }
+.offer-header { justify-content:space-between; margin-bottom:10px; }
+.offer-header label { min-width:min(155px, 100%); }
+.offer-result { padding-top:7px; border-top:1px solid var(--line); }
+.offer-result.warning { color:#853f24; }
+.scenario-tools .button:disabled { cursor:default; }
+.projection dl + .inline-note { margin-top:10px; }
 .projection-balance { display:flex; flex-wrap:wrap; justify-content:space-between; gap:5px 10px; margin:14px 0; color:#355746; font-size:13px; }
 .projection-value { display:grid; gap:3px; margin:19px 0; }
 .projection-value span { font-size:13px; color:#355746; }
@@ -190,12 +197,10 @@ dialog::backdrop { background:#152b21a0; }
   .metrics { gap:6px; } .metric { padding:9px 6px; } .metric-label { gap:3px; font-size:10px; }
   .metric-icon { width:20px; height:20px; font-size:13px; } .metric strong { font-size:clamp(12px,3.4vw,19px); } .metric small { font-size:9px; }
   .overview-grid,.sim-grid,.catalog-list,.ideas-list { grid-template-columns:1fr; }
-  .team-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .roomy,.overview-card,.dialog-form { padding:14px; }
   .sale-line,.scenario-line { grid-template-columns:minmax(0,1fr) auto; }
   .sale-line .edit-sale,.scenario-actions { grid-column:1/-1; justify-self:start; }
 }
 @media (max-width:355px) {
   .date-chip,.top-actions .button { font-size:11px; padding-inline:6px; }
-  .team-list { grid-template-columns:1fr; }
 }

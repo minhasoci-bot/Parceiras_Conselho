@@ -6,14 +6,13 @@ const money = (cents) => moneyFormat.format(cents / 100);
 const cents = (reais) => Math.round(Number(reais) * 100);
 const esc = (value) => String(value).replace(/[&<>"']/g, (part) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[part]);
 const statusLabel = { proposta: "Proposta", fechado: "Fechado", recebido: "Recebido" };
-const views = { visao: "Visão geral", equipe: "Equipe", servicos: "Serviços", simulador: "Simulador" };
+const views = { visao: "Visão geral", equipe: "Vendas", servicos: "Catálogo", simulador: "Simulador" };
 const shared = !!supabaseConfig;
 const storageKey = "mutirao-mentoria-nov-2026";
 const saleDialog = $("#sale-dialog");
 const saleForm = $("#sale-form");
-const peopleDialog = $("#people-dialog");
-const peopleForm = $("#people-form");
 const simForm = $("#sim-form");
+const itemList = $("#scenario-items");
 const authDialog = $("#auth-dialog");
 const authForm = $("#auth-form");
 const field = (form, name) => form.elements.namedItem(name);
@@ -27,6 +26,8 @@ let ready = false;
 let busy = false;
 let editingSale = null;
 let editingScenario = null;
+let scenarioDirty = false;
+let catalogMode = "services";
 let activeView = "";
 let authMode = "password";
 let loginEmail = "";
@@ -81,7 +82,6 @@ async function save(change) {
       await loadState();
       render();
       if (saleDialog.open) saleDialog.close();
-      if (peopleDialog.open) peopleDialog.close();
       fillScenario();
       notice(error.message, true);
     }
@@ -108,8 +108,8 @@ function setAuthMode(mode) {
   $("#auth-switch").textContent = passwords ? "Entrar por e-mail" : checkingCode ? "Pedir outro e-mail" : "Usar senha";
   $("#auth-help").hidden = passwords;
   $("#auth-help").textContent = checkingCode
-    ? "Digite o código. Se receber um link, copie o endereço e cole aqui."
-    : "O Supabase envia um código ou link de acesso para contas cadastradas.";
+    ? "Abra o link no e-mail ou digite o código recebido. Você também pode colar o endereço de um link novo aqui."
+    : "Enviaremos um link ou código para o seu e-mail cadastrado.";
   formError(authForm, "");
 }
 
@@ -126,7 +126,6 @@ function disconnect() {
   revision = 0;
   data = initialState();
   if (saleDialog.open) saleDialog.close();
-  if (peopleDialog.open) peopleDialog.close();
   fillScenario();
   render();
   $("#auth-action").textContent = "Entrar";
@@ -178,13 +177,6 @@ function render() {
   $("#closed-note").textContent = money(pipeline) + " fechados a receber até o prazo";
   $("#pace").textContent = days ? money(Math.ceil(remaining / days)) + "/dia" : "—";
   $("#pace-note").textContent = days ? "Inclui hoje e o dia 30" : "Prazo encerrado em 30/11";
-  $("#team-list").innerHTML = data.people.map((name, index) =>
-    `<article class="person"><span class="avatar" aria-hidden="true">${index + 1}</span><div class="person-copy"><h3>${esc(name)}</h3></div></article>`
-  ).join("");
-  const personFilter = $("#person-filter");
-  const filterBefore = personFilter.value;
-  personFilter.innerHTML = '<option value="">Todos</option>' + personOptions();
-  personFilter.value = filterBefore;
   $("#late-note").hidden = !late;
   $("#late-note").textContent = money(late) + " recebidos após o prazo.";
   renderSales();
@@ -192,99 +184,163 @@ function render() {
   renderProjection();
 }
 
-function personOptions() {
-  return data.people.map((name, index) => `<option value="${index}">${esc(name)}</option>`).join("");
-}
-
 function saleLine(sale, compact = false) {
-  const details = [data.people[sale.person], compact ? "" : sale.client, compact ? "" : dateBR(sale.date)].filter(Boolean);
-  return `<article class="sale-line"><div><strong>${esc(sale.title)}</strong><small>${esc(details.join(" · "))}</small></div><div class="amount"><strong>${money(sale.amount)}</strong><small><span class="pill ${sale.status}">${statusLabel[sale.status]}</span></small></div><button class="text-link edit-sale" type="button" data-action="edit-sale" data-id="${esc(sale.id)}" aria-label="Editar venda ${esc(sale.title)}">Editar</button></article>`;
+  const details = compact ? dateBR(sale.date) : [sale.client, dateBR(sale.date)].filter(Boolean).join(" · ");
+  return `<article class="sale-line"><div><strong>${esc(sale.title)}</strong><small>${esc(details)}</small></div><div class="amount"><strong>${money(sale.amount)}</strong><small><span class="pill ${sale.status}">${statusLabel[sale.status]}</span></small></div><button class="text-link edit-sale" type="button" data-action="edit-sale" data-id="${esc(sale.id)}" aria-label="Editar venda ${esc(sale.title)}">Editar</button></article>`;
 }
 
 function renderSales() {
   const recent = data.sales.slice().reverse();
   $("#recent-sales").innerHTML = recent.length ? recent.slice(0, 3).map((sale) => saleLine(sale, true)).join("") : empty("Nenhuma venda registrada.");
   const status = $("#status-filter").value;
-  const person = $("#person-filter").value;
-  const filtered = recent.filter((sale) => (!status || status === sale.status) && (person === "" || Number(person) === sale.person));
+  const filtered = recent.filter((sale) => !status || status === sale.status);
   $("#sales-list").innerHTML = filtered.length ? filtered.map((sale) => saleLine(sale)).join("") : empty(recent.length ? "Nenhuma venda com esses filtros." : "Nenhuma venda registrada.");
 }
 
 function renderCatalog() {
   const categoryFilter = $("#category-filter").value;
   const query = searchKey($("#catalog-search").value);
+  if (catalogMode === "products") {
+    const matches = products.map((item, index) => ({ item, index }))
+      .filter(({ item }) => searchKey([item.title, item.category, item.delivery].join(" ")).includes(query));
+    $("#catalog-list").innerHTML = matches.length ? matches.map(({ item, index }) =>
+      `<article class="card roomy catalog-card"><span class="category">${esc(item.category)}</span><h2>${esc(item.title)}</h2><p>${esc(item.delivery)}</p><button class="ref" type="button" data-action="use-product" data-index="${index}" aria-label="Adicionar ${esc(item.title)} ao cenário"><span>Preço para simular</span><span><strong>${money(item.price)}</strong><span aria-hidden="true">＋</span></span></button></article>`
+    ).join("") : empty("Nenhum infoproduto encontrado.");
+    return;
+  }
   const matches = catalog.map((item, index) => ({ item, index })).filter(({ item }) =>
     (!categoryFilter || categoryFilter === item[0]) && searchKey(item.flat(3).join(" ")).includes(query));
   $("#catalog-list").innerHTML = matches.length ? matches.map(({ item, index }) => {
     const [category, name, ranges, detail, unit = ""] = item;
-    const options = ranges.map(([mode, low, high], variant) => {
-      const price = compactMoney.format(low) + (high ? " – " + compactMoney.format(high) : "") + (unit ? " " + unit : "");
-      return `<button class="ref" type="button" data-action="use-price" data-index="${index}" data-variant="${variant}" aria-label="Simular ${esc(name)}, ${esc(mode)}, ${price}"><span>${esc(mode)}</span><span><strong>${price}</strong><span aria-hidden="true">↗</span></span></button>`;
-    }).join("");
-    return `<article class="card roomy catalog-card"><span class="category">${esc(category)}</span><h2>${esc(name)}</h2><p>${esc(detail)}</p>${options}</article>`;
+    const price = compactMoney.format(fixedPrice(ranges)) + (unit ? " " + unit : "");
+    return `<article class="card roomy catalog-card"><span class="category">${esc(category)}</span><h2>${esc(name)}</h2><p>${esc(detail)}</p><button class="ref" type="button" data-action="use-price" data-index="${index}" aria-label="Adicionar ${esc(name)} ao cenário"><span>Adicionar ao cenário</span><span><strong>${price}</strong><span aria-hidden="true">＋</span></span></button></article>`;
   }).join("") : empty("Nenhum serviço encontrado.");
 }
 
-function readScenario() {
-  const value = (name) => field(simForm, name).value.trim();
+function readOffer(row) {
+  const value = (name) => $(`[name="${name}"]`, row).value.trim();
   return {
-    id: editingScenario ?? "",
-    title: value("title"), audience: value("audience"), promise: value("promise"), delivery: value("delivery"),
+    type: value("type"), title: value("item-title"),
+    audience: value("audience"), promise: value("promise"), delivery: value("delivery"),
     price: cents(value("price")), cost: cents(value("cost")), fee: cents(value("fee")),
     quantity: Number(value("quantity")), days: Number(value("days")),
   };
 }
 
+function readScenario() {
+  return { id: editingScenario ?? "", title: field(simForm, "title").value.trim(),
+    items: Array.from(itemList.children, readOffer) };
+}
+
 function renderProjection() {
-  const scenario = readScenario();
   const remaining = Math.max(0, TEAM_TARGET - stats(data).received);
+  const offers = Array.from(itemList.children, (row) => {
+    const item = readOffer(row);
+    const valid = [...row.querySelectorAll('input[type="number"]')].every((input) => input.validity.valid);
+    return { row, item, valid };
+  });
+  const included = offers.filter((offer) => offer.valid);
+  const today = todayAt();
+  const { gross, net, byDeadline, quantity, coverage, lateItems, lines } = projectScenario(included.map(({ item }) => item), remaining, today);
+  for (const { row, valid } of offers) {
+    const result = $(".offer-result", row);
+    result.classList.remove("warning");
+    result.textContent = valid ? "" : "Preencha preço, quantidade e prazo para calcular.";
+  }
+  for (const [index, { row }] of included.entries()) {
+    const line = lines[index];
+    const result = $(".offer-result", row);
+    result.classList.toggle("warning", !line.within || line.net < 0);
+    result.textContent = money(line.net) + " líquidos · " + decimal.format(line.perDay)
+      + " vendas/dia · " + (line.within ? "Dentro do prazo" : "Após o prazo");
+  }
   $("#projection-balance").textContent = money(remaining);
-  const hasQuantity = field(simForm, "quantity").validity.valid;
-  const hasDays = field(simForm, "days").validity.valid;
-  const hasPrice = ["price", "cost", "fee"].every((name) => field(simForm, name).validity.valid);
-  const { gross, net, need, within, perDay, coverage } = project(scenario, remaining);
-  $("#estimate").textContent = money(hasPrice && hasQuantity ? net : 0);
-  $("#gross").textContent = money(hasPrice && hasQuantity ? gross : 0);
-  $("#sales-per-day").textContent = hasQuantity && hasDays ? decimal.format(perDay) : "—";
-  $("#units-needed").textContent = !remaining ? "0" : hasPrice && hasQuantity && need !== null ? decimal.format(need) : "—";
-  $("#coverage").textContent = remaining && hasPrice && hasQuantity ? decimal.format(coverage) + "%" : "—";
+  $("#estimate").textContent = money(byDeadline);
+  $("#gross").textContent = money(gross);
+  $("#net-total").textContent = money(net);
+  $("#planned-sales").textContent = decimal.format(quantity);
+  $("#coverage").textContent = remaining && included.length ? decimal.format(coverage) + "%" : "—";
+  $("#projected-balance").textContent = money(Math.max(0, remaining - byDeadline));
   const note = $("#projection-note");
-  note.classList.toggle("warning", hasDays && !within);
-  if (!remaining) note.textContent = "A meta coletiva já foi atingida.";
-  else if (!hasDays) note.textContent = "Informe um prazo entre 1 e 365 dias.";
-  else if (!within) note.textContent = "Esse prazo ultrapassa 30 de novembro.";
-  else if (!hasPrice) note.textContent = "Informe o preço para calcular a projeção.";
-  else if (net === 0) note.textContent = "O líquido estimado para o mutirão é zero.";
-  else if (remaining <= net) note.textContent = "A oferta projetada cobre o saldo da meta coletiva dentro do prazo informado.";
-  else note.textContent = "Com essa oferta, ainda faltariam " + money(remaining - net) + " para a meta coletiva.";
+  const partial = included.length !== offers.length;
+  note.classList.toggle("warning", lateItems > 0 || partial);
+  if (!offers.length) note.textContent = "Adicione um serviço ou infoproduto para simular.";
+  else if (partial) note.textContent = "Projeção parcial. Complete os campos dos demais itens.";
+  else if (lateItems === 1) note.textContent = "Um item ultrapassa o prazo.";
+  else if (lateItems > 1) note.textContent = lateItems + " itens ultrapassam o prazo.";
+  else if (!remaining) note.textContent = "A meta coletiva já foi atingida.";
+  else if (remaining <= byDeadline) note.textContent = "O cenário cobre o saldo da meta coletiva.";
+  else note.textContent = "";
 }
 
 function renderScenarios() {
-  $("#saved-scenarios").innerHTML = data.scenarios.length ? data.scenarios.map((item) => {
-    const { net, within } = project(item, TEAM_TARGET);
-    const details = item.quantity + " × " + money(item.price) + " · " + item.days + " " + (item.days === 1 ? "dia" : "dias") + (within ? "" : " · Após o prazo");
-    return `<article class="scenario-line"><div><strong>${esc(item.title)}</strong><small>${details}</small></div><div><strong>${money(net)}</strong><small>Líquido estimado</small></div><div class="scenario-actions"><button class="text-link" type="button" data-action="edit-scenario" data-id="${esc(item.id)}">Editar</button><button class="text-link danger" type="button" data-action="delete-scenario" data-id="${esc(item.id)}">Excluir</button></div></article>`;
+  const today = todayAt();
+  $("#saved-scenarios").innerHTML = data.scenarios.length ? data.scenarios.map((scenario) => {
+    const items = scenarioItems(scenario);
+    const { byDeadline, quantity, lateItems } = projectScenario(items, TEAM_TARGET, today);
+    const details = items.map((item) => item.quantity + " × " + item.title).join(" · ");
+    return `<article class="scenario-line"><div><strong>${esc(scenario.title)}</strong><small>${esc(details)}</small><small>${quantity} vendas planejadas${lateItems ? " · Inclui itens após o prazo" : ""}</small></div><div><strong>${money(byDeadline)}</strong><small>Líquido até o prazo</small></div><div class="scenario-actions"><button class="text-link" type="button" data-action="edit-scenario" data-id="${esc(scenario.id)}">Editar</button><button class="text-link danger" type="button" data-action="delete-scenario" data-id="${esc(scenario.id)}">Excluir</button></div></article>`;
   }).join("") : empty("Nenhum cenário salvo.");
 }
 
-function fillScenario(item, expanded = false) {
-  simForm.reset();
-  editingScenario = item?.id || null;
-  if (item) {
-    for (const key of ["title", "quantity", "days", "audience", "promise", "delivery"]) field(simForm, key).value = item[key] ?? "";
-    for (const key of ["price", "cost", "fee"]) field(simForm, key).value = (item[key] ?? 0) / 100;
+function appendOffer(item) {
+  const row = $("#scenario-item-template").content.firstElementChild.cloneNode(true);
+  $('[name="type"]', row).value = item.type;
+  $('[name="item-title"]', row).value = item.title ?? "";
+  for (const key of ["quantity", "days", "audience", "promise", "delivery"]) {
+    if (item[key] !== undefined) $(`[name="${key}"]`, row).value = item[key];
   }
-  $("#offer-details").open = expanded;
-  $("#save-sim").textContent = editingScenario ? "Atualizar cenário" : "Salvar cenário";
+  for (const key of ["price", "cost", "fee"]) {
+    if (item[key] !== undefined) $(`[name="${key}"]`, row).value = item[key] / 100;
+  }
+  $(".offer-source", row).href = OFFER_SOURCE;
+  itemList.append(row);
+  return row;
+}
+
+function updateItems() {
+  for (const [index, row] of Array.from(itemList.children).entries()) {
+    $("legend", row).textContent = "Item " + (index + 1);
+    $('[data-action="remove-item"]', row).setAttribute("aria-label", "Remover item " + (index + 1));
+  }
+  for (const button of document.querySelectorAll('[data-action="add-service"], [data-action="add-product"]')) {
+    button.disabled = itemList.children.length >= MAX_SCENARIO_ITEMS;
+  }
+  $("#save-sim").disabled = !itemList.children.length;
   renderProjection();
 }
 
-function showScenario(item, expanded = false) {
-  fillScenario(item, expanded);
+function fillScenario(scenario) {
+  field(simForm, "title").value = scenario?.title ?? "";
+  editingScenario = scenario?.id ?? null;
+  scenarioDirty = false;
+  itemList.replaceChildren();
+  if (scenario) for (const item of scenarioItems(scenario)) appendOffer(item);
+  $("#save-sim").textContent = editingScenario ? "Atualizar cenário" : "Salvar cenário";
+  updateItems();
+}
+
+function showScenario(scenario) {
+  fillScenario(scenario);
   location.hash = "simulador";
   route();
   window.scrollTo(0, 0);
   field(simForm, "title").focus({ preventScroll: true });
+}
+
+function addOffer(item, fromCatalog = false) {
+  if (itemList.children.length >= MAX_SCENARIO_ITEMS) {
+    notice("Este cenário já tem o máximo de " + MAX_SCENARIO_ITEMS + " itens.", true);
+    return;
+  }
+  const row = appendOffer(item);
+  scenarioDirty = true;
+  updateItems();
+  if (fromCatalog) {
+    notice(item.title + " foi adicionado ao cenário.");
+  } else {
+    $('[name="item-title"]', row).focus();
+  }
 }
 
 function dateLabel() {
@@ -299,8 +355,7 @@ function openSale(item) {
   editingSale = item?.id ?? null;
   saleForm.reset();
   formError(saleForm, "");
-  field(saleForm, "person").innerHTML = personOptions();
-  for (const key of ["title", "client", "person", "status"]) {
+  for (const key of ["title", "client", "status"]) {
     if (item) field(saleForm, key).value = item[key];
   }
   field(saleForm, "amount").value = item ? item.amount / 100 : "";
@@ -309,14 +364,6 @@ function openSale(item) {
   $("#delete-sale").hidden = !item;
   dateLabel();
   saleDialog.showModal();
-}
-
-function openPeople() {
-  if (!requireAccess()) return;
-  formError(peopleForm, "");
-  $("#people-fields").innerHTML = data.people.map((name, index) =>
-    `<label>Participante ${index + 1} <input name="person-${index}" value="${esc(name)}" maxlength="70" required></label>`).join("");
-  peopleDialog.showModal();
 }
 
 async function submit(form, button, change, message, dialog) {
@@ -341,7 +388,7 @@ saleForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const value = (name) => field(saleForm, name).value.trim();
   const sale = { id: editingSale ?? makeId(), title: value("title"), client: value("client"),
-    person: Number(value("person")), amount: cents(value("amount")), status: value("status"), date: value("date") };
+    amount: cents(value("amount")), status: value("status"), date: value("date") };
   return submit(saleForm, event.submitter, (next) => {
     const index = next.sales.findIndex((entry) => entry.id === sale.id);
     if (index < 0) next.sales.push(sale);
@@ -349,24 +396,22 @@ saleForm.addEventListener("submit", (event) => {
   }, "Venda salva.", saleDialog);
 });
 
-peopleForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  return submit(peopleForm, event.submitter, (next) => {
-    next.people = next.people.map((_, index) => field(peopleForm, "person-" + index).value.trim());
-  }, "Participantes atualizados.", peopleDialog);
-});
-
 simForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!requireAccess()) return;
   const item = readScenario();
   item.id ||= makeId();
+  const draftAtSave = JSON.stringify(item.items);
   const saved = await submit(simForm, event.submitter, (next) => {
     const index = next.scenarios.findIndex((entry) => entry.id === item.id);
     if (index < 0) next.scenarios.push(item);
     else next.scenarios[index] = item;
   }, "Cenário salvo.");
-  if (saved) fillScenario(item, $("#offer-details").open);
+  if (saved) {
+    editingScenario = item.id;
+    scenarioDirty = draftAtSave !== JSON.stringify(readScenario().items) || field(simForm, "title").value.trim() !== item.title;
+    $("#save-sim").textContent = "Atualizar cenário";
+  }
 });
 
 $("#auth-switch").addEventListener("click", () => {
@@ -426,14 +471,36 @@ $("#delete-sale").addEventListener("click", (event) => {
 document.addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-action], button[data-close]");
   if (!button) return;
-  const { action, close, id, index, variant } = button.dataset;
+  const { action, close, id, index } = button.dataset;
   if (close) return document.getElementById(close).close();
   if (action === "new-sale") return openSale();
-  if (action === "rename") return openPeople();
   if (action === "edit-sale") return openSale(data.sales.find((sale) => sale.id === id));
-  if (action === "use-idea") return showScenario(ideas[Number(index)], true);
-  if (action === "reset-sim") return fillScenario();
-  if (action === "edit-scenario") return showScenario(data.scenarios.find((item) => item.id === id), true);
+  if (action === "add-service" || action === "add-product") {
+    return addOffer({ type: action === "add-service" ? "servico" : "infoproduto" });
+  }
+  if (action === "remove-item") {
+    button.closest(".scenario-item").remove();
+    scenarioDirty = true;
+    updateItems();
+    return $('[data-action="add-service"]').focus();
+  }
+  if (action === "catalog-services" || action === "catalog-products") {
+    catalogMode = action === "catalog-services" ? "services" : "products";
+    $('[data-action="catalog-services"]').setAttribute("aria-pressed", String(catalogMode === "services"));
+    $('[data-action="catalog-products"]').setAttribute("aria-pressed", String(catalogMode === "products"));
+    $("#catalog-category").hidden = catalogMode === "products";
+    $("#catalog-search").value = "";
+    $("#catalog-search").placeholder = catalogMode === "products" ? "Ex.: workshop ou guia" : "Ex.: Reels ou estratégia";
+    return renderCatalog();
+  }
+  if (action === "use-product") return addOffer({ ...products[Number(index)], type: "infoproduto" }, true);
+  if (["use-idea", "reset-sim", "edit-scenario"].includes(action)) {
+    if (busy) return;
+    if (scenarioDirty && !window.confirm("Descartar as alterações do cenário atual?")) return;
+    if (action === "use-idea") return showScenario(ideas[Number(index)]);
+    if (action === "reset-sim") return showScenario();
+    return showScenario(data.scenarios.find((item) => item.id === id));
+  }
   if (action === "delete-scenario") {
     if (!window.confirm("Excluir este cenário?")) return;
     const saved = await submit(simForm, button, (next) => {
@@ -443,31 +510,32 @@ document.addEventListener("click", async (event) => {
   }
   if (action === "use-price") {
     const [, title, ranges, detail, unit = ""] = catalog[Number(index)];
-    const [mode, low, high = low] = ranges[Number(variant)];
-    const draft = { title, price: cents((low + high) / 2), quantity: 1, days: Math.max(1, Math.min(7, countDays(todayAt(), DEADLINE))),
-      delivery: detail + ". Referência " + mode.toLowerCase() + (unit ? " " + unit : "") + "." };
-    return showScenario(draft);
+    return addOffer({ type: "servico", title, price: cents(fixedPrice(ranges)),
+      delivery: detail + (unit ? ". Preço de referência mensal." : "") }, true);
   }
 });
 
-for (const id of ["#status-filter", "#person-filter"]) $(id).addEventListener("change", renderSales);
+$("#status-filter").addEventListener("change", renderSales);
 $("#catalog-search").addEventListener("input", renderCatalog);
 $("#category-filter").addEventListener("change", renderCatalog);
-simForm.addEventListener("input", renderProjection);
+simForm.addEventListener("input", () => {
+  scenarioDirty = true;
+  renderProjection();
+});
 field(saleForm, "status").addEventListener("change", dateLabel);
 window.addEventListener("hashchange", route);
 window.addEventListener("storage", async (event) => {
-  if (shared || event.key !== storageKey || busy || saleDialog.open || peopleDialog.open || editingScenario) return;
+  if (shared || event.key !== storageKey || busy || saleDialog.open || editingScenario) return;
   try { await loadState(); render(); } catch (error) { notice(error.message, true); }
 });
 window.addEventListener("focus", async () => {
-  if (!shared || !ready || busy || saleDialog.open || peopleDialog.open) return;
+  if (!shared || !ready || busy || saleDialog.open) return;
   const previousSession = session;
   const previousRevision = revision;
   try {
     const result = await loadSharedDashboard();
     if (!busy && session === previousSession && revision === previousRevision
-      && !saleDialog.open && !peopleDialog.open && !editingScenario) {
+      && !saleDialog.open && !editingScenario) {
       setState(result);
       render();
     }
@@ -479,22 +547,42 @@ window.addEventListener("focus", async () => {
   }
 });
 
-$("#offer-source").href = OFFER_SOURCE;
-$("#services-options").innerHTML = catalog.map(([, title]) => `<option value="${esc(title)}"></option>`).join("");
+$("#services-options").innerHTML = [...catalog.map(([, title]) => title), ...products.map((item) => item.title)]
+  .map((title) => `<option value="${esc(title)}"></option>`).join("");
 $("#category-filter").insertAdjacentHTML("beforeend", [...new Set(catalog.map(([category]) => category))]
   .map((category) => `<option>${esc(category)}</option>`).join(""));
-$("#ideas-list").innerHTML = ideas.map((idea, index) =>
-  `<article class="idea"><h3>${esc(idea.title)}</h3><strong>${money(idea.price)} por venda</strong><p>${esc(idea.delivery)}</p><button class="button" type="button" data-action="use-idea" data-index="${index}">Usar no simulador ↗</button></article>`).join("");
+$("#ideas-list").innerHTML = ideas.map((idea, index) => {
+  const items = scenarioItems(idea);
+  const gross = items.reduce((total, item) => total + item.price * item.quantity, 0);
+  return `<article class="idea"><h3>${esc(idea.title)}</h3><strong>${money(gross)} de faturamento bruto</strong><p>${esc(idea.delivery)}</p><button class="button" type="button" data-action="use-idea" data-index="${index}">Usar no simulador ↗</button></article>`;
+}).join("");
 route();
 renderCatalog();
+updateItems();
 render();
 if (shared) {
   $("#auth-action").hidden = false;
   $("#storage-label").textContent = "Aguardando acesso";
-  if (restoreSession()) connect().catch((error) => { disconnect(); notice(error.message, true); });
+  initializeSharedAccess();
 } else {
   loadState().then(() => { ready = true; render(); }).catch((error) => {
     $("#storage-label").textContent = "Dados indisponíveis";
     notice(error.message, true);
   });
+}
+
+async function initializeSharedAccess() {
+  const redirect = readSignInRedirect();
+  if (redirect?.error) {
+    openAuth("O link é inválido, já foi usado ou expirou. Peça um novo e-mail.");
+    return;
+  }
+  try {
+    if (redirect && ["magiclink", "email"].includes(redirect.type)) storeSession(redirect);
+    else if (!restoreSession()) return;
+    await connect();
+  } catch (error) {
+    disconnect();
+    notice(error.message, true);
+  }
 }
