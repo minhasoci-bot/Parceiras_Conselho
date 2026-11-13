@@ -21,6 +21,16 @@ async function supabaseRequest(path, { method = "GET", body, token, representati
   return result;
 }
 
+let recoveryToken = (function () {
+  try { return sessionStorage.getItem("mutirao_recovery_token") || null; }
+  catch { return null; }
+})();
+
+function clearRecoveryToken() {
+  recoveryToken = null;
+  try { sessionStorage.removeItem("mutirao_recovery_token"); } catch {}
+}
+
 function decodeJwt(token) {
   try {
     const part = token.split(".")[1];
@@ -32,18 +42,71 @@ function decodeJwt(token) {
   }
 }
 
-function checkAuthRedirect() {
+async function checkAuthRedirect() {
   const hash = location.hash.slice(1);
-  if (!hash) return null;
-  const params = new URLSearchParams(hash);
-  if (params.get("type") === "recovery" && params.has("access_token")) {
-    const access_token = params.get("access_token");
-    const refresh_token = params.get("refresh_token") || "";
+  const search = location.search.slice(1);
+  const hashParams = new URLSearchParams(hash);
+  const searchParams = new URLSearchParams(search);
+
+  // 1. Token no hash (#access_token=...&type=recovery)
+  if (hashParams.get("type") === "recovery" && hashParams.has("access_token")) {
+    const access_token = hashParams.get("access_token");
+    const refresh_token = hashParams.get("refresh_token") || "";
+    recoveryToken = access_token;
+    try { sessionStorage.setItem("mutirao_recovery_token", access_token); } catch {}
     storeSession({ access_token, refresh_token, expires_in: 3600 });
-    history.replaceState(history.state, "", location.pathname + location.search + "#visao");
+    history.replaceState(history.state, "", location.pathname + (location.search || "") + "#visao");
     return "recovery";
   }
-  if (params.has("access_token") || params.has("error_code")) {
+
+  // 2. Token hash na query ou hash (?token_hash=...&type=recovery)
+  const tokenHash = searchParams.get("token_hash") || hashParams.get("token_hash");
+  const type = searchParams.get("type") || hashParams.get("type");
+  if (tokenHash && type === "recovery") {
+    try {
+      const result = await supabaseRequest("/auth/v1/verify", {
+        method: "POST",
+        body: { token_hash: tokenHash, type: "recovery" },
+      });
+      if (result?.access_token) {
+        recoveryToken = result.access_token;
+        try { sessionStorage.setItem("mutirao_recovery_token", result.access_token); } catch {}
+        storeSession(result);
+        history.replaceState(history.state, "", location.pathname + "#visao");
+        return "recovery";
+      }
+    } catch {}
+  }
+
+  // 3. Authorization code na query (?code=...)
+  const code = searchParams.get("code");
+  if (code) {
+    try {
+      const result = await supabaseRequest("/auth/v1/token?grant_type=pkce", {
+        method: "POST",
+        body: { auth_code: code },
+      }).catch(() => supabaseRequest("/auth/v1/token?grant_type=authorization_code", {
+        method: "POST",
+        body: { code },
+      }));
+      if (result?.access_token) {
+        storeSession(result);
+        history.replaceState(history.state, "", location.pathname + "#visao");
+        if (searchParams.get("type") === "recovery" || type === "recovery") {
+          recoveryToken = result.access_token;
+          try { sessionStorage.setItem("mutirao_recovery_token", result.access_token); } catch {}
+          return "recovery";
+        }
+      }
+    } catch {}
+  }
+
+  // 4. Se já há recoveryToken ativo na sessão
+  if (recoveryToken) {
+    return "recovery";
+  }
+
+  if (hashParams.has("access_token") || hashParams.has("error_code")) {
     history.replaceState(history.state, "", location.pathname + location.search + "#visao");
   }
   return null;
@@ -88,6 +151,7 @@ function restoreSession() {
 }
 
 function clearSession() {
+  if (globalThis.__isRecovering && recoveryToken) return;
   session = null;
   try { localStorage.removeItem(sessionKey); } catch {}
   try { sessionStorage.removeItem(sessionKey); } catch {}
@@ -126,10 +190,28 @@ async function sendPasswordReset(email) {
 }
 
 async function updatePassword(password) {
-  const token = await accessToken();
-  return supabaseRequest("/auth/v1/user", {
+  let token = recoveryToken;
+  if (!token && session?.access_token) {
+    token = session.access_token;
+  }
+  if (!token) {
+    try { token = await accessToken(); }
+    catch { token = recoveryToken; }
+  }
+  if (!token) {
+    throw new Error("O link de recuperação expirou ou é inválido. Solicite um novo link em 'Esqueci minha senha'.");
+  }
+
+  const result = await supabaseRequest("/auth/v1/user", {
     method: "PUT", body: { password }, token,
   });
+
+  clearRecoveryToken();
+  if (result) {
+    if (result.access_token) storeSession(result);
+    else if (session) storeSession({ ...session, user: result });
+  }
+  return result;
 }
 
 async function getAccessRole() {

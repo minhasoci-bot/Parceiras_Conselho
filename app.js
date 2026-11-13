@@ -653,14 +653,16 @@ simForm.addEventListener("submit", async (event) => {
 });
 
 function authErrorMessage(error) {
+  if (error.code === "same_password") return "A nova senha deve ser diferente da senha anterior.";
+  if (error.code === "weak_password") return "Escolha uma senha mais forte (mínimo de 8 caracteres).";
   if (error.code === "invalid_credentials") return "E-mail ou senha incorretos.";
   if (error.code === "email_not_confirmed") return "Confirme o e-mail da sua conta para entrar.";
-  if (error.code === "weak_password") return "Escolha uma senha mais forte.";
   if (error.code === "signup_disabled") return "O cadastro está desativado. Fale com a pessoa responsável pelo mutirão.";
   if (error.code === "email_address_not_authorized") return "O envio de confirmação para este endereço está indisponível. Fale com a pessoa responsável pelo mutirão.";
   if (error.code === "over_email_send_rate_limit") return "O limite de envio de e-mails do projeto foi atingido. Tente mais tarde.";
   if (error.status === 429) return "O Supabase limitou temporariamente esta solicitação. Aguarde antes de tentar novamente.";
-  return error.message;
+  if (error.status === 401 || error.code === "bad_jwt") return "O link de recuperação expirou ou já foi utilizado. Solicite um novo link.";
+  return error.message || "Não foi possível concluir a operação.";
 }
 
 $("#auth-mode").addEventListener("click", () => {
@@ -724,14 +726,20 @@ resetPasswordForm?.addEventListener("submit", async (event) => {
   const newPassword = field(resetPasswordForm, "password").value;
   try {
     await updatePassword(newPassword);
+    globalThis.__isRecovering = false;
     resetPasswordDialog.close();
-    notice("Sua senha foi redefinida com sucesso!");
-    await connect();
+    notice("Sua senha foi redefinida com sucesso! Você já pode entrar.");
+    try { await connect(); } catch {}
   } catch (error) {
     formError(resetPasswordForm, authErrorMessage(error));
   } finally {
     button.disabled = false;
   }
+});
+
+resetPasswordDialog?.addEventListener("close", () => {
+  globalThis.__isRecovering = false;
+  clearRecoveryToken();
 });
 
 function openAccessDialog(tab = "pending") {
@@ -972,10 +980,12 @@ $("#services-options").innerHTML = [...catalog.map(([, title]) => title), ...pro
 $("#category-filter").insertAdjacentHTML("beforeend", [...new Set(catalog.map(([category]) => category))]
   .map((category) => `<option>${esc(category)}</option>`).join(""));
 if (shared) {
-  const redirectMode = checkAuthRedirect();
-  if (redirectMode === "recovery") {
-    resetPasswordDialog?.showModal();
-  }
+  checkAuthRedirect().then((redirectMode) => {
+    if (redirectMode === "recovery") {
+      globalThis.__isRecovering = true;
+      resetPasswordDialog?.showModal();
+    }
+  });
 }
 route();
 renderCatalog();
@@ -997,10 +1007,12 @@ if (shared) {
 }
 
 async function initializeSharedAccess() {
+  if (globalThis.__isRecovering) return;
   try {
     if (!restoreSession()) return;
     await connect();
   } catch (error) {
+    if (globalThis.__isRecovering) return;
     disconnect();
     notice(error.message, true);
   }
