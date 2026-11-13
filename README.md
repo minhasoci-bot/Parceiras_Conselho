@@ -22,7 +22,7 @@ O sistema possui cadastro e login com e-mail e senha integrados ao Supabase, com
 
 1. **Cadastro, Login e Recuperação de Senha**:
    - Qualquer pessoa do grupo clica em **Entrar** no topo da página.
-   - Se ainda não tiver conta, clica em **Criar conta**, insere seu e-mail e define uma senha.
+   - Se ainda não tiver conta, clica em **Criar conta**, insere seu e-mail, define uma senha e abre o link de confirmação enviado pelo Supabase.
    - Se esqueceu a senha, clica em **Esqueci minha senha**, digita seu e-mail e recebe o link de redefinição para cadastrar uma nova senha.
    - Ao fazer login, o perfil do usuário fica visível no topo (avatar, e-mail, papel de acesso e botão de logout), além de destacar seu nome com a etiqueta **Você** na lista da equipe.
    - Se a conta ainda não foi aprovada, o sistema envia automaticamente a solicitação e exibe a mensagem **"Aguardando aprovação do administrador"**.
@@ -65,6 +65,10 @@ end $$;
 ```
 
 Pronto! Ao entrar com essa conta, você terá privilégios de administrador para aprovar os demais membros diretamente pela interface web.
+
+### 3. Configurar os e-mails
+
+Em **Authentication → Emails → SMTP Settings**, conecte um serviço de envio de e-mail. O serviço padrão do Supabase é para testes, tem limite baixo e não envia para endereços fora da equipe do projeto. A confirmação e a recuperação de senha para participantes dependem de [SMTP próprio](https://supabase.com/docs/guides/auth/auth-smtp). Mantenha **Allow new users to sign up** e **Confirm Email** ativos em **Sign In / Providers**. Em **URL Configuration**, informe a URL do painel publicado como **Site URL**.
 
 ---
 

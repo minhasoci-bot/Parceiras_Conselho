@@ -59,6 +59,11 @@ async function checkAuthRedirect() {
     return "recovery";
   }
 
+  if (hashParams.get("type") === "signup" && hashParams.has("access_token")) {
+    history.replaceState(history.state, "", location.pathname + "#visao");
+    return "signup-confirmed";
+  }
+
   // 2. Token hash na query ou hash (?token_hash=...&type=recovery)
   const tokenHash = searchParams.get("token_hash") || hashParams.get("token_hash");
   const type = searchParams.get("type") || hashParams.get("type");
@@ -108,6 +113,7 @@ async function checkAuthRedirect() {
 
   if (hashParams.has("access_token") || hashParams.has("error_code")) {
     history.replaceState(history.state, "", location.pathname + location.search + "#visao");
+    if (hashParams.has("error_code")) return "invalid-link";
   }
   return null;
 }
@@ -178,8 +184,13 @@ async function signInWithPassword(email, password) {
 }
 
 async function createAccount(email, password) {
-  const result = await supabaseRequest("/auth/v1/signup", { method: "POST", body: { email, password } });
-  if (result.access_token) storeSession(result);
+  const redirectTo = location.origin + location.pathname;
+  const result = await supabaseRequest("/auth/v1/signup?redirect_to=" + encodeURIComponent(redirectTo), {
+    method: "POST", body: { email, password },
+  });
+  if (!result?.access_token) return false;
+  storeSession(result);
+  return true;
 }
 
 async function sendPasswordReset(email) {
@@ -245,12 +256,8 @@ async function rejectDashboardAccess(userId) {
 }
 
 async function listMembers() {
-  let token;
-  if (session) {
-    try { token = await accessToken(); } catch { /* sem token válido */ }
-  }
   return supabaseRequest("/rest/v1/rpc/mutirao_mentoria_list_members", {
-    method: "POST", body: {}, token,
+    method: "POST", body: {}, token: await accessToken(),
   });
 }
 

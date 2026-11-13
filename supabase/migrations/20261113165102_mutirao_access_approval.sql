@@ -34,8 +34,12 @@ using (
   or (select exists (select 1 from public.mutirao_mentoria_admins where user_id = (select auth.uid())))
 );
 
+create schema if not exists mutirao_private;
+revoke all on schema mutirao_private from public, anon, authenticated;
+grant usage on schema mutirao_private to anon, authenticated;
+
 -- 3. Função para solicitar acesso ao painel (chamada pelo usuário após login)
-create or replace function public.mutirao_mentoria_request_access()
+create or replace function mutirao_private.request_access()
 returns void
 language plpgsql
 security definer
@@ -53,22 +57,19 @@ begin
     return;
   end if;
 
-  select email into uemail from auth.users where id = uid;
+  select email into uemail from auth.users where id = uid and email_confirmed_at is not null;
   if uemail is null or uemail = '' then
-    uemail := coalesce((auth.jwt() ->> 'email'), 'Sem e-mail');
+    raise insufficient_privilege using message = 'Confirme seu e-mail antes de solicitar acesso.';
   end if;
 
   insert into public.mutirao_mentoria_access_requests (user_id, email, requested_at, approved_at)
   values (uid, uemail, now(), null)
-  on conflict (user_id) do update
-    set email = excluded.email,
-        requested_at = now()
-    where public.mutirao_mentoria_access_requests.approved_at is null;
+  on conflict (user_id) do nothing;
 end;
 $$;
 
 -- 4. Função para o administrador aprovar solicitação
-create or replace function public.mutirao_mentoria_approve_access(applicant_id uuid)
+create or replace function mutirao_private.approve_access(applicant_id uuid)
 returns boolean
 language plpgsql
 security definer
@@ -96,7 +97,7 @@ end;
 $$;
 
 -- 5. Função para o administrador recusar solicitação
-create or replace function public.mutirao_mentoria_reject_access(applicant_id uuid)
+create or replace function mutirao_private.reject_access(applicant_id uuid)
 returns boolean
 language plpgsql
 security definer
@@ -116,7 +117,7 @@ end;
 $$;
 
 -- 6. Função para listar os membros aprovados
-create or replace function public.mutirao_mentoria_list_members()
+create or replace function mutirao_private.list_members()
 returns table (
   user_id uuid,
   email text,
@@ -136,11 +137,14 @@ as $$
   from public.mutirao_mentoria_members m
   left join auth.users u on u.id = m.user_id
   left join public.mutirao_mentoria_access_requests r on r.user_id = m.user_id
+  where exists (
+    select 1 from public.mutirao_mentoria_members caller where caller.user_id = (select auth.uid())
+  )
   order by is_admin desc, joined_at asc;
 $$;
 
 -- 7. Função para o administrador remover membro
-create or replace function public.mutirao_mentoria_remove_member(target_user_id uuid)
+create or replace function mutirao_private.remove_member(target_user_id uuid)
 returns boolean
 language plpgsql
 security definer
@@ -165,7 +169,7 @@ end;
 $$;
 
 -- 8. Contagem pública de participantes aprovados
-create or replace function public.mutirao_mentoria_team_count()
+create or replace function mutirao_private.team_count()
 returns integer
 language sql
 stable
@@ -175,17 +179,69 @@ as $$
   select count(*)::integer from public.mutirao_mentoria_members;
 $$;
 
--- 9. Permissões de execução das funções
-revoke all on function public.mutirao_mentoria_request_access() from public, anon, authenticated;
-revoke all on function public.mutirao_mentoria_approve_access(uuid) from public, anon, authenticated;
-revoke all on function public.mutirao_mentoria_reject_access(uuid) from public, anon, authenticated;
-revoke all on function public.mutirao_mentoria_remove_member(uuid) from public, anon, authenticated;
-revoke all on function public.mutirao_mentoria_list_members() from public, anon, authenticated;
-revoke all on function public.mutirao_mentoria_team_count() from public, anon, authenticated;
+-- 9. Expor apenas as funções de entrada pela API; as funções que ignoram RLS ficam em um esquema privado.
+create or replace function public.mutirao_mentoria_request_access()
+returns void
+language sql volatile security invoker
+set search_path = ''
+as $$ select mutirao_private.request_access(); $$;
 
+revoke all on function mutirao_private.request_access() from public, anon, authenticated;
+revoke all on function public.mutirao_mentoria_request_access() from public, anon, authenticated;
+grant execute on function mutirao_private.request_access() to authenticated;
 grant execute on function public.mutirao_mentoria_request_access() to authenticated;
+
+create or replace function public.mutirao_mentoria_approve_access(applicant_id uuid)
+returns boolean
+language sql volatile security invoker
+set search_path = ''
+as $$ select mutirao_private.approve_access(applicant_id); $$;
+
+revoke all on function mutirao_private.approve_access(uuid) from public, anon, authenticated;
+revoke all on function public.mutirao_mentoria_approve_access(uuid) from public, anon, authenticated;
+grant execute on function mutirao_private.approve_access(uuid) to authenticated;
 grant execute on function public.mutirao_mentoria_approve_access(uuid) to authenticated;
+
+create or replace function public.mutirao_mentoria_reject_access(applicant_id uuid)
+returns boolean
+language sql volatile security invoker
+set search_path = ''
+as $$ select mutirao_private.reject_access(applicant_id); $$;
+
+revoke all on function mutirao_private.reject_access(uuid) from public, anon, authenticated;
+revoke all on function public.mutirao_mentoria_reject_access(uuid) from public, anon, authenticated;
+grant execute on function mutirao_private.reject_access(uuid) to authenticated;
 grant execute on function public.mutirao_mentoria_reject_access(uuid) to authenticated;
+
+create or replace function public.mutirao_mentoria_list_members()
+returns table (user_id uuid, email text, is_admin boolean, joined_at timestamptz)
+language sql stable security invoker
+set search_path = ''
+as $$ select * from mutirao_private.list_members(); $$;
+
+revoke all on function mutirao_private.list_members() from public, anon, authenticated;
+revoke all on function public.mutirao_mentoria_list_members() from public, anon, authenticated;
+grant execute on function mutirao_private.list_members() to authenticated;
+grant execute on function public.mutirao_mentoria_list_members() to authenticated;
+
+create or replace function public.mutirao_mentoria_remove_member(target_user_id uuid)
+returns boolean
+language sql volatile security invoker
+set search_path = ''
+as $$ select mutirao_private.remove_member(target_user_id); $$;
+
+revoke all on function mutirao_private.remove_member(uuid) from public, anon, authenticated;
+revoke all on function public.mutirao_mentoria_remove_member(uuid) from public, anon, authenticated;
+grant execute on function mutirao_private.remove_member(uuid) to authenticated;
 grant execute on function public.mutirao_mentoria_remove_member(uuid) to authenticated;
-grant execute on function public.mutirao_mentoria_list_members() to anon, authenticated;
+
+create or replace function public.mutirao_mentoria_team_count()
+returns integer
+language sql stable security invoker
+set search_path = ''
+as $$ select mutirao_private.team_count(); $$;
+
+revoke all on function mutirao_private.team_count() from public, anon, authenticated;
+revoke all on function public.mutirao_mentoria_team_count() from public, anon, authenticated;
+grant execute on function mutirao_private.team_count() to anon, authenticated;
 grant execute on function public.mutirao_mentoria_team_count() to anon, authenticated;

@@ -34,6 +34,7 @@ let catalogMode = "services";
 let activeView = "";
 let authMode = "login";
 let accessRole = null;
+let accessGeneration = 0;
 let checkingPendingAccess = false;
 
 function notice(message, error = false) {
@@ -111,7 +112,7 @@ function setAuthMode(mode) {
     password.autocomplete = "new-password";
     password.minLength = 8;
     heading.textContent = "Criar conta";
-    desc.textContent = "Escolha uma senha de pelo menos 8 caracteres. Após confirmar seu e-mail, entre para solicitar acesso.";
+    desc.textContent = "Escolha uma senha de pelo menos 8 caracteres. Confirme seu e-mail para solicitar acesso ao painel.";
     submitBtn.textContent = "Criar conta";
     authModeBtn.textContent = "Já tenho conta";
     if (authForgotBtn) authForgotBtn.hidden = true;
@@ -231,6 +232,8 @@ async function updatePendingBadge() {
 }
 
 let currentMembers = [];
+let publicParticipantCount = 0;
+let membersRefresh = 0;
 
 function getTeamTarget() {
   const defaultPlan = data?.default_plan || DEFAULT_PLAN;
@@ -241,6 +244,9 @@ function getTeamTarget() {
 function formatGoalNote(target, members, defaultPlan, memberPlans) {
   const count = members?.length || 0;
   if (!count) {
+    if (publicParticipantCount && shared && !ready) {
+      return "Entre com uma conta aprovada para ver a meta atual do mutirão.";
+    }
     return "Meta calculada por participante: R$ 1.497,00 (6 meses) ou R$ 2.997,00 (1 ano). Nenhum participante confirmado ainda.";
   }
   const planDefault = COURSE_PLANS[defaultPlan] ? defaultPlan : DEFAULT_PLAN;
@@ -265,8 +271,8 @@ function formatGoalNote(target, members, defaultPlan, memberPlans) {
 }
 
 function renderConfirmedMembers(members) {
-  currentMembers = members || [];
-  const count = currentMembers.length;
+  const hasMemberAccess = !shared || ready;
+  const count = hasMemberAccess ? members.length : publicParticipantCount;
   $("#participant-count").textContent = decimal.format(count);
   $("#participant-label").textContent = count === 1 ? "participante confirmado" : "participantes confirmados";
 
@@ -275,6 +281,10 @@ function renderConfirmedMembers(members) {
 
   if (count === 0) {
     container.innerHTML = empty("Nenhum usuário confirmado ainda. Os participantes confirmados aparecerão aqui conforme entrarem no mutirão.");
+    return;
+  }
+  if (!hasMemberAccess) {
+    container.innerHTML = "";
     return;
   }
 
@@ -320,59 +330,28 @@ function renderConfirmedMembers(members) {
 }
 
 async function refreshConfirmedMembers() {
-  let list = [];
-  let remoteSuccess = false;
-  if (shared) {
-    try {
-      const remote = await listMembers();
-      if (Array.isArray(remote)) {
-        list = remote.slice();
-        remoteSuccess = true;
-      }
-    } catch {
-      // Silencioso se a RPC não estiver disponível ou houver erro de rede
-    }
-  }
-
-  if (Array.isArray(data?.people) && data.people.length) {
-    const existingEmails = new Set(list.map((m) => m.email.toLowerCase()));
-    for (const name of data.people) {
-      if (name && !existingEmails.has(name.toLowerCase())) {
-        list.push({ email: name, is_admin: false, joined_at: null });
-        existingEmails.add(name.toLowerCase());
-      }
-    }
-  }
-
-  if (!list.length && shared && !remoteSuccess) {
-    try {
+  const request = ++membersRefresh;
+  try {
+    if (!shared) {
+      currentMembers = (data.people || []).map((name) => ({ email: name }));
+    } else if (ready) {
+      const list = await listMembers();
+      if (request !== membersRefresh || !ready) return;
+      currentMembers = list;
+      publicParticipantCount = list.length;
+    } else {
       const count = await countParticipants();
-      if (typeof count === "number" && count > 0) {
-        $("#participant-count").textContent = decimal.format(count);
-        $("#participant-label").textContent = count === 1 ? "participante confirmado" : "participantes confirmados";
-        const container = $("#confirmed-members-list");
-        if (container) {
-          container.innerHTML = `<p class="empty">${decimal.format(count)} participante(s) confirmado(s) no mutirão.</p>`;
-        }
-        return;
-      }
-    } catch {
-      // falha silenciosa
+      if (request !== membersRefresh || ready) return;
+      publicParticipantCount = count;
     }
+    render();
+  } catch {
+    // Mantém a última contagem em caso de falha de rede.
   }
-
-  currentMembers = list;
-  renderConfirmedMembers(list);
-  const target = getTeamTarget();
-  const defaultPlan = data?.default_plan || DEFAULT_PLAN;
-  const memberPlans = data?.member_plans || {};
-  const targetEl = $("#goal-target");
-  if (targetEl) targetEl.textContent = money(target);
-  const noteEl = $("#goal-note");
-  if (noteEl) noteEl.textContent = formatGoalNote(target, currentMembers, defaultPlan, memberPlans);
 }
 
 function disconnect() {
+  accessGeneration += 1;
   stopPendingPolling();
   clearSession();
   accessRole = null;
@@ -389,14 +368,14 @@ function disconnect() {
 }
 
 async function connect() {
-  const currentSession = session;
+  const generation = accessGeneration;
   const role = await getAccessRole();
-  if (!session || session.refresh_token !== currentSession.refresh_token) return;
+  if (!session || generation !== accessGeneration) return;
   if (role === "pending") {
     if (accessRole !== "pending") {
-      try { await requestDashboardAccess(); } catch {}
+      await requestDashboardAccess();
     }
-    if (!session || session.refresh_token !== currentSession.refresh_token) return;
+    if (!session || generation !== accessGeneration) return;
     accessRole = role;
     renderAccess();
     notice("Sua solicitação foi enviada e está aguardando aprovação do administrador.");
@@ -405,7 +384,7 @@ async function connect() {
   }
   stopPendingPolling();
   const saved = await loadSharedDashboard();
-  if (!session || session.refresh_token !== currentSession.refresh_token) return;
+  if (!session || generation !== accessGeneration) return;
   const wasPending = accessRole === "pending";
   accessRole = role;
   setState(saved);
@@ -745,7 +724,8 @@ function authErrorMessage(error) {
   if (error.code === "email_not_confirmed") return "Confirme o e-mail da sua conta para entrar.";
   if (error.code === "signup_disabled") return "O cadastro está desativado. Fale com a pessoa responsável pelo mutirão.";
   if (error.code === "email_address_not_authorized") return "O envio de confirmação para este endereço está indisponível. Fale com a pessoa responsável pelo mutirão.";
-  if (error.code === "over_email_send_rate_limit") return "O limite de envio de e-mails do projeto foi atingido. Tente mais tarde.";
+  if (error.code === "user_already_exists" || error.code === "email_exists") return "Já existe uma conta com este e-mail. Volte para Entrar ou use Esqueci minha senha.";
+  if (error.code === "over_email_send_rate_limit") return "O serviço de e-mail do painel atingiu o limite de envio. Se já tem conta, entre com sua senha.";
   if (error.status === 429) return "O Supabase limitou temporariamente esta solicitação. Aguarde antes de tentar novamente.";
   if (error.status === 401 || error.code === "bad_jwt") return "O link de recuperação expirou ou já foi utilizado. Solicite um novo link.";
   return error.message || "Não foi possível concluir a operação.";
@@ -779,11 +759,11 @@ authForm.addEventListener("submit", async (event) => {
       return;
     }
     if (authMode === "create") {
-      await createAccount(email, password.value);
-      if (!session) {
+      const signedIn = await createAccount(email, password.value);
+      if (!signedIn) {
         setAuthMode("login");
         authDialog.close();
-        notice("Confira seu e-mail para confirmar a conta. Depois, entre para solicitar acesso.");
+        notice("Confira seu e-mail e a caixa de spam para confirmar a conta. Se já tem uma conta confirmada, entre com sua senha.");
         return;
       }
     } else {
@@ -1107,14 +1087,6 @@ $("#services-options").innerHTML = [...catalog.map(([, title]) => title), ...pro
   .map((title) => `<option value="${esc(title)}"></option>`).join("");
 $("#category-filter").insertAdjacentHTML("beforeend", [...new Set(catalog.map(([category]) => category))]
   .map((category) => `<option>${esc(category)}</option>`).join(""));
-if (shared) {
-  checkAuthRedirect().then((redirectMode) => {
-    if (redirectMode === "recovery") {
-      globalThis.__isRecovering = true;
-      resetPasswordDialog?.showModal();
-    }
-  });
-}
 route();
 renderCatalog();
 updateItems();
@@ -1135,8 +1107,19 @@ if (shared) {
 }
 
 async function initializeSharedAccess() {
-  if (globalThis.__isRecovering) return;
   try {
+    const redirectMode = await checkAuthRedirect();
+    if (redirectMode === "recovery") {
+      globalThis.__isRecovering = true;
+      resetPasswordDialog?.showModal();
+      return;
+    }
+    if (redirectMode === "invalid-link") {
+      notice("Este link expirou ou já foi utilizado. Se já confirmou sua conta, entre com sua senha.", true);
+    }
+    if (redirectMode === "signup-confirmed") {
+      notice("E-mail confirmado. Entre com o e-mail e a senha que você cadastrou para solicitar acesso.");
+    }
     if (!restoreSession()) return;
     await connect();
   } catch (error) {
