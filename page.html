@@ -162,14 +162,19 @@
           <button class="button primary" id="event-new" type="button">＋ Novo evento</button>
         </div>
         <div class="events-toolbar">
-          <label>Evento <select id="event-picker"><option value="">Selecione um evento</option></select></label>
+          <h2 id="event-gallery-heading" tabindex="-1">Eventos criados</h2>
+          <button class="button" id="event-gallery-back" type="button" hidden><span aria-hidden="true">←</span> Voltar à galeria</button>
           <button class="button" id="event-reload" type="button">Atualizar</button>
         </div>
         <p id="event-feedback" class="form-error" role="alert" hidden></p>
-        <div id="event-empty" class="card roomy event-empty">
-          <h2>Nenhum evento planejado</h2>
-          <p>Crie um evento em branco ou comece com o modelo de lançamento.</p>
-        </div>
+        <section id="event-gallery" aria-labelledby="event-gallery-heading">
+          <p id="event-loading" role="status" hidden>Carregando eventos…</p>
+          <div id="event-gallery-grid" class="event-gallery-grid"></div>
+          <div id="event-empty" class="card roomy event-empty" hidden>
+            <h3>Nenhum evento planejado</h3>
+            <p>Crie um evento em branco ou comece com o modelo de lançamento.</p>
+          </div>
+        </section>
         <div id="event-workspace" hidden>
           <section class="event-hero" aria-labelledby="event-current-title">
             <div><span id="event-current-status" class="pill"></span><h2 id="event-current-title"></h2><p id="event-current-date"></p></div>

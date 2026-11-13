@@ -368,9 +368,24 @@ dialog::backdrop { background:#152b21a0; }
 }
 
 .events-toolbar,.event-tabs,.event-filters { display:flex; flex-wrap:wrap; align-items:end; gap:12px; }
-.events-toolbar { margin-bottom:16px; }
-.events-toolbar label,.event-filters label { min-width:140px; }
-.events-toolbar label { flex:1; max-width:440px; }
+.events-toolbar { justify-content:space-between; align-items:center; margin-bottom:16px; }
+.events-toolbar h2 { font-size:20px; }
+.event-filters label { min-width:140px; }
+.event-gallery-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr)); gap:16px; }
+.event-card {
+  display:grid; grid-template-rows:auto 1fr auto auto; gap:14px; min-width:0; padding:20px;
+  border:1px solid var(--line); border-radius:14px; background:var(--paper); color:var(--ink); text-align:left;
+}
+.event-card:hover,.event-card:focus-visible { background:#f9fcf7; border-color:#a8bda6; }
+.event-card-meta { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; color:var(--muted); font-size:12px; }
+.event-card-meta [data-status="planejado"],.event-card-meta [data-status="concluido"] { background:var(--mint); color:var(--green); }
+.event-card-meta [data-status="em_andamento"] { background:#faefd9; color:#6f4c21; }
+.event-card-title { font:700 23px/1.15 "Instrument Sans","DM Sans",system-ui,sans-serif; overflow-wrap:anywhere; }
+.event-card-progress { display:grid; gap:8px; color:var(--muted); font-size:12px; }
+.event-card-track { height:6px; border-radius:10px; background:#e7eee4; overflow:hidden; }
+.event-card-track > span { display:block; height:100%; border-radius:inherit; background:#438768; }
+.event-card-link { display:flex; justify-content:space-between; align-items:center; gap:8px; padding-top:12px; border-top:1px solid var(--line); color:var(--green); font-size:13px; font-weight:700; }
+#event-loading { color:var(--muted); }
 .event-empty { display:grid; gap:8px; }
 .event-empty p,.event-list-copy p,.event-brief p { color:var(--muted); }
 .event-hero {

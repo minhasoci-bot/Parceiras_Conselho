@@ -24,7 +24,11 @@
   ];
   const dialog = $("#event-dialog");
   const form = $("#event-form");
-  const picker = $("#event-picker");
+  const gallery = $("#event-gallery");
+  const galleryHeading = $("#event-gallery-heading");
+  const galleryGrid = $("#event-gallery-grid");
+  const galleryBack = $("#event-gallery-back");
+  const loading = $("#event-loading");
   const feedback = $("#event-feedback");
   const panelContent = $("#event-panel-content");
   const phaseFilter = $("#event-filter-phase");
@@ -32,14 +36,19 @@
   const channelFilter = $("#event-filter-channel");
   const eventRoute = "/rest/v1/mutirao_mentoria_events";
   let events = [];
+  let selectedEventId = null;
   let section = "brief";
   let editor = null;
   let request = 0;
   let saving = false;
 
   const allowed = () => ready && !!session && (accessRole === "member" || accessRole === "admin");
-  const active = () => events.find((event) => event.id === picker.value);
+  const active = () => events.find((event) => event.id === selectedEventId);
   const itemsFor = (event, kind) => (event.plan.items || []).filter((item) => item?.kind === kind);
+  const taskProgress = (event) => {
+    const tasks = itemsFor(event, "task");
+    return { done: tasks.filter((item) => item.status === "feito").length, total: tasks.length };
+  };
   const input = (name, label, type = "text", limits = "") =>
     `<label>${label}<input name="${name}" type="${type}" ${limits}></label>`;
   const area = (name, label) => `<label>${label}<textarea name="${name}" rows="3" maxlength="5000"></textarea></label>`;
@@ -89,23 +98,39 @@
     ] };
   }
 
-  function renderPicker(selected) {
-    picker.replaceChildren(new Option(events.length ? "Selecione um evento" : "Nenhum evento", ""),
-      ...events.map((event) => new Option(event.title + (event.status === "arquivado" ? " · arquivado" : ""), event.id)));
-    picker.disabled = !events.length;
-    picker.value = events.some((event) => event.id === selected)
-      ? selected
-      : (events.find((event) => event.status !== "arquivado") || events[0])?.id || "";
+  function renderGallery() {
+    const focusedId = document.activeElement?.dataset.eventOpen;
+    $("#event-empty").hidden = events.length > 0;
+    galleryGrid.innerHTML = events.map((event) => {
+      const { done, total } = taskProgress(event);
+      const percentage = total ? Math.round(100 * done / total) : 0;
+      const status = stateName(eventStates, event.status);
+      return `<button type="button" class="event-card" data-event-open="${esc(event.id)}">
+        <span class="event-card-meta"><span class="pill" data-status="${status ? esc(event.status) : ""}">${esc(status)}</span><span>${formatDate(event.event_date) || "Data a definir"}</span></span>
+        <strong class="event-card-title">${esc(event.title)}</strong>
+        <span class="event-card-progress">${total ? `${done} de ${total} ${total === 1 ? "tarefa concluída" : "tarefas concluídas"}` : "Sem tarefas"}
+          <span class="event-card-track" aria-hidden="true"><span style="width:${percentage}%"></span></span>
+        </span>
+        <span class="event-card-link">Abrir planejamento <span aria-hidden="true">→</span></span>
+      </button>`;
+    }).join("");
+    if (focusedId) focusEventCard(focusedId);
   }
 
-  async function fetchEvents(selected = picker.value) {
+  function focusEventCard(id) {
+    const card = Array.from(galleryGrid.children).find((button) => button.dataset.eventOpen === id);
+    (card || galleryHeading).focus();
+  }
+
+  async function fetchEvents() {
     if (!allowed()) return;
     const operation = ++request;
     const generation = accessGeneration;
     const reload = $("#event-reload");
     reload.disabled = true;
     setFeedback("");
-    if (!events.length) $("#event-empty").hidden = true;
+    loading.hidden = events.length > 0;
+    if (!loading.hidden) $("#event-empty").hidden = true;
     try {
       const result = await supabaseRequest(
         eventRoute + "?select=id,title,event_date,status,revision,plan&order=created_at.desc",
@@ -113,36 +138,49 @@
       );
       if (operation !== request || generation !== accessGeneration || !allowed()) return;
       events = result;
-      renderPicker(selected);
+      if (!active()) selectedEventId = null;
+      renderGallery();
       renderEvent();
     } catch (error) {
       if (operation !== request || generation !== accessGeneration) return;
       setFeedback("Não foi possível carregar os eventos. Tente atualizar.");
       if (error.status === 401) disconnect();
     } finally {
-      if (operation === request) reload.disabled = false;
+      if (operation === request) {
+        reload.disabled = false;
+        loading.hidden = true;
+      }
     }
   }
 
   function renderEvent() {
     const event = active();
-    $("#event-empty").hidden = !!event;
+    gallery.hidden = !!event;
+    galleryHeading.hidden = !!event;
+    galleryBack.hidden = !event;
     $("#event-workspace").hidden = !event;
     if (!event) return;
     $("#event-current-title").textContent = event.title;
     $("#event-current-status").textContent = stateName(eventStates, event.status);
     $("#event-current-date").textContent = formatDate(event.event_date) || "Data a definir";
-    const tasks = itemsFor(event, "task");
+    const { done, total } = taskProgress(event);
     const messages = itemsFor(event, "message");
     const links = itemsFor(event, "link");
     const duration = itemsFor(event, "agenda").reduce((sum, item) => sum + (Number(item.duration) || 0), 0);
     $("#event-overview-metrics").innerHTML = [
-      [tasks.filter((item) => item.status === "feito").length + "/" + tasks.length, "Tarefas concluídas"],
+      [done + "/" + total, "Tarefas concluídas"],
       [messages.filter((item) => item.status === "enviado").length + "/" + messages.length, "Mensagens enviadas"],
       [duration + " min", "Duração do roteiro"],
       [links.filter((item) => item.status === "pronto").length + "/" + links.length, "Links validados"],
     ].map(([value, label]) => `<div><strong>${value}</strong><span>${label}</span></div>`).join("");
     renderPanel();
+  }
+
+  function openEvent(id) {
+    selectedEventId = id;
+    selectSection("brief", false);
+    renderEvent();
+    galleryBack.focus();
   }
 
   function selectSection(next, render = true) {
@@ -263,6 +301,7 @@
     saving = true;
     // Evita que uma atualização iniciada antes da gravação substitua o resultado novo.
     request += 1;
+    loading.hidden = true;
     $("#event-reload").disabled = true;
     saveButton.disabled = true;
     deleteButton.disabled = true;
@@ -279,10 +318,10 @@
       if (generation !== accessGeneration || !allowed()) return;
       if (!response?.length) throw new Error("O evento foi atualizado em outra sessão. Copie alterações ainda não salvas, feche esta janela e clique em Atualizar.");
       replaceEvent(response[0]);
-      renderPicker(response[0].id);
-      if (!event) selectSection("brief", false);
-      renderEvent();
+      renderGallery();
       dialog.close();
+      if (event) renderEvent();
+      else openEvent(response[0].id);
       setFeedback("");
       notice(event ? "Evento atualizado." : "Evento criado.");
     } catch (error) {
@@ -338,7 +377,16 @@
   $("#event-new").addEventListener("click", () => edit("new"));
   $("#event-reload").addEventListener("click", () => { if (!saving) fetchEvents(); });
   $("#event-add").addEventListener("click", () => edit(section));
-  picker.addEventListener("change", () => { selectSection("brief", false); renderEvent(); });
+  galleryGrid.addEventListener("click", (event) => {
+    const card = event.target.closest("[data-event-open]");
+    if (card && allowed()) openEvent(card.dataset.eventOpen);
+  });
+  galleryBack.addEventListener("click", () => {
+    const previousId = selectedEventId;
+    selectedEventId = null;
+    renderEvent();
+    focusEventCard(previousId);
+  });
   $("#event-sections").addEventListener("click", (event) => {
     const button = event.target.closest("[data-event-section]");
     if (button) selectSection(button.dataset.eventSection);
@@ -352,21 +400,29 @@
     if (item) edit(section, item);
   });
   document.addEventListener("mutirao:route", (event) => {
-    if (event.detail === "eventos" && !saving && !dialog.open) fetchEvents();
+    if (event.detail === "eventos") {
+      if (!saving && !dialog.open) fetchEvents();
+    } else if (selectedEventId) {
+      selectedEventId = null;
+      renderEvent();
+    }
   });
   document.addEventListener("mutirao:disconnect", () => {
     request += 1;
     events = [];
+    selectedEventId = null;
     if (dialog.open) dialog.close();
     editor = null;
-    picker.replaceChildren(new Option("Selecione um evento", ""));
+    galleryGrid.replaceChildren();
     for (const id of ["event-current-title", "event-current-status", "event-current-date", "event-overview-metrics", "event-panel-content", "event-form-fields"]) {
       $("#" + id).replaceChildren();
     }
     $("#event-reload").disabled = false;
-    $("#event-workspace").hidden = true;
+    $("#event-empty").hidden = true;
+    loading.hidden = true;
     setFeedback("");
     selectSection("brief", false);
+    renderEvent();
   });
   selectSection("brief", false);
 })();
