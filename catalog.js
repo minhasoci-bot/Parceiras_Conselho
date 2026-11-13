@@ -1,4 +1,3 @@
-const PRICE_SOURCE = "https://whimsical.com/tabela-de-precos-marketing-digital-Neh9EL4z4pTZ6XQmm4fufw";
 const OFFER_SOURCE = "https://whimsical.com/estrutura-do-infoproduto-oferta-e-precificacao-FwH9ZVg333TfNbNqpa4By9";
 const catalog = [
   ["Design", "Arte de carrossel", [["Avulso", 40, 80], ["Em quantidade", 20, 30]], "Somente arte"],

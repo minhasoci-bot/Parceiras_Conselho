@@ -479,7 +479,6 @@ window.addEventListener("focus", async () => {
   }
 });
 
-$("#price-source").href = PRICE_SOURCE;
 $("#offer-source").href = OFFER_SOURCE;
 $("#services-options").innerHTML = catalog.map(([, title]) => `<option value="${esc(title)}"></option>`).join("");
 $("#category-filter").insertAdjacentHTML("beforeend", [...new Set(catalog.map(([category]) => category))]
