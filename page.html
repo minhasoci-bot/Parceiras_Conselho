@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Acompanhe a meta coletiva e planeje as ofertas do Mutirão da Mentoria.">
+  <title>Mutirão da Mentoria</title>
+  <style>/* STYLE */</style>
+</head>
+<body>
+  <aside class="rail">
+    <a class="brand" href="#visao" aria-label="Mutirão da Mentoria, visão geral">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span><strong>Mutirão</strong><small>da Mentoria</small></span>
+    </a>
+    <nav aria-label="Seções do painel">
+      <a href="#visao"><i class="icon grid-icon" aria-hidden="true"></i> Visão geral</a>
+      <a href="#equipe"><i class="icon people-icon" aria-hidden="true"></i> Equipe</a>
+      <a href="#servicos"><i class="icon catalog-icon" aria-hidden="true"></i> Serviços</a>
+      <a href="#simulador"><i class="icon sim-icon" aria-hidden="true"></i> Simulador</a>
+    </nav>
+    <div class="rail-bottom"><span class="pulse" aria-hidden="true"></span><span id="storage-label">Salvo neste navegador</span></div>
+  </aside>
+
+  <div class="workspace">
+    <header class="masthead">
+      <span id="breadcrumb">Visão geral</span>
+      <div class="top-actions">
+        <button class="button" type="button" id="auth-action" hidden>Entrar</button>
+        <span class="date-chip"><i class="calendar-icon icon" aria-hidden="true"></i> Até 30 nov. 2026</span>
+        <button class="button primary" type="button" data-action="new-sale"><span aria-hidden="true">＋</span> Registrar venda</button>
+      </div>
+    </header>
+    <main id="main">
+      <div id="notice" class="notice" role="status" hidden></div>
+
+      <section id="visao" class="view" aria-labelledby="overview-heading">
+        <div class="view-heading overview-heading">
+          <div><p class="eyebrow"><span></span> MUTIRÃO DA MENTORIA</p><h1 id="overview-heading">Painel de metas</h1>
+          <p>Acompanhe a arrecadação para garantir a entrada das 15 pessoas na mentoria.</p></div>
+          <a class="button" href="#simulador">Simular uma oferta <span aria-hidden="true">↗</span></a>
+        </div>
+
+        <div class="goal">
+          <div class="orbit-art" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b><b></b><b></b></div>
+          <div class="goal-content">
+            <div class="goal-label"><span class="target-mark" aria-hidden="true"></span> Meta coletiva</div>
+            <div class="goal-number">R$ 22.455</div>
+            <div class="goal-note">Entrada de 15 pessoas na mentoria</div>
+            <div class="leader"><span id="goal-total">R$ 0,00 recebidos</span><strong id="goal-percent">0%</strong></div>
+            <progress id="goal-progress" value="0" max="100" aria-label="Progresso da meta coletiva"></progress>
+          </div>
+          <div class="goal-countdown"><strong id="days-left">18</strong><span id="days-caption">dias restantes</span></div>
+        </div>
+
+        <div class="metrics">
+          <article class="metric"><div class="metric-label"><span class="metric-icon" aria-hidden="true">↙</span> Recebido</div><strong id="received">R$ 0,00</strong><small>Pagamentos até 30 de novembro</small></article>
+          <article class="metric"><div class="metric-label"><span class="metric-icon amber" aria-hidden="true">◔</span> Falta para a meta</div><strong id="remaining">R$ 22.455,00</strong><small id="closed-note">R$ 0,00 fechados a receber até o prazo</small></article>
+          <article class="metric"><div class="metric-label"><span class="metric-icon blue" aria-hidden="true">↗</span> Ritmo necessário</div><strong id="pace">R$ 1.247,50/dia</strong><small id="pace-note">Inclui hoje e o dia 30</small></article>
+        </div>
+
+        <div class="overview-grid">
+          <section class="card overview-card">
+            <div class="section-header"><h2>Equipe do mutirão</h2><a class="text-link" href="#equipe">Ver equipe <span aria-hidden="true">→</span></a></div>
+            <p class="team-count"><strong>15</strong> participantes</p>
+          </section>
+          <section class="card overview-card">
+            <div class="section-header"><div><h2>Vendas recentes</h2><p>Propostas, contratos e recebimentos.</p></div><button class="text-link" data-action="new-sale" type="button">Adicionar <span aria-hidden="true">＋</span></button></div>
+            <div id="recent-sales"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="equipe" class="view" aria-labelledby="team-heading" hidden>
+        <div class="view-heading"><div><h1 id="team-heading">Equipe</h1><p>Gerencie os participantes e consulte as vendas registradas para o mutirão.</p></div></div>
+        <section class="card roomy"><div class="section-header"><h2>15 participantes</h2><button class="button" data-action="rename" type="button">Editar nomes</button></div><div id="team-list" class="team-list"></div></section>
+        <section class="card roomy ledger">
+          <div class="section-header"><div><h2>Registro de vendas</h2><p>Use o valor líquido que entra no caixa do mutirão.</p></div><button class="button primary" type="button" data-action="new-sale">＋ Registrar venda</button></div>
+          <div class="filters"><label>Status <select id="status-filter"><option value="">Todos</option><option value="proposta">Proposta</option><option value="fechado">Fechado</option><option value="recebido">Recebido</option></select></label>
+          <label>Participante <select id="person-filter"></select></label></div>
+          <p id="late-note" class="inline-note" hidden></p><div id="sales-list"></div>
+        </section>
+      </section>
+
+      <section id="servicos" class="view" aria-labelledby="catalog-heading" hidden>
+        <div class="view-heading"><div><h1 id="catalog-heading">Catálogo de serviços</h1><p>Escolha uma faixa de referência para começar a simular uma oferta.</p></div><a class="button" id="price-source" target="_blank" rel="noopener">Tabela no Whimsical ↗</a></div>
+        <div class="filters catalog-filters"><label>Buscar <input id="catalog-search" type="search" placeholder="Ex.: Reels ou estratégia"></label><label>Categoria <select id="category-filter"><option value="">Todas</option></select></label></div>
+        <div id="catalog-list" class="catalog-list"></div>
+      </section>
+
+      <section id="simulador" class="view" aria-labelledby="sim-heading" hidden>
+        <div class="view-heading"><div><h1 id="sim-heading">Simulador de ofertas</h1><p>Combine preço, quantidade e dias para planejar o que cabe no mutirão.</p></div><a class="button" href="#servicos">Consultar serviços <span aria-hidden="true">↗</span></a></div>
+        <div class="sim-grid">
+          <form id="sim-form" class="card roomy">
+            <div class="section-header"><h2>Montar oferta</h2><button type="button" class="text-link" data-action="reset-sim">Limpar</button></div>
+            <label>Nome da oferta <input name="title" required maxlength="120" placeholder="Ex.: Diagnóstico + plano de conteúdo"></label>
+            <div class="form-grid">
+              <label>Preço unitário (R$) <input name="price" type="number" min=".01" max="1000000" step=".01" required placeholder="0,00"></label>
+              <label>Quantidade de vendas <input name="quantity" type="number" min="1" max="10000" step="1" required value="1"></label>
+              <label>Dias para vender e receber <input name="days" type="number" min="1" max="365" step="1" required value="7"></label>
+              <label>Custo por unidade (R$) <input name="cost" type="number" min="0" max="1000000" step=".01" value="0"></label>
+              <label>Taxas sobre a venda (%) <input name="fee" type="number" min="0" max="100" step=".01" value="0"></label>
+            </div>
+            <details id="offer-details">
+              <summary>Estruturar a oferta</summary>
+              <label>Público <input name="audience" maxlength="180" placeholder="Quem tem esse problema?"></label>
+              <label>Promessa <input name="promise" maxlength="240" placeholder="Que resultado a pessoa pode alcançar?"></label>
+              <label>Entrega e complementos <textarea name="delivery" maxlength="500" rows="3" placeholder="Formato, escopo, ferramenta, suporte ou bônus."></textarea></label>
+              <a class="text-link" id="offer-source" target="_blank" rel="noopener">Estrutura e precificação no Whimsical ↗</a>
+            </details>
+            <div class="form-footer"><button id="save-sim" class="button primary" type="submit">Salvar cenário</button></div>
+          </form>
+          <section class="card roomy projection" aria-labelledby="projection-heading">
+            <h2 id="projection-heading">Projeção</h2>
+            <p class="projection-balance">Falta para a meta coletiva <strong id="projection-balance">R$ 22.455,00</strong></p>
+            <div class="projection-value"><span>Líquido estimado</span><strong id="estimate">R$ 0,00</strong></div>
+            <dl><div><dt>Faturamento bruto</dt><dd id="gross">R$ 0,00</dd></div><div><dt>Vendas por dia</dt><dd id="sales-per-day">—</dd></div><div><dt>Vendas para cobrir o saldo</dt><dd id="units-needed">—</dd></div><div><dt>Cobertura do saldo</dt><dd id="coverage">—</dd></div></dl>
+            <p class="projection-note" id="projection-note" aria-live="polite"></p>
+          </section>
+        </div>
+        <section class="roomy card ledger"><div class="section-header"><div><h2>Cenários salvos</h2><p>Compare as possibilidades com a meta do mutirão.</p></div></div><div id="saved-scenarios"></div></section>
+        <section class="ideas-section"><div class="section-header"><div><h2>Combinações para experimentar</h2><p>Exemplos editáveis com preços da tabela e do guia de ofertas.</p></div></div><div id="ideas-list" class="ideas-list"></div></section>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="auth-dialog" aria-labelledby="auth-heading">
+    <form id="auth-form" class="dialog-form">
+      <div class="section-header"><div><h2 id="auth-heading">Entrar no painel</h2><p>Use sua conta autorizada no Supabase.</p></div><button class="icon-button" type="button" data-close="auth-dialog" aria-label="Fechar">×</button></div>
+      <label>E-mail <input name="email" autocomplete="email" type="email" required></label>
+      <label class="auth-field">Senha <input name="password" autocomplete="current-password" type="password" required></label>
+      <label class="auth-field" hidden>Código ou link recebido por e-mail <input name="code" autocomplete="one-time-code" maxlength="3000" disabled></label>
+      <p class="inline-note auth-field" id="auth-help" hidden></p>
+      <p class="form-error auth-field" role="alert" hidden></p>
+      <div class="form-footer"><button class="text-link" type="button" id="auth-switch">Usar código por e-mail</button><button class="button primary" type="submit" id="auth-submit">Entrar</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="sale-dialog">
+    <form id="sale-form" class="dialog-form">
+      <div class="section-header"><h2 id="sale-heading">Registrar venda</h2><button class="icon-button" type="button" data-close="sale-dialog" aria-label="Fechar">×</button></div>
+      <label>Serviço ou oferta <input name="title" required maxlength="120" list="services-options" placeholder="Ex.: Edição de VSL"></label>
+      <datalist id="services-options"></datalist>
+      <div class="form-grid"><label>Participante <select name="person" required></select></label>
+      <label>Cliente (opcional) <input name="client" maxlength="100"></label>
+      <label>Valor líquido (R$) <input name="amount" min=".01" max="1000000" step=".01" type="number" required></label>
+      <label>Status <select name="status"><option value="proposta">Proposta</option><option value="fechado">Fechado</option><option value="recebido">Recebido</option></select></label>
+      <label id="sale-date-label"><span>Previsão de recebimento</span> <input name="date" type="date" required></label></div>
+      <p class="inline-note">Entradas recebidas até 30 de novembro contam para a meta. Para pagamento parcial, registre cada parcela em uma linha.</p>
+      <p class="form-error" role="alert" hidden></p>
+      <div class="form-footer"><button class="button danger" id="delete-sale" type="button" hidden>Excluir venda</button><button class="button primary" type="submit">Salvar venda</button></div>
+    </form>
+  </dialog>
+  <dialog id="people-dialog">
+    <form id="people-form" class="dialog-form">
+      <div class="section-header"><h2>Editar participantes</h2><button class="icon-button" type="button" data-close="people-dialog" aria-label="Fechar">×</button></div>
+      <div id="people-fields" class="form-grid"></div>
+      <p class="form-error" role="alert" hidden></p>
+      <div class="form-footer"><button class="button primary" type="submit">Salvar nomes</button></div>
+    </form>
+  </dialog>
+  <script>/* SCRIPTS */</script>
+</body>
+</html>
