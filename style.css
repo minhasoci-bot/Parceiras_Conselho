@@ -292,8 +292,6 @@ dialog::backdrop { background:#152b21a0; }
 }
 .masthead-brand { display:none; }
 @media (max-width:760px) {
-  .top-actions .primary { width:39px; padding:0; }
-  .top-actions .primary .button-label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
 }
 @media (max-width:615px) {
   /* Celular: barra superior compacta + navegação fixa no rodapé, como em um app. */
@@ -315,7 +313,6 @@ dialog::backdrop { background:#152b21a0; }
   #breadcrumb,.date-chip .icon,.user-info { display:none; }
   .top-actions { gap:6px; flex:none; }
   .top-actions .button,.date-chip { min-height:36px; padding:6px 10px; font-size:12px; }
-  .top-actions .primary { width:36px; padding:0; }
   .user-badge { gap:5px; padding:2px 3px 2px 2px; }
   .auth-logout { min-height:30px; }
   .masthead:has(#user-badge:not([hidden])) .brand-text { display:none; }
