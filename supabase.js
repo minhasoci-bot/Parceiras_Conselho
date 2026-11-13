@@ -261,6 +261,12 @@ async function listMembers() {
   });
 }
 
+async function setMemberPosition(userId, position) {
+  return supabaseRequest("/rest/v1/rpc/mutirao_mentoria_set_member_position", {
+    method: "POST", body: { target_user_id: userId, new_position: position }, token: await accessToken(),
+  });
+}
+
 async function removeMember(userId) {
   return supabaseRequest("/rest/v1/rpc/mutirao_mentoria_remove_member", {
     method: "POST", body: { target_user_id: userId }, token: await accessToken(),

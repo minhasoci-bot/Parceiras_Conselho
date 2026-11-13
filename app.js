@@ -6,16 +6,17 @@ const money = (cents) => moneyFormat.format(cents / 100);
 const cents = (reais) => Math.round(Number(reais) * 100);
 const esc = (value) => String(value).replace(/[&<>"']/g, (part) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[part]);
 const statusLabel = { proposta: "Proposta", fechado: "Fechado", recebido: "Recebido" };
-const views = { visao: "Visão geral", equipe: "Vendas", servicos: "Catálogo", simulador: "Simulador" };
+const views = { visao: "Visão geral", vendas: "Vendas", equipe: "Equipe", servicos: "Catálogo", simulador: "Simulador" };
+const memberPositions = { estrategia: "Estratégia", comercial: "Comercial", design: "Design", copy: "Copy", video: "Vídeo", dev: "Dev" };
 const shared = !!supabaseConfig;
 const storageKey = "mutirao-mentoria-nov-2026";
 const saleDialog = $("#sale-dialog");
 const saleForm = $("#sale-form");
 const simForm = $("#sim-form");
+const scenarioDialog = $("#scenario-dialog");
 const itemList = $("#scenario-items");
 const authDialog = $("#auth-dialog");
 const authForm = $("#auth-form");
-const accessDialog = $("#access-dialog");
 const resetPasswordDialog = $("#reset-password-dialog");
 const resetPasswordForm = $("#reset-password-form");
 const field = (form, name) => form.elements.namedItem(name);
@@ -26,6 +27,7 @@ const empty = (message) => `<p class="empty">${esc(message)}</p>`;
 let data = initialState();
 let revision = 0;
 let ready = false;
+let checkingInitialAccess = shared;
 let busy = false;
 let editingSale = null;
 let editingScenario = null;
@@ -169,6 +171,10 @@ function renderAccess() {
   const isAdmin = accessRole === "admin";
   const user = currentSessionUser();
   const isLoggedIn = !!session && !!user;
+  for (const element of document.querySelectorAll("[data-sales-access], [data-member-access]")) {
+    element.hidden = !ready || !session;
+  }
+  $("#pending-section").hidden = !isAdmin || !ready;
 
   const authAction = $("#auth-action");
   const userBadge = $("#user-badge");
@@ -337,8 +343,10 @@ async function refreshConfirmedMembers() {
     } else if (ready) {
       const list = await listMembers();
       if (request !== membersRefresh || !ready) return;
+      const membersChanged = JSON.stringify(list) !== JSON.stringify(currentMembers);
       currentMembers = list;
       publicParticipantCount = list.length;
+      if (activeView === "equipe" && membersChanged) renderMembersList();
     } else {
       const count = await countParticipants();
       if (request !== membersRefresh || ready) return;
@@ -351,6 +359,7 @@ async function refreshConfirmedMembers() {
 }
 
 function disconnect() {
+  if (scenarioDialog.open) scenarioDialog.close();
   accessGeneration += 1;
   stopPendingPolling();
   clearSession();
@@ -359,11 +368,15 @@ function disconnect() {
   revision = 0;
   data = initialState();
   if (saleDialog.open) saleDialog.close();
-  if (accessDialog.open) accessDialog.close();
+  $("#members-list").replaceChildren();
+  $("#access-list").replaceChildren();
+  $("#member-error").hidden = true;
+  $("#access-error").hidden = true;
   fillScenario();
   currentMembers = [];
   render();
   renderAccess();
+  route();
   refreshConfirmedMembers();
 }
 
@@ -390,6 +403,7 @@ async function connect() {
   setState(saved);
   ready = true;
   renderAccess();
+  route();
   render();
   refreshConfirmedMembers();
   notice(wasPending ? "Acesso liberado! Bem-vindo(a) ao painel do mutirão." : "");
@@ -406,7 +420,10 @@ function requireAccess() {
 
 function route() {
   const fragment = location.hash.slice(1);
-  const view = Object.hasOwn(views, fragment) ? fragment : "visao";
+  const privateView = fragment === "vendas" || fragment === "equipe";
+  const blocked = privateView && (!ready || !session);
+  const view = !blocked && Object.hasOwn(views, fragment) ? fragment : "visao";
+  if (blocked && !checkingInitialAccess) history.replaceState(history.state, "", "#visao");
   if (view === activeView) return;
   const changed = activeView !== "";
   activeView = view;
@@ -416,6 +433,10 @@ function route() {
     else link.removeAttribute("aria-current");
   }
   $("#breadcrumb").textContent = views[view];
+  if (view === "equipe") {
+    renderMembersList();
+    if (accessRole === "admin") renderAccessRequests();
+  }
   if (changed) window.scrollTo(0, 0);
 }
 
@@ -566,12 +587,88 @@ function renderScenarios() {
   const today = todayAt();
   const target = getTeamTarget();
   const baselineTarget = target > 0 ? target : COURSE_PLANS[data?.default_plan || DEFAULT_PLAN].price;
-  $("#saved-scenarios").innerHTML = data.scenarios.length ? data.scenarios.map((scenario) => {
+  const gallery = $("#saved-scenarios");
+  gallery.innerHTML = data.scenarios.length ? data.scenarios.map((scenario) => {
     const items = scenarioItems(scenario);
     const { byDeadline, quantity, lateItems } = projectScenario(items, baselineTarget, today);
-    const details = items.map((item) => item.quantity + " × " + item.title).join(" · ");
-    return `<article class="scenario-line"><div><strong>${esc(scenario.title)}</strong><small>${esc(details)}</small><small>${quantity} vendas planejadas${lateItems ? " · Inclui itens após o prazo" : ""}</small></div><div><strong>${money(byDeadline)}</strong><small>Líquido até o prazo</small></div><div class="scenario-actions"><button class="text-link" type="button" data-action="edit-scenario" data-id="${esc(scenario.id)}">Editar</button><button class="text-link danger" type="button" data-action="delete-scenario" data-id="${esc(scenario.id)}">Excluir</button></div></article>`;
-  }).join("") : empty("Nenhum cenário salvo.");
+    const offerRows = items.slice(0, 3).map((item) => `<li><span>${esc(item.title)}</span><strong>${decimal.format(item.quantity)}×</strong></li>`);
+    const moreOffers = items.length - offerRows.length;
+    const id = esc(scenario.id);
+    const title = esc(scenario.title);
+    const plannedSales = quantity === 1 ? "1 venda planejada" : `${decimal.format(quantity)} vendas planejadas`;
+    const lateNote = lateItems === 1 ? "1 oferta após o prazo" : `${lateItems} ofertas após o prazo`;
+
+    return `<article class="card scenario-card">
+      <header class="scenario-card-header">
+        <h3>${title}</h3>
+        <p>${plannedSales}</p>
+      </header>
+      <div class="scenario-card-value">
+        <span>Líquido até o prazo</span>
+        <strong>${money(byDeadline)}</strong>
+      </div>
+      <div class="scenario-card-offers">
+        <ul aria-label="Ofertas do cenário">${offerRows.join("")}</ul>
+        ${moreOffers ? `<p class="scenario-card-more">Mais ${moreOffers} ${moreOffers === 1 ? "oferta" : "ofertas"}</p>` : ""}
+        ${lateItems ? `<p class="scenario-card-warning">${lateNote}</p>` : ""}
+      </div>
+      <footer class="scenario-actions">
+        <button class="button scenario-card-open" type="button" data-action="view-scenario" data-id="${id}" aria-label="Ver detalhes de ${title}">Ver detalhes</button>
+        <button class="text-link" type="button" data-action="edit-scenario" data-id="${id}" aria-label="Editar cenário ${title}">Editar</button>
+        <button class="text-link danger" type="button" data-action="delete-scenario" data-id="${id}" aria-label="Excluir cenário ${title}">Excluir</button>
+      </footer>
+    </article>`;
+  }).join("") : empty("Nenhum cenário salvo. Salve uma combinação no simulador para vê-la aqui.");
+}
+
+function openScenarioDetails(scenario) {
+  const items = scenarioItems(scenario);
+  const target = getTeamTarget();
+  const received = stats(data).received;
+  const remaining = Math.max(0, target - received);
+  const { gross, net, byDeadline, quantity, coverage, lines } = projectScenario(items, remaining);
+  const fields = [
+    ["Meta coletiva", money(target)],
+    ["Participantes confirmados", decimal.format(currentMembers.length)],
+    ["Recebido até o prazo", money(received)],
+    ["Falta para a meta", money(remaining)],
+    ["Faturamento bruto", money(gross)],
+    ["Líquido total", money(net)],
+    ["Vendas planejadas", decimal.format(quantity)],
+    ["Cobertura do saldo", remaining ? decimal.format(coverage) + "%" : "—"],
+    ["Saldo após o cenário", target ? money(Math.max(0, remaining - byDeadline)) : "—"],
+  ];
+  const entry = ([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`;
+  $("#scenario-dialog-title").textContent = scenario.title;
+  $("#scenario-dialog-estimate").textContent = money(byDeadline);
+  $("#scenario-dialog-metrics").innerHTML = fields.map(entry).join("");
+  $("#scenario-dialog-offers").innerHTML = items.map((item, index) => {
+    const line = lines[index];
+    const metrics = [
+      ["Preço unitário", money(item.price)],
+      ["Vendas planejadas", decimal.format(item.quantity)],
+      ["Dias para vender e receber", decimal.format(item.days)],
+      ["Vendas por dia", decimal.format(line.perDay)],
+      ["Custo unitário", money(item.cost)],
+      ["Taxa sobre a venda", decimal.format(item.fee / 100) + "%"],
+      ["Faturamento bruto", money(line.gross)],
+      ["Valor líquido", money(line.net)],
+    ];
+    const offerDetails = [
+      ["Público", item.audience],
+      ["Promessa", item.promise],
+      ["Entrega", item.delivery],
+    ].filter(([, value]) => value?.trim());
+    return `<li class="scenario-detail-offer">
+      <div class="scenario-offer-heading">
+        <div><p>${OFFER_TYPES[item.type]}</p><h4>${esc(item.title)}</h4></div>
+        <span class="pill ${line.within ? "recebido" : "fechado"}">${line.within ? "Dentro do prazo" : "Após o prazo"}</span>
+      </div>
+      <dl class="scenario-detail-metrics">${metrics.map(entry).join("")}</dl>
+      ${offerDetails.length ? `<dl class="scenario-offer-notes">${offerDetails.map(([label, value]) => entry([label, esc(value)])).join("")}</dl>` : ""}
+    </li>`;
+  }).join("");
+  scenarioDialog.showModal();
 }
 
 function setOfferOptions(row, type, title = "") {
@@ -808,29 +905,13 @@ resetPasswordDialog?.addEventListener("close", () => {
   clearRecoveryToken();
 });
 
-function openAccessDialog(tab = "pending") {
-  if (accessRole !== "admin" || !ready) return;
-  accessDialog.showModal();
-  switchAccessTab(tab);
-}
-
-function switchAccessTab(tab) {
-  const isPending = tab === "pending";
-  $("#tab-pending").classList.toggle("active", isPending);
-  $("#tab-pending").setAttribute("aria-selected", String(isPending));
-  $("#tab-members").classList.toggle("active", !isPending);
-  $("#tab-members").setAttribute("aria-selected", String(!isPending));
-  $("#pending-section").hidden = !isPending;
-  $("#members-section").hidden = isPending;
-  if (isPending) renderAccessRequests();
-  else renderMembersList();
-}
-
 async function renderAccessRequests() {
+  const generation = accessGeneration;
   $("#access-error").hidden = true;
   $("#access-list").textContent = "Carregando solicitações…";
   try {
     const requests = await listAccessRequests();
+    if (generation !== accessGeneration) return;
     updatePendingBadge();
     $("#access-list").innerHTML = requests.length ? requests.map(({ user_id, email, requested_at }) => {
       const dateText = requested_at ? new Date(requested_at).toLocaleDateString("pt-BR") : "";
@@ -846,31 +927,31 @@ async function renderAccessRequests() {
       </div>`;
     }).join("") : empty("Nenhuma solicitação pendente.");
   } catch (error) {
+    if (generation !== accessGeneration) return;
     $("#access-list").textContent = "";
     showAccessError(error);
   }
 }
 
-async function renderMembersList() {
-  $("#access-error").hidden = true;
-  $("#members-list").textContent = "Carregando participantes…";
-  try {
-    const members = await listMembers();
-    $("#members-list").innerHTML = members.length ? members.map(({ user_id, email, is_admin }) =>
-      `<div class="access-request">
-        <div>
-          <span>${esc(email)}</span>
-          <small><span class="member-tag ${is_admin ? "admin" : ""}">${is_admin ? "Administrador" : "Participante"}</span></small>
-        </div>
-        <div class="access-actions">
-          ${!is_admin ? `<button class="button small danger outline" type="button" data-action="remove-member" data-id="${esc(user_id)}" aria-label="Remover ${esc(email)}">Remover</button>` : ""}
-        </div>
-      </div>`
-    ).join("") : empty("Nenhum participante cadastrado.");
-  } catch (error) {
-    $("#members-list").textContent = "";
-    showAccessError(error);
-  }
+function renderMembersList() {
+  const isAdmin = accessRole === "admin";
+  $("#members-list").innerHTML = currentMembers.length ? currentMembers.map(({ user_id, email, is_admin, position }) => {
+    const options = Object.entries(memberPositions).map(([value, label]) =>
+      `<option value="${value}"${position === value ? " selected" : ""}>${label}</option>`).join("");
+    return `<div class="access-request team-member-row">
+      <div>
+        <strong>${esc(email)}</strong>
+        <small><span class="member-tag ${is_admin ? "admin" : ""}">${is_admin ? "Administrador" : "Participante"}</span></small>
+      </div>
+      ${isAdmin ? `<form class="team-position-form" data-member-position="${esc(user_id)}">
+        <label>Cargo <select name="position" aria-label="Cargo de ${esc(email)}">
+          <option value="">Sem cargo</option>${options}
+        </select></label>
+        <button class="button small" type="submit">Salvar cargo</button>
+      </form>` : `<span>${memberPositions[position] || "Sem cargo"}</span>`}
+      ${isAdmin && !is_admin ? `<button class="button small danger outline" type="button" data-action="remove-member" data-id="${esc(user_id)}" aria-label="Remover ${esc(email)}">Remover</button>` : ""}
+    </div>`;
+  }).join("") : empty("Nenhum participante cadastrado.");
 }
 
 function showAccessError(error) {
@@ -879,10 +960,39 @@ function showAccessError(error) {
   message.hidden = false;
 }
 
-$("#tab-pending").addEventListener("click", () => switchAccessTab("pending"));
-$("#tab-members").addEventListener("click", () => switchAccessTab("members"));
-$("#manage-access").addEventListener("click", () => openAccessDialog("pending"));
-$("#admin-action")?.addEventListener("click", () => openAccessDialog("pending"));
+$("#members-list").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.target;
+  if (!ready || accessRole !== "admin" || !form.dataset.memberPosition) return;
+  const button = event.submitter;
+  if (button.disabled) return;
+  const generation = accessGeneration;
+  const id = form.dataset.memberPosition;
+  const select = field(form, "position");
+  const position = select.value || null;
+  const message = $("#member-error");
+  button.disabled = true;
+  select.disabled = true;
+  message.hidden = true;
+  try {
+    await setMemberPosition(id, position);
+    if (generation !== accessGeneration) return;
+    const member = currentMembers.find((item) => item.user_id === id);
+    if (member) member.position = position;
+    button.textContent = "Cargo salvo";
+  } catch (error) {
+    if (generation !== accessGeneration) return;
+    message.textContent = error.message;
+    message.hidden = false;
+  } finally {
+    select.disabled = false;
+    button.disabled = false;
+  }
+});
+$("#members-list").addEventListener("change", (event) => {
+  const form = event.target.closest("[data-member-position]");
+  if (form) $('button[type="submit"]', form).textContent = "Salvar cargo";
+});
 
 $("#auth-action").addEventListener("click", () => {
   if (busy) return;
@@ -940,10 +1050,12 @@ document.addEventListener("click", async (event) => {
     button.disabled = true;
     try {
       await removeMember(id);
-      await Promise.all([renderMembersList(), refreshConfirmedMembers()]);
+      await refreshConfirmedMembers();
     } catch (error) {
       button.disabled = false;
-      showAccessError(error);
+      const message = $("#member-error");
+      message.textContent = error.message;
+      message.hidden = false;
     }
     return;
   }
@@ -968,6 +1080,11 @@ document.addEventListener("click", async (event) => {
     return renderCatalog();
   }
   if (action === "use-product") return addOffer(catalogOffers.infoproduto[Number(index)], true);
+  if (action === "view-scenario") {
+    const scenario = data.scenarios.find((item) => item.id === id);
+    if (scenario) openScenarioDetails(scenario);
+    return;
+  }
   if (action === "reset-sim" || action === "edit-scenario") {
     if (busy) return;
     if (scenarioDirty && !window.confirm("Descartar as alterações do cenário atual?")) return;
@@ -1126,5 +1243,8 @@ async function initializeSharedAccess() {
     if (globalThis.__isRecovering) return;
     disconnect();
     notice(error.message, true);
+  } finally {
+    checkingInitialAccess = false;
+    route();
   }
 }

@@ -15,7 +15,8 @@
     </a>
     <nav aria-label="Seções do painel">
       <a href="#visao"><i class="icon grid-icon" aria-hidden="true"></i> Visão geral</a>
-      <a href="#equipe"><i class="icon people-icon" aria-hidden="true"></i> Vendas</a>
+      <a href="#vendas" data-sales-access hidden><i class="icon people-icon" aria-hidden="true"></i> Vendas</a>
+      <a href="#equipe" data-member-access hidden><i class="icon people-icon" aria-hidden="true"></i> Equipe</a>
       <a href="#servicos"><i class="icon catalog-icon" aria-hidden="true"></i> Catálogo</a>
       <a href="#simulador"><i class="icon sim-icon" aria-hidden="true"></i> Simulador</a>
     </nav>
@@ -26,7 +27,7 @@
     <header class="masthead">
       <span id="breadcrumb">Visão geral</span>
       <div class="top-actions">
-        <button class="button" type="button" id="admin-action" hidden><i class="icon people-icon" aria-hidden="true"></i> Equipe <span class="badge" id="header-pending-badge" hidden>0</span></button>
+        <a class="button" href="#equipe" id="admin-action" hidden><i class="icon people-icon" aria-hidden="true"></i> Equipe <span class="badge" id="header-pending-badge" hidden>0</span></a>
         <div class="user-badge" id="user-badge" hidden>
           <span class="user-avatar" id="user-avatar" aria-hidden="true">U</span>
           <div class="user-info">
@@ -37,7 +38,7 @@
         </div>
         <button class="button" type="button" id="auth-action" hidden>Entrar</button>
         <span class="date-chip"><i class="calendar-icon icon" aria-hidden="true"></i> Até 30 nov. 2026</span>
-        <button class="button primary" type="button" data-action="new-sale"><span aria-hidden="true">＋</span> Registrar venda</button>
+        <button class="button primary" type="button" data-action="new-sale" data-sales-access hidden><span aria-hidden="true">＋</span> Registrar venda</button>
       </div>
     </header>
     <main id="main">
@@ -82,23 +83,23 @@
                 <p>Participantes confirmados no mutirão.</p>
               </div>
               <div class="card-header-actions">
-                <button class="text-link" type="button" id="manage-access" hidden>Solicitações <span class="badge" id="overview-pending-badge" hidden>0</span></button>
+                <a class="text-link" href="#equipe" id="manage-access" hidden>Solicitações <span class="badge" id="overview-pending-badge" hidden>0</span></a>
               </div>
             </div>
             <p class="team-count"><strong id="participant-count">0</strong> <span id="participant-label">participantes confirmados</span></p>
             <div id="confirmed-members-list" class="confirmed-members-list" aria-live="polite"></div>
           </section>
           <section class="card overview-card">
-            <div class="section-header"><div><h2>Vendas recentes</h2><p>Propostas, contratos e recebimentos.</p></div><button class="text-link" data-action="new-sale" type="button">Adicionar <span aria-hidden="true">＋</span></button></div>
+            <div class="section-header"><div><h2>Vendas recentes</h2><p>Propostas, contratos e recebimentos.</p></div><button class="text-link" data-action="new-sale" type="button" data-sales-access hidden>Adicionar <span aria-hidden="true">＋</span></button></div>
             <div id="recent-sales"></div>
           </section>
         </div>
       </section>
 
-      <section id="equipe" class="view" aria-labelledby="team-heading" hidden>
-        <div class="view-heading"><div><h1 id="team-heading">Vendas do mutirão</h1><p>Acompanhe as propostas e os pagamentos do caixa coletivo.</p></div></div>
+      <section id="vendas" class="view" aria-labelledby="sales-heading" hidden>
+        <div class="view-heading"><div><h1 id="sales-heading">Vendas do mutirão</h1><p>Acompanhe as propostas e os pagamentos do caixa coletivo.</p></div></div>
         <section class="card roomy">
-          <div class="section-header"><div><h2>Registro de vendas</h2><p>Use o valor líquido que entra no caixa do mutirão.</p></div><button class="button primary" type="button" data-action="new-sale">＋ Registrar venda</button></div>
+          <div class="section-header"><div><h2>Registro de vendas</h2><p>Use o valor líquido que entra no caixa do mutirão.</p></div><button class="button primary" type="button" data-action="new-sale" data-sales-access hidden>＋ Registrar venda</button></div>
           <div class="filters"><label>Status <select id="status-filter"><option value="">Todos</option><option value="proposta">Proposta</option><option value="fechado">Fechado</option><option value="recebido">Recebido</option></select></label></div>
           <p id="late-note" class="inline-note" hidden></p><div id="sales-list"></div>
         </section>
@@ -112,6 +113,20 @@
         </div>
         <div class="filters catalog-filters"><label>Buscar <input id="catalog-search" type="search" placeholder="Ex.: Reels ou estratégia"></label><label id="catalog-category">Categoria <select id="category-filter"><option value="">Todas</option></select></label></div>
         <div id="catalog-list" class="catalog-list"></div>
+      </section>
+
+      <section id="equipe" class="view" aria-labelledby="team-heading" hidden>
+        <div class="view-heading"><div><h1 id="team-heading">Equipe do mutirão</h1><p>Veja quem participa e qual é a função de cada pessoa.</p></div></div>
+        <section class="roomy card" aria-labelledby="team-members-heading">
+          <div class="section-header"><h2 id="team-members-heading">Participantes aprovados</h2></div>
+          <div id="members-list"></div>
+          <p id="member-error" class="form-error auth-field" role="alert" hidden></p>
+        </section>
+        <section class="roomy card ledger" id="pending-section" aria-labelledby="pending-heading" hidden>
+          <div class="section-header"><h2 id="pending-heading">Solicitações de acesso <span class="badge" id="tab-pending-badge" hidden>0</span></h2></div>
+          <div id="access-list" aria-live="polite"></div>
+          <p id="access-error" class="form-error auth-field" role="alert" hidden></p>
+        </section>
       </section>
 
       <section id="simulador" class="view" aria-labelledby="sim-heading" hidden>
@@ -137,7 +152,12 @@
             <p class="projection-note" id="projection-note" aria-live="polite"></p>
           </section>
         </div>
-        <section class="roomy card ledger"><div class="section-header"><div><h2>Cenários salvos</h2><p>Compare as possibilidades com a meta do mutirão.</p></div></div><div id="saved-scenarios"></div></section>
+        <section class="scenario-gallery" aria-labelledby="saved-scenarios-heading">
+          <div class="section-header">
+            <div><h2 id="saved-scenarios-heading">Cenários salvos</h2><p>Compare as ofertas e o valor previsto até o prazo.</p></div>
+          </div>
+          <div id="saved-scenarios" class="scenario-gallery-grid"></div>
+        </section>
       </section>
     </main>
   </div>
@@ -197,26 +217,19 @@
     </form>
   </dialog>
 
-  <dialog id="access-dialog" aria-labelledby="access-heading">
+  <dialog id="scenario-dialog" aria-labelledby="scenario-dialog-title">
     <div class="dialog-form">
       <div class="section-header">
-        <div>
-          <h2 id="access-heading">Gerenciar equipe</h2>
-          <p>Aprove solicitações ou gerencie os participantes do mutirão.</p>
-        </div>
-        <button class="icon-button" type="button" data-close="access-dialog" aria-label="Fechar">×</button>
+        <h2 id="scenario-dialog-title"></h2>
+        <button class="icon-button" type="button" data-close="scenario-dialog" aria-label="Fechar detalhes do cenário" autofocus>×</button>
       </div>
-      <div class="access-tabs" role="tablist">
-        <button class="button small active" type="button" id="tab-pending" role="tab" aria-selected="true">Solicitações <span class="badge" id="tab-pending-badge" hidden>0</span></button>
-        <button class="button small" type="button" id="tab-members" role="tab" aria-selected="false">Participantes aprovados</button>
+      <div class="scenario-card-value">
+        <span>Líquido projetado até 30 de novembro</span>
+        <strong id="scenario-dialog-estimate"></strong>
       </div>
-      <div id="pending-section" class="access-section">
-        <div id="access-list" aria-live="polite"></div>
-      </div>
-      <div id="members-section" class="access-section" hidden>
-        <div id="members-list" aria-live="polite"></div>
-      </div>
-      <p id="access-error" class="form-error auth-field" role="alert" hidden></p>
+      <dl class="scenario-detail-metrics" id="scenario-dialog-metrics"></dl>
+      <h3 class="scenario-offers-title">Ofertas do cenário</h3>
+      <ul class="scenario-detail-offers" id="scenario-dialog-offers"></ul>
     </div>
   </dialog>
 
