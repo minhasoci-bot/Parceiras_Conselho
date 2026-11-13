@@ -445,6 +445,7 @@ function route(fromHashChange = false) {
 let shownScenario = null;
 let scenarioEnteredInApp = false;
 let scenarioRequest = 0;
+let scenarioPointerStartedOutside = false;
 
 async function syncScenarioRoute(id, fromHashChange) {
   if (fromHashChange || !id) scenarioEnteredInApp = !!id;
@@ -471,7 +472,22 @@ function scenarioNotFound() {
   notice("Não encontramos esse cenário. Ele pode ter sido excluído ou o link está incompleto.", true);
 }
 
+function isScenarioBackdrop(event) {
+  if (event.target !== scenarioDialog) return false;
+  const { top, right, bottom, left } = scenarioDialog.getBoundingClientRect();
+  return event.clientX < left || event.clientX >= right || event.clientY < top || event.clientY >= bottom;
+}
+
+scenarioDialog.addEventListener("pointerdown", (event) => {
+  scenarioPointerStartedOutside = isScenarioBackdrop(event);
+});
+scenarioDialog.addEventListener("click", (event) => {
+  const clickedBackdrop = scenarioPointerStartedOutside && isScenarioBackdrop(event);
+  scenarioPointerStartedOutside = false;
+  if (clickedBackdrop) scenarioDialog.close();
+});
 scenarioDialog.addEventListener("close", () => {
+  scenarioPointerStartedOutside = false;
   shownScenario = null;
   if (!routedScenarioId()) return;
   // Volta para onde a pessoa estava; quem chegou pelo link fica no simulador.

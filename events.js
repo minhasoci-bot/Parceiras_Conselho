@@ -3,7 +3,7 @@
   const channels = { grupos: "WhatsApp · grupos", privado: "WhatsApp · privado", instagram: "Instagram · privado", email: "E-mail", outro: "Outro" };
   const eventStates = { planejado: "Planejado", em_andamento: "Em andamento", concluido: "Concluído", arquivado: "Arquivado" };
   const progress = { pendente: "Pendente", andamento: "Em andamento", feito: "Concluído" };
-  const messageStates = { rascunho: "Rascunho", revisao: "Em revisão", agendado: "Agendado", enviado: "Enviado", cancelado: "Cancelado" };
+  const messageStates = { rascunho: "Rascunho", revisao: "Em revisão", pronto: "Pronto para enviar", agendado: "Agendado", enviado: "Enviado", cancelado: "Cancelado" };
   const linkStates = { pendente: "Pendente", pronto: "Validado" };
   const teams = { estrategia: "Estratégia", comercial: "Comercial", design: "Design", copy: "Copy", video: "Vídeo", dev: "Dev" };
   const panel = {
@@ -24,6 +24,7 @@
   ];
   const dialog = $("#event-dialog");
   const form = $("#event-form");
+  const closeEditor = $("[data-close='event-dialog']", dialog);
   const gallery = $("#event-gallery");
   const galleryHeading = $("#event-gallery-heading");
   const galleryGrid = $("#event-gallery-grid");
@@ -57,7 +58,11 @@
   const select = (name, label, values) => `<label>${label}<select name="${name}">${options(values)}</select></label>`;
   const pair = (...fields) => `<div class="event-field-pair">${fields.join("")}</div>`;
   const setFeedback = (text) => { feedback.textContent = text; feedback.hidden = !text; };
-  const replaceEvent = (saved) => { events = [saved, ...events.filter((event) => event.id !== saved.id)]; };
+  const replaceEvent = (saved) => {
+    const index = events.findIndex(({ id }) => id === saved.id);
+    if (index === -1) events.unshift(saved);
+    else events[index] = saved;
+  };
   const stateName = (states, key) => Object.hasOwn(states, key) ? states[key] : "";
   const safeUrl = (value) => {
     try {
@@ -71,31 +76,114 @@
     return member?.email || item.ownerLabel || "";
   };
 
-  function templatePlan() {
+  function templatePlan(eventDate) {
     const item = (kind, title, phase, fields = {}) => ({
       id: makeId(), kind, title, phase, status: Object.keys(panel[kind].states)[0], ...fields,
     });
-    return { brief: {}, items: [
-      item("task", "Definir objetivo, narrativa e oferta", "captura", { team: "estrategia" }),
-      item("task", "Criar identidade visual e peças", "captura", { team: "design" }),
-      item("task", "Revisar e aprovar mensagens", "aquecimento", { team: "copy" }),
-      item("task", "Testar transmissão e materiais de apoio", "evento", { team: "video" }),
-      item("task", "Organizar atendimento e follow-up", "pos", { team: "comercial" }),
-      item("message", "Convite inicial", "captura", { channel: "grupos" }),
-      item("message", "Reativar contatos", "captura", { channel: "privado" }),
-      item("message", "Lembrete do evento", "aquecimento", { channel: "grupos" }),
-      item("message", "Abertura das vendas", "vendas", { channel: "grupos" }),
-      item("agenda", "Abertura", "evento", { order: 1, duration: 10 }),
-      item("agenda", "Bloco principal", "evento", { order: 2, duration: 25 }),
-      item("agenda", "Demonstração ou prática", "evento", { order: 3, duration: 25 }),
-      item("agenda", "Oferta e encerramento", "evento", { order: 4, duration: 10 }),
-      item("link", "Página de captura", "captura"),
-      item("link", "Página de obrigado", "captura"),
-      item("link", "Grupo do evento", "aquecimento"),
-      item("link", "Pesquisa", "aquecimento"),
-      item("link", "Transmissão", "evento"),
-      item("link", "Checkout", "vendas"),
-    ] };
+    const eventDay = isDate(eventDate) ? Date.parse(eventDate) : NaN;
+    const dateAt = (offset) => {
+      if (!Number.isFinite(eventDay)) return "";
+      const date = new Date(eventDay + offset * DAY).toISOString().split("T")[0];
+      return isDate(date) ? date : "";
+    };
+    const tasks = [
+      ["Definir objetivo, metas, narrativa e oferta", "captura", "estrategia", -12],
+      ["Criar identidade visual, peças e materiais", "captura", "design", -11],
+      ["Publicar páginas de captura e obrigado", "captura", "dev", -10],
+      ["Preparar grupos, segmentação e pesquisa", "captura", "comercial", -10],
+      ["Revisar e aprovar copies de grupos e privado", "captura", "copy", -10],
+      ["Conferir inscrições e respostas da pesquisa", "aquecimento", "estrategia", -2],
+      ["Ensaiar o roteiro e testar transmissão, áudio e gravação", "evento", "video", -1],
+      ["Testar página de vendas, checkouts e opções de pagamento", "vendas", "dev", -1],
+      ["Acompanhar chat, presença e dúvidas ao vivo", "evento", "comercial", 0],
+      ["Publicar replay e enviar devolutiva", "pos", "video", 1],
+      ["Fazer follow-up e recuperar pagamentos pendentes", "vendas", "comercial", 1],
+      ["Consolidar resultados e aprendizados", "pos", "estrategia", 12],
+    ].map(([title, phase, team, offset]) => item("task", title, phase, { team, date: dateAt(offset) }));
+
+    const groupMessages = [
+      ["Convite inicial", "captura", -9, "18:00", "Oi! No dia [data], vou mostrar como [benefício]. Garanta sua vaga em [link da inscrição]."],
+      ["Para quem é o evento", "captura", -8, "12:00", "Se você quer [objetivo] e trava em [dificuldade], este encontro foi feito para você. Inscreva-se em [link]."],
+      ["Antes e depois", "captura", -7, "12:00", "O que muda quando você [ação]? Vou comparar os dois caminhos com um exemplo ao vivo. Inscreva-se em [link]."],
+      ["Dúvida frequente", "captura", -6, "12:00", "Muita gente me pergunta [dúvida]. No encontro, vou mostrar como resolver isso. Reserve sua vaga em [link]."],
+      ["Bastidores dos materiais", "captura", -5, "12:00", "Olha o que estou preparando para o encontro: [material]. Você vai usá-lo para [ação]. Inscreva-se em [link]."],
+      ["O que vamos aprender", "captura", -3, "12:00", "Vamos passar por [tema 1], [tema 2] e [tema 3]. Venha com uma dúvida para aplicar no seu caso. Inscrições em [link]."],
+      ["Prévia de um exemplo", "captura", -2, "12:00", "Já reparou em [exemplo]? Vou abrir o passo a passo ao vivo. Participe em [link da inscrição]."],
+      ["Amanhã é o evento", "captura", -1, "12:00", "Amanhã, às [hora], começa [evento]. Se ainda precisa se inscrever, use [link]."],
+      ["Inscrições no dia do evento", "captura", 0, "12:00", "É hoje! [Evento] começa às [hora]. Sua inscrição é feita em [link]."],
+      ["Última chamada para inscrições", "captura", 0, "18:00", "Começamos às [hora]. Se ainda quiser participar, faça sua inscrição em [link]."],
+      ["Boas-vindas ao grupo do evento", "aquecimento", -3, "12:00", "Bem-vinda ao grupo de [evento]! Salve [data e hora] e conte pra gente qual é sua maior dúvida sobre [tema]."],
+      ["Faltam dois dias", "aquecimento", -2, "12:00", "Faltam dois dias para [evento]. Conte como podemos ajudar respondendo à pesquisa em [link]."],
+      ["Lembrete da véspera", "aquecimento", -1, "12:00", "Nosso encontro é amanhã às [hora]. Deixe o link [transmissão] salvo para entrar na hora."],
+      ["Áudio de boas-vindas", "evento", 0, "12:00", "Grave um áudio curto com a promessa do encontro, o horário e o que levar. Envie [link da transmissão] na mesma mensagem."],
+      ["Faltam algumas horas", "evento", 0, "16:00", "Nos vemos em algumas horas. Separe [material] para acompanhar a prática e entre por [link]."],
+      ["Bastidores e aviso de 30 minutos", "evento", 0, "19:30", "Mostre em um vídeo curto o que já está pronto. Inclua a chamada: começamos em 30 minutos. Entre em [link]."],
+      ["Sala aberta", "evento", 0, "19:55", "A sala está aberta. Entre em [link] e diga no chat de onde você está acompanhando."],
+      ["Transmissão ao vivo", "evento", 0, "20:05", "Já estamos ao vivo! Entre em [link] para acompanhar [tópico em andamento]."],
+      ["Convite para entrar durante a live", "evento", 0, "20:20", "Ainda dá tempo de ver [bloco]. Já estamos mostrando [exemplo]. Entre em [link]."],
+      ["Oferta e abertura das vendas", "vendas", 0, "21:00", "As inscrições para [oferta] abriram. Você recebe [entregáveis]. Confira o valor e as condições em [link]."],
+      ["Bônus e garantia", "vendas", 0, "22:30", "Para quem entrar até [prazo], [bônus aprovado]. As condições de garantia estão em [link]."],
+      ["Enquete sobre matrícula", "vendas", 1, "12:00", "Você conseguiu concluir a matrícula? Responda: já concluí, tenho dúvidas ou preciso de ajuda com o pagamento."],
+      ["Opções de pagamento", "vendas", 1, "15:00", "Se você precisa de outra forma de pagamento, confira as opções em [link] ou fale com [contato]."],
+      ["Replay e próximo passo", "pos", 1, "18:00", "O replay está em [link] até [prazo]. Para colocar em prática com [oferta], veja [página de vendas]."],
+      ["Dúvidas antes do encerramento", "vendas", 2, "12:00", "As inscrições ficam abertas até [data e hora]. Qual dúvida você quer esclarecer antes de decidir?"],
+      ["Lembrete de condição de pagamento", "vendas", 4, "12:00", "A condição [condição aprovada] vai até [prazo]. Se precisar de suporte para concluir, chame [contato]."],
+      ["Últimas horas para entrar", "vendas", 4, "18:00", "As inscrições encerram às [hora]. Se já decidiu participar, finalize em [link]."],
+    ];
+    const privateMessages = [
+      ["Reativar contato", "captura", -7, "", "Oi, [nome]. Lembrei de você porque vamos falar de [tema]. Quer que eu te mande o link do encontro?"],
+      ["Apresentar entregáveis", "captura", -3, "", "Oi, [nome]. No encontro você vai sair com [material] para [ação]. Ainda faz sentido para você?"],
+      ["Última chamada no privado", "captura", 0, "", "Oi, [nome]. Passando porque o encontro é hoje às [hora]. Se quiser participar, aqui está [link]."],
+      ["Abertura e condições de pagamento", "vendas", 0, "22:00", "Oi, [nome]. As inscrições para [oferta] abriram. Quer ajuda para entender as condições de pagamento?"],
+      ["Enviar replay", "pos", 1, "15:00", "Oi, [nome]. Aqui está o replay [link]. No trecho [minutagem] falamos sobre [dúvida da pessoa]."],
+      ["Ajudar com pagamento pendente", "vendas", 4, "12:00", "Oi, [nome]. Você conseguiu concluir a inscrição? Posso te ajudar com [etapa pendente]."],
+      ["Último contato sobre a turma", "pos", 11, "12:00", "Oi, [nome]. Estou fechando o acompanhamento desta turma. Você quer que eu te avise sobre uma próxima edição?"],
+    ];
+    const messagesFor = (entries, channel, prefix) => entries.map(([title, phase, offset, time, notes], index) =>
+      item("message", title, phase, {
+        channel, date: dateAt(offset), time, notes,
+        code: prefix + "-" + String(index + 1).padStart(2, "0"),
+      }));
+
+    const agenda = [
+      ["Abertura e boas-vindas", 5, "Apresente a equipe, confirme a duração e oriente o uso do chat."],
+      ["Contexto e promessa do encontro", 5, "Mostre o problema que será resolvido e o que o público vai conseguir fazer."],
+      ["Conteúdo principal", 20, "Apresente o passo a passo e conecte os pontos com exemplos do público."],
+      ["Demonstração ou prática", 15, "Mostre uma aplicação e reserve tempo para o público testar."],
+      ["Apresentação da oferta", 10, "Explique entregáveis, investimento, bônus, garantia e prazo."],
+      ["Perguntas e respostas", 10, "Responda às dúvidas da transmissão e repita o próximo passo."],
+      ["Encerramento e próximos passos", 5, "Informe como acessar o replay ou a oferta e onde pedir suporte."],
+    ].map(([title, duration, notes], index) => item("agenda", title, "evento", { order: index + 1, duration, notes }));
+
+    const links = [
+      ["Página de captura", "captura", "Valide inscrição, integração e redirecionamento no celular."],
+      ["Página de obrigado", "captura", "Confirme a inscrição e mostre como entrar no grupo."],
+      ["Grupo do evento no WhatsApp", "aquecimento", "Confira o convite, a descrição e as permissões do grupo."],
+      ["Pesquisa com inscritos", "aquecimento", "Teste o formulário e a gravação das respostas."],
+      ["WhatsApp comercial", "aquecimento", "Teste o contato e a mensagem inicial de atendimento."],
+      ["Transmissão", "evento", "Confira o acesso de participantes e os recursos do anfitrião."],
+      ["Página de vendas", "vendas", "Revise preço, prazos, bônus, garantia e botões de compra."],
+      ["Checkout à vista", "vendas", "Confira produto, valor e meios de pagamento."],
+      ["Boleto de entrada", "vendas", "Preencha se houver essa modalidade na oferta."],
+      ["Boleto do saldo", "vendas", "Confira valor restante e condições de vencimento."],
+      ["Checkout de upgrade de 6 meses", "vendas", "Preencha se a oferta incluir essa opção."],
+      ["Checkout de upgrade de 1 ano", "vendas", "Preencha se a oferta incluir essa opção."],
+      ["Replay", "pos", "Teste o acesso e confirme a data de retirada."],
+    ].map(([title, phase, notes]) => item("link", title, phase, { notes }));
+
+    return {
+      brief: {
+        logistics: "Formato: [online, presencial ou híbrido]. Horário e fuso: [a definir]. Local ou plataforma: [a definir].",
+        goal: "Objetivo do encontro: [resultado esperado]. Metas: [inscrições], [presença], [conversão] e [receita].",
+        audience: "Público prioritário: [perfil e problema]. Lista VIP: [critérios e canal]. Contatos antigos: [segmentos para reativação].",
+        narrative: "Problema: [dor do público]. Promessa: [transformação]. Provas e exemplos: [materiais aprovados].",
+        offer: "Oferta: [nome e entregáveis]. Investimento: [valor e condições]. Bônus: [itens e validade]. Garantia: [regras aprovadas].",
+        identity: "Identidade visual: [referências]. Materiais: [páginas, peças de divulgação, slides e vídeos].",
+        followup: "Inscrições até [data e hora]. Replay até [data]. Atendimento em [canal]. Follow-up para [segmentos e prazos].",
+      },
+      items: [...tasks, ...messagesFor(groupMessages, "grupos", "GRUPO"),
+        ...messagesFor(privateMessages, "privado", "PRIVADO"), ...agenda, ...links],
+    };
   }
 
   function renderGallery() {
@@ -105,20 +193,28 @@
       const { done, total } = taskProgress(event);
       const percentage = total ? Math.round(100 * done / total) : 0;
       const status = stateName(eventStates, event.status);
-      return `<button type="button" class="event-card" data-event-open="${esc(event.id)}">
+      const id = esc(event.id);
+      return `<article class="event-card">
+        <button type="button" class="event-card-body" data-event-open="${id}">
         <span class="event-card-meta"><span class="pill" data-status="${status ? esc(event.status) : ""}">${esc(status)}</span><span>${formatDate(event.event_date) || "Data a definir"}</span></span>
         <strong class="event-card-title">${esc(event.title)}</strong>
         <span class="event-card-progress">${total ? `${done} de ${total} ${total === 1 ? "tarefa concluída" : "tarefas concluídas"}` : "Sem tarefas"}
           <span class="event-card-track" aria-hidden="true"><span style="width:${percentage}%"></span></span>
         </span>
         <span class="event-card-link">Abrir planejamento <span aria-hidden="true">→</span></span>
-      </button>`;
+        </button>
+        <div class="event-card-actions" role="group" aria-label="Ações para ${esc(event.title)}">
+          <button type="button" class="button small" data-event-manage="rename" data-id="${id}">Renomear</button>
+          <button type="button" class="button small" data-event-manage="duplicate" data-id="${id}">Duplicar</button>
+          <button type="button" class="button small danger" data-event-manage="delete" data-id="${id}">Apagar</button>
+        </div>
+      </article>`;
     }).join("");
     if (focusedId) focusEventCard(focusedId);
   }
 
   function focusEventCard(id) {
-    const card = Array.from(galleryGrid.children).find((button) => button.dataset.eventOpen === id);
+    const card = Array.from(galleryGrid.querySelectorAll("[data-event-open]")).find((button) => button.dataset.eventOpen === id);
     (card || galleryHeading).focus();
   }
 
@@ -223,8 +319,9 @@
         formatDate(item.date), item.time, item.duration ? item.duration + " min" : "", eligibleOwner(item), item.code].filter(Boolean);
       const link = safeUrl(item.url);
       const notes = item.notes || "";
-      const stateClass = ["feito", "enviado", "pronto"].includes(item.status) ? " recebido"
-        : ["andamento", "revisao", "agendado"].includes(item.status) ? " fechado" : "";
+      const completed = item.status === "feito" || item.status === "enviado" || (section === "link" && item.status === "pronto");
+      const stateClass = completed ? " recebido"
+        : ["andamento", "revisao", "agendado", "pronto"].includes(item.status) ? " fechado" : "";
       return `<li class="event-list-item">
         ${section === "agenda" ? `<span class="event-agenda-order">${esc(item.order || "—")}</span>` : ""}
         <div class="event-list-copy">
@@ -240,18 +337,28 @@
 
   function edit(kind, item) {
     if (!allowed() || saving) return;
-    const event = active();
+    const managing = ["rename", "duplicate", "delete"].includes(kind);
+    const event = managing ? item : active();
     if (kind !== "new" && !event) return;
-    editor = { kind, event, item };
+    editor = { kind, event, item: managing ? null : item };
     const fields = $("#event-form-fields");
     const names = { task: "tarefa", message: "mensagem", agenda: "bloco", link: "link" };
     const status = (states) => select("status", "Status", states);
-    if (kind === "new" || kind === "brief") {
+    if (managing) {
+      const titles = { rename: "Renomear evento", duplicate: "Duplicar evento", delete: "Apagar evento" };
+      $("#event-dialog-heading").textContent = titles[kind];
+      fields.innerHTML = kind === "delete"
+        ? `<p>Apagar <strong>${esc(event.title)}</strong> e todo o seu planejamento? Essa ação é definitiva.</p>`
+        : input("title", "Nome do evento", "text", "required maxlength=120");
+      if (kind === "rename") field(form, "title").value = event.title;
+      if (kind === "duplicate") field(form, "title").value = event.title.slice(0, 112).trimEnd() + " (cópia)";
+    } else if (kind === "new" || kind === "brief") {
       $("#event-dialog-heading").textContent = kind === "new" ? "Novo evento" : "Editar planejamento";
       fields.innerHTML = input("title", "Nome do evento", "text", "required maxlength=120")
         + pair(input("event_date", "Data do evento", "date"), status(eventStates))
         + (kind === "new"
           ? select("template", "Começar com", { launch: "Modelo de lançamento", blank: "Evento em branco" })
+            + '<p class="event-template-hint">No modelo de lançamento, a data informada ao criar o evento preenche as datas sugeridas de tarefas e mensagens.</p>'
           : briefFields.map(([key, label]) => area(key, label)).join(""));
     } else {
       $("#event-dialog-heading").textContent = (item ? "Editar " : "Adicionar ") + names[kind];
@@ -281,10 +388,14 @@
       field(form, "phase").value = "evento";
       field(form, "order").value = Math.max(0, ...itemsFor(event, "agenda").map((row) => Number(row.order) || 0)) + 1;
     }
-    $("#event-remove-item").hidden = !item;
+    $("#event-remove-item").hidden = !editor.item;
+    const saveButton = $("#event-save");
+    saveButton.textContent = { rename: "Renomear", duplicate: "Duplicar", delete: "Apagar evento" }[kind] || "Salvar";
+    saveButton.classList.toggle("danger", kind === "delete");
+    saveButton.classList.toggle("primary", kind !== "delete");
     formError(form, "");
     dialog.showModal();
-    field(form, "title").focus();
+    (field(form, "title") || closeEditor).focus();
   }
 
   function getEdits() {
@@ -295,6 +406,7 @@
 
   async function saveEvent(payload, event) {
     if (saving || !allowed()) return;
+    const { kind } = editor;
     const generation = accessGeneration;
     const saveButton = $("#event-save");
     const deleteButton = $("#event-remove-item");
@@ -305,25 +417,32 @@
     $("#event-reload").disabled = true;
     saveButton.disabled = true;
     deleteButton.disabled = true;
+    closeEditor.disabled = true;
     formError(form, "");
+    const deleting = kind === "delete";
     try {
       const response = await supabaseRequest(event
-        ? eventRoute + "?id=eq." + event.id + "&revision=eq." + event.revision
+        ? eventRoute + "?id=eq." + event.id + "&revision=eq." + event.revision + (deleting ? "&select=id" : "")
         : eventRoute, {
-        method: event ? "PATCH" : "POST",
+        method: deleting ? "DELETE" : event ? "PATCH" : "POST",
         token: await accessToken(),
         representation: true,
-        body: event ? { ...payload, revision: event.revision + 1 } : payload,
+        body: deleting ? undefined : event ? { ...payload, revision: event.revision + 1 } : payload,
       });
       if (generation !== accessGeneration || !allowed()) return;
       if (!response?.length) throw new Error("O evento foi atualizado em outra sessão. Copie alterações ainda não salvas, feche esta janela e clique em Atualizar.");
-      replaceEvent(response[0]);
+      if (deleting) events = events.filter(({ id }) => id !== event.id);
+      else replaceEvent(response[0]);
       renderGallery();
       dialog.close();
-      if (event) renderEvent();
-      else openEvent(response[0].id);
+      if (kind === "new") openEvent(response[0].id);
+      else {
+        renderEvent();
+        if (kind === "rename" || kind === "duplicate" || deleting) focusEventCard(response[0].id);
+      }
       setFeedback("");
-      notice(event ? "Evento atualizado." : "Evento criado.");
+      const messages = { new: "Evento criado.", rename: "Evento renomeado.", duplicate: "Evento duplicado.", delete: "Evento apagado." };
+      notice(messages[kind] || "Evento atualizado.");
     } catch (error) {
       if (generation !== accessGeneration) return;
       if (error.status === 401) disconnect();
@@ -332,6 +451,7 @@
       saving = false;
       saveButton.disabled = false;
       deleteButton.disabled = false;
+      closeEditor.disabled = false;
       $("#event-reload").disabled = false;
     }
   }
@@ -341,10 +461,22 @@
     if (!editor || saving || !allowed()) return;
     try {
       const { kind, event: current, item } = editor;
+      if (kind === "delete") {
+        saveEvent(undefined, current);
+        return;
+      }
       const values = getEdits();
+      if (kind === "rename") {
+        saveEvent({ title: values.title }, current);
+        return;
+      }
+      if (kind === "duplicate") {
+        saveEvent({ title: values.title, event_date: current.event_date, status: current.status, plan: current.plan }, null);
+        return;
+      }
       if (kind === "new" || kind === "brief") {
         const plan = kind === "new"
-          ? (values.template === "launch" ? templatePlan() : { brief: {}, items: [] })
+          ? (values.template === "launch" ? templatePlan(values.event_date) : { brief: {}, items: [] })
           : { ...current.plan, brief: Object.fromEntries(briefFields.map(([key]) => [key, values[key]])) };
         saveEvent({ title: values.title, event_date: values.event_date || null, status: values.status, plan }, kind === "new" ? null : current);
         return;
@@ -370,6 +502,9 @@
     const { event, item } = editor;
     saveEvent({ plan: { ...event.plan, items: event.plan.items.filter((row) => row.id !== item.id) } }, event);
   });
+  dialog.addEventListener("cancel", (event) => {
+    if (saving) event.preventDefault();
+  });
   dialog.addEventListener("close", () => {
     editor = null;
     $("#event-form-fields").replaceChildren();
@@ -378,8 +513,15 @@
   $("#event-reload").addEventListener("click", () => { if (!saving) fetchEvents(); });
   $("#event-add").addEventListener("click", () => edit(section));
   galleryGrid.addEventListener("click", (event) => {
+    if (!allowed() || saving) return;
+    const action = event.target.closest("[data-event-manage]");
+    if (action) {
+      const selected = events.find(({ id }) => id === action.dataset.id);
+      if (selected) edit(action.dataset.eventManage, selected);
+      return;
+    }
     const card = event.target.closest("[data-event-open]");
-    if (card && allowed()) openEvent(card.dataset.eventOpen);
+    if (card) openEvent(card.dataset.eventOpen);
   });
   galleryBack.addEventListener("click", () => {
     const previousId = selectedEventId;
