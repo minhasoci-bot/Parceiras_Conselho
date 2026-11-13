@@ -3,8 +3,9 @@
 :root {
   color-scheme: light; --bg:#f6f7f3; --paper:#fff; --ink:#192421; --muted:#596662;
   --line:#e3e8df; --green:#183d30; --mint:#dcecdd; --lime:#d8f386;
+  --masthead-height:76px; --sticky-gap:12px;
   font-family:"DM Sans",system-ui,sans-serif; color:var(--ink); background:var(--bg);
-  font-synthesis:none; scrollbar-width:none; scroll-padding-top:88px;
+  font-synthesis:none; scrollbar-width:none; scroll-padding-top:calc(var(--masthead-height) + var(--sticky-gap));
 }
 html::-webkit-scrollbar { display:none; }
 * { box-sizing:border-box; }
@@ -44,7 +45,7 @@ strong,dd,output { font-variant-numeric:tabular-nums; }
 .sim-icon::after { content:"±"; inset:-4px 0 0; text-align:center; font:700 14px/18px system-ui; }
 .calendar-icon::after { left:0; right:0; top:4px; border-top:1.5px solid; }
 .workspace { margin-left:224px; }
-.masthead { position:sticky; top:0; z-index:3; display:flex; justify-content:space-between; align-items:center; gap:12px; height:76px; padding:0 36px; background:#fbfcf8; border-bottom:1px solid var(--line); }
+.masthead { position:sticky; top:0; z-index:3; display:flex; justify-content:space-between; align-items:center; gap:12px; height:var(--masthead-height); padding:0 36px; background:#fbfcf8; border-bottom:1px solid var(--line); }
 #breadcrumb { color:var(--muted); font-size:14px; font-weight:600; }
 .top-actions,.button,.date-chip { display:inline-flex; align-items:center; gap:9px; }
 .top-actions { gap:12px; }
@@ -211,14 +212,23 @@ dialog::backdrop { background:#152b21a0; }
   .masthead { padding-inline:24px; } main { padding-inline:24px; }
 }
 @media (max-width:830px) {
-  :root { scroll-padding-top:73px; }
+  :root { --masthead-height:61px; }
   .rail { position:static; width:auto; padding:11px 17px; flex-direction:row; align-items:center; flex-wrap:wrap; justify-content:space-between; gap:10px; border-right:0; border-bottom:1px solid var(--line); }
   .brand { padding:0; } .brand-mark { width:34px; height:34px; }
   .brand strong { font-size:17px; } .brand small { font-size:11px; margin-top:2px; }
   .rail nav { margin-top:0; display:flex; flex-wrap:wrap; }
   .rail nav a { padding:8px; font-size:12px; gap:6px; }
   .rail-bottom { margin:0; padding:0; }
-  .workspace { margin:0; } .masthead { height:61px; } main { padding-top:25px; }
+  .workspace { margin:0; } main { padding-top:25px; }
+}
+@media (width > 615px) {
+  .sim-grid > .projection {
+    position:sticky;
+    top:calc(var(--masthead-height) + var(--sticky-gap));
+    max-height:calc(100dvh - var(--masthead-height) - 2 * var(--sticky-gap));
+    overflow-y:auto;
+    scrollbar-width:none;
+  }
 }
 @media (max-width:615px) {
   .rail nav { order:3; width:100%; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); }
