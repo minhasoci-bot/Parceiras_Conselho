@@ -212,7 +212,7 @@ dd { margin:0; font-weight:800; text-align:right; }
 .scenario-card-open::after { content:""; position:absolute; inset:0; border-radius:inherit; }
 #scenario-dialog { width:min(840px, calc(100% - 24px)); max-height:calc(100dvh - 32px); }
 #scenario-dialog-title { font-size:24px; overflow-wrap:anywhere; }
-#scenario-dialog .icon-button { flex-shrink:0; }
+#scenario-dialog .card-header-actions { flex-shrink:0; }
 .scenario-detail-metrics {
   display:grid;
   grid-template-columns:repeat(auto-fit, minmax(min(100%, 176px), 1fr));

@@ -43,7 +43,7 @@ O sistema possui cadastro e login com e-mail e senha integrados ao Supabase, com
 
 ### 1. Aplicar o SQL
 
-Em um banco novo, execute [supabase/setup.sql](supabase/setup.sql), [a migração de cargos](supabase/migrations/20261113185556_member_positions.sql) e [a migração do resumo público](supabase/migrations/20261113190131_public_dashboard_summary.sql), nessa ordem, no **SQL Editor**. Em um banco já configurado, aplique as migrações que faltarem.
+Em um banco novo, execute [supabase/setup.sql](supabase/setup.sql), [a migração de cargos](supabase/migrations/20261113185556_member_positions.sql), [a migração do resumo público](supabase/migrations/20261113190131_public_dashboard_summary.sql) e [a migração dos links de cenário](supabase/migrations/20261113200000_public_scenario.sql), nessa ordem, no **SQL Editor**. Em um banco já configurado, aplique as migrações que faltarem.
 
 ### 2. Definir o primeiro Administrador
 

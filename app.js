@@ -399,12 +399,87 @@ function requireAccess() {
   return false;
 }
 
-function route() {
+const scenarioRoutePrefix = "cenario/";
+const scenarioUrl = (id) => location.origin + location.pathname + "#" + scenarioRoutePrefix + encodeURIComponent(id);
+
+function routedScenarioId() {
   const fragment = location.hash.slice(1);
+  if (!fragment.startsWith(scenarioRoutePrefix)) return null;
+  try { return decodeURIComponent(fragment.slice(scenarioRoutePrefix.length)) || null; }
+  catch { return null; }
+}
+
+function route(fromHashChange = false) {
+  const scenarioId = routedScenarioId();
+  const fragment = scenarioId ? "simulador" : location.hash.slice(1);
   const privateView = fragment === "vendas" || fragment === "equipe";
   const blocked = privateView && (!ready || !session);
   const view = !blocked && Object.hasOwn(views, fragment) ? fragment : "visao";
   if (blocked && !checkingInitialAccess) history.replaceState(history.state, "", "#visao");
+  showView(view);
+  syncScenarioRoute(scenarioId, fromHashChange);
+}
+
+let shownScenario = null;
+let scenarioEnteredInApp = false;
+let scenarioRequest = 0;
+
+async function syncScenarioRoute(id, fromHashChange) {
+  if (fromHashChange || !id) scenarioEnteredInApp = !!id;
+  const request = ++scenarioRequest;
+  if (!id) {
+    if (shownScenario && scenarioDialog.open) scenarioDialog.close();
+    return;
+  }
+  if (scenarioDialog.open && shownScenario?.id === id) return;
+  const known = data.scenarios.find((item) => item.id === id);
+  if (known) return openScenarioDetails(known);
+  if (!shared) return scenarioNotFound();
+  let scenario = null;
+  try { scenario = await loadSharedScenario(id); } catch {}
+  if (request !== scenarioRequest || routedScenarioId() !== id) return;
+  if (scenario && validScenario(scenario)) return openScenarioDetails(scenario);
+  // Para membros, o painel ainda pode estar carregando; route() roda de novo quando os dados chegam.
+  if (checkingInitialAccess || (session && !ready && accessRole !== "pending")) return;
+  scenarioNotFound();
+}
+
+function scenarioNotFound() {
+  history.replaceState(history.state, "", "#simulador");
+  notice("Não encontramos esse cenário. Ele pode ter sido excluído ou o link está incompleto.", true);
+}
+
+scenarioDialog.addEventListener("close", () => {
+  shownScenario = null;
+  if (!routedScenarioId()) return;
+  // Volta para onde a pessoa estava; quem chegou pelo link fica no simulador.
+  if (scenarioEnteredInApp) history.back();
+  else {
+    history.replaceState(history.state, "", "#simulador");
+    route();
+  }
+});
+
+async function shareScenario(button, id) {
+  const scenario = shownScenario?.id === id ? shownScenario : data.scenarios.find((item) => item.id === id);
+  const url = scenarioUrl(id);
+  const label = button.textContent;
+  try {
+    if (navigator.share && matchMedia("(pointer: coarse)").matches) {
+      await navigator.share({ title: scenario?.title ?? "Cenário do Mutirão", url });
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    button.textContent = "Link copiado ✓";
+  } catch (error) {
+    if (error?.name === "AbortError") return;
+    window.prompt("Copie o link do cenário:", url);
+    return;
+  }
+  setTimeout(() => { button.textContent = label; }, 2000);
+}
+
+function showView(view) {
   if (view === activeView) return;
   const changed = activeView !== "";
   activeView = view;
@@ -448,6 +523,7 @@ function render() {
   renderScenarios();
   renderProjection();
   renderConfirmedMembers(currentMembers);
+  if (shownScenario && scenarioDialog.open) fillScenarioDetails(shownScenario);
 }
 
 function updateHeaderCountdown() {
@@ -602,7 +678,8 @@ function renderScenarios() {
         ${lateItems ? `<p class="scenario-card-warning">${lateNote}</p>` : ""}
       </div>
       <footer class="scenario-actions">
-        <button class="button scenario-card-open" type="button" data-action="view-scenario" data-id="${id}" aria-label="Ver detalhes de ${title}">Ver detalhes</button>
+        <a class="button scenario-card-open" href="#${scenarioRoutePrefix}${esc(encodeURIComponent(scenario.id))}" aria-label="Ver detalhes de ${title}">Ver detalhes</a>
+        <button class="text-link" type="button" data-action="share-scenario" data-id="${id}" aria-label="Copiar link de ${title}">Copiar link</button>
         <button class="text-link" type="button" data-action="edit-scenario" data-id="${id}" aria-label="Editar cenário ${title}">Editar</button>
         <button class="text-link danger" type="button" data-action="delete-scenario" data-id="${id}" aria-label="Excluir cenário ${title}">Excluir</button>
       </footer>
@@ -611,14 +688,23 @@ function renderScenarios() {
 }
 
 function openScenarioDetails(scenario) {
+  shownScenario = scenario;
+  fillScenarioDetails(scenario);
+  if (scenarioDialog.open) return;
+  scenarioDialog.showModal();
+  scenarioDialog.scrollTop = 0;
+}
+
+function fillScenarioDetails(scenario) {
   const items = scenarioItems(scenario);
   const target = getTeamTarget();
-  const received = stats(data).received;
+  const received = getDashboardStats().received;
   const remaining = Math.max(0, target - received);
+  const plans = getPlanCounts();
   const { gross, net, byDeadline, quantity, coverage, lines } = projectScenario(items, remaining);
   const fields = [
     ["Meta coletiva", money(target)],
-    ["Participantes confirmados", decimal.format(currentMembers.length)],
+    ["Participantes confirmados", decimal.format(plans["6m"] + plans["1y"])],
     ["Recebido até o prazo", money(received)],
     ["Falta para a meta", money(remaining)],
     ["Faturamento bruto", money(gross)],
@@ -657,7 +743,7 @@ function openScenarioDetails(scenario) {
       ${offerDetails.length ? `<dl class="scenario-offer-notes">${offerDetails.map(([label, value]) => entry([label, esc(value)])).join("")}</dl>` : ""}
     </li>`;
   }).join("");
-  scenarioDialog.showModal();
+  $("#scenario-dialog-share").dataset.id = scenario.id;
 }
 
 function setOfferOptions(row, type, title = "") {
@@ -1069,11 +1155,7 @@ document.addEventListener("click", async (event) => {
     return renderCatalog();
   }
   if (action === "use-product") return addOffer(catalogOffers.infoproduto[Number(index)], true);
-  if (action === "view-scenario") {
-    const scenario = data.scenarios.find((item) => item.id === id);
-    if (scenario) openScenarioDetails(scenario);
-    return;
-  }
+  if (action === "share-scenario") return shareScenario(button, id);
   if (action === "reset-sim" || action === "edit-scenario") {
     if (busy) return;
     if (scenarioDirty && !window.confirm("Descartar as alterações do cenário atual?")) return;
@@ -1114,7 +1196,7 @@ simForm.addEventListener("change", (event) => {
 });
 field(saleForm, "status").addEventListener("change", dateLabel);
 
-window.addEventListener("hashchange", route);
+window.addEventListener("hashchange", () => route(true));
 window.addEventListener("storage", async (event) => {
   if (shared || event.key !== storageKey || busy || saleDialog.open || editingScenario) return;
   try { await loadState(); render(); } catch (error) { notice(error.message, true); }
