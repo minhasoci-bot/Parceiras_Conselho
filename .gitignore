@@ -2,3 +2,5 @@ dist/
 supabase.config.json
 .env*
 .vercel/
+
+supabase/.temp/

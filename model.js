@@ -1,4 +1,3 @@
-const TEAM_SIZE = 15;
 const TEAM_TARGET = 2245500;
 const DEADLINE = "2026-11-30";
 const STATUSES = ["proposta", "fechado", "recebido"];
@@ -14,7 +13,7 @@ function countDays(from, through) {
 }
 
 function initialState() {
-  return { people: Array.from({ length: TEAM_SIZE }, (_, i) => "Pessoa " + String(i + 1).padStart(2, "0")), sales: [], scenarios: [] };
+  return { people: [], sales: [], scenarios: [] };
 }
 
 function stats(data) {
@@ -76,7 +75,7 @@ function validScenario(scenario) {
 }
 
 function validState(data) {
-  return data && Array.isArray(data.people) && data.people.length === TEAM_SIZE
+  return data && Array.isArray(data.people)
     && data.people.every((name) => isText(name, 70, true))
     && Array.isArray(data.sales) && data.sales.length <= 2000
     && data.sales.every((sale) => sale && isText(sale.id, 50, true) && isText(sale.title, 120, true)

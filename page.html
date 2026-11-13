@@ -26,6 +26,7 @@
     <header class="masthead">
       <span id="breadcrumb">Visão geral</span>
       <div class="top-actions">
+        <button class="button" type="button" id="admin-action" hidden><i class="icon people-icon" aria-hidden="true"></i> Equipe <span class="badge" id="header-pending-badge" hidden>0</span></button>
         <button class="button" type="button" id="auth-action" hidden>Entrar</button>
         <span class="date-chip"><i class="calendar-icon icon" aria-hidden="true"></i> Até 30 nov. 2026</span>
         <button class="button primary" type="button" data-action="new-sale"><span aria-hidden="true">＋</span> Registrar venda</button>
@@ -37,7 +38,7 @@
       <section id="visao" class="view" aria-labelledby="overview-heading">
         <div class="view-heading overview-heading">
           <div><p class="eyebrow"><span></span> MUTIRÃO DA MENTORIA</p><h1 id="overview-heading">Painel de metas</h1>
-          <p>Acompanhe a arrecadação para garantir a entrada das 15 pessoas na mentoria.</p></div>
+          <p>Acompanhe a arrecadação para a entrada do grupo na mentoria.</p></div>
           <a class="button" href="#simulador">Simular uma oferta <span aria-hidden="true">↗</span></a>
         </div>
 
@@ -46,7 +47,7 @@
           <div class="goal-content">
             <div class="goal-label"><span class="target-mark" aria-hidden="true"></span> Meta coletiva</div>
             <div class="goal-number">R$ 22.455</div>
-            <div class="goal-note">Entrada de 15 pessoas na mentoria</div>
+            <div class="goal-note">Entrada do grupo na mentoria</div>
             <div class="leader"><span id="goal-total">R$ 0,00 recebidos</span><strong id="goal-percent">0%</strong></div>
             <progress id="goal-progress" value="0" max="100" aria-label="Progresso da meta coletiva"></progress>
           </div>
@@ -61,8 +62,17 @@
 
         <div class="overview-grid">
           <section class="card overview-card">
-            <div class="section-header"><h2>Equipe do mutirão</h2></div>
-            <p class="team-count"><strong>15</strong> participantes</p>
+            <div class="section-header">
+              <div>
+                <h2>Equipe do mutirão</h2>
+                <p>Participantes confirmados no mutirão.</p>
+              </div>
+              <div class="card-header-actions">
+                <button class="text-link" type="button" id="manage-access" hidden>Solicitações <span class="badge" id="overview-pending-badge" hidden>0</span></button>
+              </div>
+            </div>
+            <p class="team-count"><strong id="participant-count">0</strong> <span id="participant-label">participantes confirmados</span></p>
+            <div id="confirmed-members-list" class="confirmed-members-list" aria-live="polite"></div>
           </section>
           <section class="card overview-card">
             <div class="section-header"><div><h2>Vendas recentes</h2><p>Propostas, contratos e recebimentos.</p></div><button class="text-link" data-action="new-sale" type="button">Adicionar <span aria-hidden="true">＋</span></button></div>
@@ -148,15 +158,38 @@
 
   <dialog id="auth-dialog" aria-labelledby="auth-heading">
     <form id="auth-form" class="dialog-form">
-      <div class="section-header"><div><h2 id="auth-heading">Entrar no painel</h2><p>Use o e-mail e a senha da sua conta.</p></div><button class="icon-button" type="button" data-close="auth-dialog" aria-label="Fechar">×</button></div>
+      <div class="section-header"><div><h2 id="auth-heading">Entrar no painel</h2><p id="auth-description">Use o e-mail e a senha da sua conta.</p></div><button class="icon-button" type="button" data-close="auth-dialog" aria-label="Fechar">×</button></div>
       <label>E-mail <input name="email" autocomplete="username" type="email" required></label>
       <label class="auth-field">Senha <input name="password" autocomplete="current-password" type="password" required></label>
       <p class="form-error auth-field" role="alert" hidden></p>
       <div class="form-footer">
+        <button class="text-link" type="button" id="auth-mode">Criar conta</button>
         <button class="button primary" type="submit" id="auth-submit">Entrar</button>
       </div>
-      <p class="inline-note auth-field">Ainda não tem conta? Peça seu acesso à pessoa responsável pelo mutirão.</p>
     </form>
+  </dialog>
+
+  <dialog id="access-dialog" aria-labelledby="access-heading">
+    <div class="dialog-form">
+      <div class="section-header">
+        <div>
+          <h2 id="access-heading">Gerenciar equipe</h2>
+          <p>Aprove solicitações ou gerencie os participantes do mutirão.</p>
+        </div>
+        <button class="icon-button" type="button" data-close="access-dialog" aria-label="Fechar">×</button>
+      </div>
+      <div class="access-tabs" role="tablist">
+        <button class="button small active" type="button" id="tab-pending" role="tab" aria-selected="true">Solicitações <span class="badge" id="tab-pending-badge" hidden>0</span></button>
+        <button class="button small" type="button" id="tab-members" role="tab" aria-selected="false">Participantes aprovados</button>
+      </div>
+      <div id="pending-section" class="access-section">
+        <div id="access-list" aria-live="polite"></div>
+      </div>
+      <div id="members-section" class="access-section" hidden>
+        <div id="members-list" aria-live="polite"></div>
+      </div>
+      <p id="access-error" class="form-error auth-field" role="alert" hidden></p>
+    </div>
   </dialog>
 
   <dialog id="sale-dialog">

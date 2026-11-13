@@ -98,8 +98,18 @@ progress::-moz-progress-bar { background:var(--lime); border-radius:30px; }
 .section-header p { margin-top:5px; font-size:12px; }
 .text-link { color:#295f44; padding:0; border:0; background:none; font-size:13px; font-weight:800; text-align:left; }
 .text-link:hover { text-decoration:underline; }
-.team-count { display:flex; gap:10px; align-items:center; color:var(--muted); font-size:14px; }
-.team-count strong { color:var(--green); font-family:"Instrument Sans","DM Sans",system-ui,sans-serif; font-size:34px; letter-spacing:-.05em; }
+.team-count { display:flex; gap:10px; align-items:center; color:var(--muted); font-size:14px; margin-bottom:4px; }
+.team-count strong { color:var(--green); font-family:"Instrument Sans","DM Sans",system-ui,sans-serif; font-size:34px; letter-spacing:-.05em; line-height:1; }
+.card-header-actions { display:flex; align-items:center; gap:10px; }
+.confirmed-members-list { display:grid; gap:8px; margin-top:14px; max-height:260px; overflow-y:auto; padding-right:2px; }
+.confirmed-member-item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:#fbfcf9; font-size:13px; }
+.confirmed-member-info { display:flex; align-items:center; gap:10px; min-width:0; }
+.confirmed-member-avatar { width:28px; height:28px; border-radius:50%; background:#e2efde; color:var(--green); font-weight:800; font-size:12px; display:grid; place-items:center; flex-shrink:0; text-transform:uppercase; }
+.confirmed-member-text { min-width:0; }
+.confirmed-member-name { display:block; font-weight:700; color:var(--ink); font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.confirmed-member-date { display:block; font-size:11px; color:var(--muted); margin-top:1px; }
+.confirmed-member-badges { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.pill.admin-pill { background:#dbe7f3; color:#1f4b73; }
 .empty { border:1px dashed #dbe4d7; border-radius:9px; padding:14px; color:var(--muted); font-size:13px; line-height:1.5; background:#fbfcf9; }
 .catalog-switch { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
 .catalog-switch [aria-pressed="true"] { background:var(--green); border-color:var(--green); color:#fff; }
@@ -161,6 +171,19 @@ dialog { width:min(560px,calc(100% - 24px)); background:var(--paper); color:var(
 dialog::backdrop { background:#152b21a0; }
 .dialog-form { padding:20px; }
 .auth-field { margin-top:12px; }
+.badge { display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px; border-radius:999px; font-size:11px; font-weight:700; background:#d97706; color:#fff; line-height:1; }
+.button.small { min-height:30px; padding:3px 9px; font-size:12px; }
+.button.danger { background:#fee2e2; color:#991b1b; border-color:#fca5a5; }
+.button.danger:hover { background:#fecaca; }
+.button.outline { background:transparent; }
+.access-tabs { display:flex; gap:8px; margin:14px 0 16px; border-bottom:1px solid var(--line); padding-bottom:12px; }
+.access-tabs .button.active { background:var(--green); color:#fff; border-color:var(--green); }
+.access-request { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); }
+.access-request span { overflow-wrap:anywhere; }
+.access-request small { display:block; color:var(--muted); font-size:11px; margin-top:2px; }
+.access-actions { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.member-tag { font-size:11px; font-weight:700; padding:2px 7px; border-radius:4px; background:#eef3eb; color:var(--green); }
+.member-tag.admin { background:#faefd9; color:#854d0e; }
 .icon-button { width:32px; height:32px; border:1px solid var(--line); background:var(--paper); border-radius:6px; font-size:20px; line-height:1; color:var(--ink); }
 
 @media (max-width:1050px) {

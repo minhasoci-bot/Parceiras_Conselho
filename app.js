@@ -15,6 +15,7 @@ const simForm = $("#sim-form");
 const itemList = $("#scenario-items");
 const authDialog = $("#auth-dialog");
 const authForm = $("#auth-form");
+const accessDialog = $("#access-dialog");
 const field = (form, name) => form.elements.namedItem(name);
 const dateBR = (date) => date.split("-").reverse().join("/");
 const searchKey = (value) => value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
@@ -29,6 +30,9 @@ let editingScenario = null;
 let scenarioDirty = false;
 let catalogMode = "services";
 let activeView = "";
+let creatingAccount = false;
+let accessRole = null;
+let checkingPendingAccess = false;
 
 function notice(message, error = false) {
   const box = $("#notice");
@@ -82,34 +86,214 @@ async function save(change) {
 function openAuth() {
   if (authDialog.open) return;
   authForm.reset();
-  formError(authForm, "");
+  setAuthMode(false);
   authDialog.showModal();
 }
 
+function setAuthMode(create) {
+  creatingAccount = create;
+  const password = field(authForm, "password");
+  password.value = "";
+  password.autocomplete = create ? "new-password" : "current-password";
+  password.minLength = create ? 8 : 0;
+  $("#auth-heading").textContent = create ? "Criar conta" : "Entrar no painel";
+  $("#auth-description").textContent = create
+    ? "Escolha uma senha de pelo menos 8 caracteres. Após confirmar seu e-mail, entre para solicitar acesso."
+    : "Use o e-mail e a senha da sua conta.";
+  $("#auth-submit").textContent = create ? "Criar conta" : "Entrar";
+  $("#auth-mode").textContent = create ? "Já tenho conta" : "Criar conta";
+  formError(authForm, "");
+}
+
+let pendingTimer = null;
+
+function startPendingPolling() {
+  if (pendingTimer) return;
+  pendingTimer = setInterval(async () => {
+    if (accessRole !== "pending" || !session) {
+      stopPendingPolling();
+      return;
+    }
+    try {
+      const role = await getAccessRole();
+      if (role !== "pending") {
+        stopPendingPolling();
+        await connect();
+      }
+    } catch {
+      // Ignora oscilações de conexão durante a verificação em segundo plano.
+    }
+  }, 10000);
+}
+
+function stopPendingPolling() {
+  if (pendingTimer) {
+    clearInterval(pendingTimer);
+    pendingTimer = null;
+  }
+}
+
+function renderAccess() {
+  const isAdmin = accessRole === "admin";
+  $("#auth-action").textContent = session ? "Sair" : "Entrar";
+  $("#manage-access").hidden = !isAdmin || !ready;
+  const adminAction = $("#admin-action");
+  if (adminAction) adminAction.hidden = !isAdmin || !ready;
+  $("#storage-label").textContent = ready ? "Dados compartilhados" :
+    accessRole === "pending" ? "Aguardando aprovação" : "Aguardando acesso";
+  if (isAdmin && ready) {
+    updatePendingBadge();
+  }
+}
+
+async function updatePendingBadge() {
+  if (accessRole !== "admin" || !session) return;
+  try {
+    const requests = await listAccessRequests();
+    const count = requests.length;
+    for (const badgeId of ["overview-pending-badge", "header-pending-badge", "tab-pending-badge"]) {
+      const el = document.getElementById(badgeId);
+      if (el) {
+        el.textContent = count;
+        el.hidden = count === 0;
+      }
+    }
+  } catch {
+    // Mantém estado anterior em caso de erro temporário.
+  }
+}
+
+let currentMembers = [];
+
+function renderConfirmedMembers(members) {
+  currentMembers = members || [];
+  const count = currentMembers.length;
+  $("#participant-count").textContent = decimal.format(count);
+  $("#participant-label").textContent = count === 1 ? "participante confirmado" : "participantes confirmados";
+
+  const container = $("#confirmed-members-list");
+  if (!container) return;
+
+  if (count === 0) {
+    container.innerHTML = empty("Nenhum usuário confirmado ainda. Os participantes confirmados aparecerão aqui conforme entrarem no mutirão.");
+    return;
+  }
+
+  container.innerHTML = currentMembers.map((member) => {
+    const rawName = member.email || "Participante";
+    const initial = rawName.trim().charAt(0).toUpperCase() || "?";
+    const dateText = member.joined_at ? new Date(member.joined_at).toLocaleDateString("pt-BR") : "";
+    const adminBadge = member.is_admin ? `<span class="pill admin-pill">Admin</span>` : "";
+    return `<article class="confirmed-member-item">
+      <div class="confirmed-member-info">
+        <span class="confirmed-member-avatar" aria-hidden="true">${esc(initial)}</span>
+        <div class="confirmed-member-text">
+          <strong class="confirmed-member-name" title="${esc(rawName)}">${esc(rawName)}</strong>
+          ${dateText ? `<small class="confirmed-member-date">Confirmado em ${esc(dateText)}</small>` : ""}
+        </div>
+      </div>
+      <div class="confirmed-member-badges">
+        ${adminBadge}
+        <span class="pill recebido">Confirmado</span>
+      </div>
+    </article>`;
+  }).join("");
+}
+
+async function refreshConfirmedMembers() {
+  let list = [];
+  let remoteSuccess = false;
+  if (shared) {
+    try {
+      const remote = await listMembers();
+      if (Array.isArray(remote)) {
+        list = remote.slice();
+        remoteSuccess = true;
+      }
+    } catch {
+      // Silencioso se a RPC não estiver disponível ou houver erro de rede
+    }
+  }
+
+  if (Array.isArray(data?.people) && data.people.length) {
+    const existingEmails = new Set(list.map((m) => m.email.toLowerCase()));
+    for (const name of data.people) {
+      if (name && !existingEmails.has(name.toLowerCase())) {
+        list.push({ email: name, is_admin: false, joined_at: null });
+        existingEmails.add(name.toLowerCase());
+      }
+    }
+  }
+
+  if (!list.length && shared && !remoteSuccess) {
+    try {
+      const count = await countParticipants();
+      if (typeof count === "number" && count > 0) {
+        $("#participant-count").textContent = decimal.format(count);
+        $("#participant-label").textContent = count === 1 ? "participante confirmado" : "participantes confirmados";
+        const container = $("#confirmed-members-list");
+        if (container) {
+          container.innerHTML = `<p class="empty">${decimal.format(count)} participante(s) confirmado(s) no mutirão.</p>`;
+        }
+        return;
+      }
+    } catch {
+      // falha silenciosa
+    }
+  }
+
+  renderConfirmedMembers(list);
+}
+
 function disconnect() {
+  stopPendingPolling();
   clearSession();
+  accessRole = null;
   ready = false;
   revision = 0;
   data = initialState();
   if (saleDialog.open) saleDialog.close();
+  if (accessDialog.open) accessDialog.close();
   fillScenario();
   render();
-  $("#auth-action").textContent = "Entrar";
-  $("#storage-label").textContent = "Aguardando acesso";
+  renderAccess();
+  currentMembers = [];
+  refreshConfirmedMembers();
 }
 
 async function connect() {
-  await loadState();
+  const currentSession = session;
+  const role = await getAccessRole();
+  if (!session || session.refresh_token !== currentSession.refresh_token) return;
+  if (role === "pending") {
+    if (accessRole !== "pending") {
+      try { await requestDashboardAccess(); } catch {}
+    }
+    if (!session || session.refresh_token !== currentSession.refresh_token) return;
+    accessRole = role;
+    renderAccess();
+    notice("Sua solicitação foi enviada e está aguardando aprovação do administrador.");
+    startPendingPolling();
+    return;
+  }
+  stopPendingPolling();
+  const saved = await loadSharedDashboard();
+  if (!session || session.refresh_token !== currentSession.refresh_token) return;
+  const wasPending = accessRole === "pending";
+  accessRole = role;
+  setState(saved);
   ready = true;
-  $("#auth-action").textContent = "Sair";
-  $("#storage-label").textContent = "Dados compartilhados";
+  renderAccess();
   render();
+  refreshConfirmedMembers();
+  notice(wasPending ? "Acesso liberado! Bem-vindo(a) ao painel do mutirão." : "");
 }
 
 function requireAccess() {
   if (ready && session) return true;
   if (!shared) notice("Configure o acesso ao painel para salvar alterações.", true);
   else if (!session) openAuth();
+  else if (accessRole === "pending") notice("Aguarde a aprovação da sua conta para salvar alterações.", true);
   else notice("Aguarde o carregamento dos dados do painel.", true);
   return false;
 }
@@ -149,6 +333,7 @@ function render() {
   renderSales();
   renderScenarios();
   renderProjection();
+  renderConfirmedMembers(currentMembers);
 }
 
 function saleLine(sale, compact = false) {
@@ -397,32 +582,124 @@ simForm.addEventListener("submit", async (event) => {
 function authErrorMessage(error) {
   if (error.code === "invalid_credentials") return "E-mail ou senha incorretos.";
   if (error.code === "email_not_confirmed") return "Confirme o e-mail da sua conta para entrar.";
+  if (error.code === "weak_password") return "Escolha uma senha mais forte.";
+  if (error.code === "signup_disabled") return "O cadastro está desativado. Fale com a pessoa responsável pelo mutirão.";
+  if (error.code === "email_address_not_authorized") return "O envio de confirmação para este endereço está indisponível. Fale com a pessoa responsável pelo mutirão.";
+  if (error.code === "over_email_send_rate_limit") return "O limite de envio de e-mails do projeto foi atingido. Tente mais tarde.";
   if (error.status === 429) return "O Supabase limitou temporariamente esta solicitação. Aguarde antes de tentar novamente.";
   return error.message;
 }
 
+$("#auth-mode").addEventListener("click", () => setAuthMode(!creatingAccount));
 authForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const button = $("#auth-submit");
   if (button.disabled) return;
   button.disabled = true;
+  $("#auth-mode").disabled = true;
   formError(authForm, "");
   const password = field(authForm, "password");
   try {
     const email = field(authForm, "email").value.trim();
-    await signInWithPassword(email, password.value);
+    if (creatingAccount) {
+      await createAccount(email, password.value);
+      if (!session) {
+        setAuthMode(false);
+        authDialog.close();
+        notice("Confira seu e-mail para confirmar a conta. Depois, entre para solicitar acesso.");
+        return;
+      }
+    } else {
+      await signInWithPassword(email, password.value);
+    }
     await connect();
     authForm.reset();
     authDialog.close();
-    notice("");
   } catch (error) {
     if (session) disconnect();
     formError(authForm, authErrorMessage(error));
   } finally {
     password.value = "";
     button.disabled = false;
+    $("#auth-mode").disabled = false;
   }
 });
+
+function openAccessDialog(tab = "pending") {
+  if (accessRole !== "admin" || !ready) return;
+  accessDialog.showModal();
+  switchAccessTab(tab);
+}
+
+function switchAccessTab(tab) {
+  const isPending = tab === "pending";
+  $("#tab-pending").classList.toggle("active", isPending);
+  $("#tab-pending").setAttribute("aria-selected", String(isPending));
+  $("#tab-members").classList.toggle("active", !isPending);
+  $("#tab-members").setAttribute("aria-selected", String(!isPending));
+  $("#pending-section").hidden = !isPending;
+  $("#members-section").hidden = isPending;
+  if (isPending) renderAccessRequests();
+  else renderMembersList();
+}
+
+async function renderAccessRequests() {
+  $("#access-error").hidden = true;
+  $("#access-list").textContent = "Carregando solicitações…";
+  try {
+    const requests = await listAccessRequests();
+    updatePendingBadge();
+    $("#access-list").innerHTML = requests.length ? requests.map(({ user_id, email, requested_at }) => {
+      const dateText = requested_at ? new Date(requested_at).toLocaleDateString("pt-BR") : "";
+      return `<div class="access-request">
+        <div>
+          <span>${esc(email)}</span>
+          ${dateText ? `<small>Solicitado em ${esc(dateText)}</small>` : ""}
+        </div>
+        <div class="access-actions">
+          <button class="button small danger outline" type="button" data-action="reject-access" data-id="${esc(user_id)}" aria-label="Recusar ${esc(email)}">Recusar</button>
+          <button class="button small primary" type="button" data-action="approve-access" data-id="${esc(user_id)}" aria-label="Aprovar ${esc(email)}">Aprovar</button>
+        </div>
+      </div>`;
+    }).join("") : empty("Nenhuma solicitação pendente.");
+  } catch (error) {
+    $("#access-list").textContent = "";
+    showAccessError(error);
+  }
+}
+
+async function renderMembersList() {
+  $("#access-error").hidden = true;
+  $("#members-list").textContent = "Carregando participantes…";
+  try {
+    const members = await listMembers();
+    $("#members-list").innerHTML = members.length ? members.map(({ user_id, email, is_admin }) =>
+      `<div class="access-request">
+        <div>
+          <span>${esc(email)}</span>
+          <small><span class="member-tag ${is_admin ? "admin" : ""}">${is_admin ? "Administrador" : "Participante"}</span></small>
+        </div>
+        <div class="access-actions">
+          ${!is_admin ? `<button class="button small danger outline" type="button" data-action="remove-member" data-id="${esc(user_id)}" aria-label="Remover ${esc(email)}">Remover</button>` : ""}
+        </div>
+      </div>`
+    ).join("") : empty("Nenhum participante cadastrado.");
+  } catch (error) {
+    $("#members-list").textContent = "";
+    showAccessError(error);
+  }
+}
+
+function showAccessError(error) {
+  const message = $("#access-error");
+  message.textContent = error.message;
+  message.hidden = false;
+}
+
+$("#tab-pending").addEventListener("click", () => switchAccessTab("pending"));
+$("#tab-members").addEventListener("click", () => switchAccessTab("members"));
+$("#manage-access").addEventListener("click", () => openAccessDialog("pending"));
+$("#admin-action")?.addEventListener("click", () => openAccessDialog("pending"));
 
 $("#auth-action").addEventListener("click", async (event) => {
   if (busy) return;
@@ -445,6 +722,44 @@ document.addEventListener("click", async (event) => {
   if (!button) return;
   const { action, close, id, index } = button.dataset;
   if (close) return document.getElementById(close).close();
+  if (action === "approve-access") {
+    if (accessRole !== "admin" || button.disabled) return;
+    button.disabled = true;
+    try {
+      await approveDashboardAccess(id);
+      await Promise.all([renderAccessRequests(), refreshConfirmedMembers()]);
+    } catch (error) {
+      button.disabled = false;
+      showAccessError(error);
+    }
+    return;
+  }
+  if (action === "reject-access") {
+    if (accessRole !== "admin" || button.disabled) return;
+    if (!window.confirm("Recusar esta solicitação de acesso?")) return;
+    button.disabled = true;
+    try {
+      await rejectDashboardAccess(id);
+      await renderAccessRequests();
+    } catch (error) {
+      button.disabled = false;
+      showAccessError(error);
+    }
+    return;
+  }
+  if (action === "remove-member") {
+    if (accessRole !== "admin" || button.disabled) return;
+    if (!window.confirm("Remover o acesso deste participante ao painel?")) return;
+    button.disabled = true;
+    try {
+      await removeMember(id);
+      await Promise.all([renderMembersList(), refreshConfirmedMembers()]);
+    } catch (error) {
+      button.disabled = false;
+      showAccessError(error);
+    }
+    return;
+  }
   if (action === "new-sale") return openSale();
   if (action === "edit-sale") return openSale(data.sales.find((sale) => sale.id === id));
   if (action === "add-service" || action === "add-product") {
@@ -511,7 +826,17 @@ window.addEventListener("storage", async (event) => {
   try { await loadState(); render(); } catch (error) { notice(error.message, true); }
 });
 window.addEventListener("focus", async () => {
-  if (!shared || !ready || busy || saleDialog.open) return;
+  if (!shared) return;
+  refreshConfirmedMembers();
+  if (accessRole === "pending" && session) {
+    if (checkingPendingAccess) return;
+    checkingPendingAccess = true;
+    try { await connect(); }
+    catch (error) { notice(error.message, true); }
+    finally { checkingPendingAccess = false; }
+    return;
+  }
+  if (!ready || busy || saleDialog.open) return;
   const previousSession = session;
   const previousRevision = revision;
   try {
@@ -542,8 +867,12 @@ if (shared) {
   $("#auth-action").hidden = false;
   $("#storage-label").textContent = "Aguardando acesso";
   initializeSharedAccess();
+  refreshConfirmedMembers();
 } else {
-  loadState().then(render).catch((error) => {
+  loadState().then(() => {
+    render();
+    refreshConfirmedMembers();
+  }).catch((error) => {
     $("#storage-label").textContent = "Dados indisponíveis";
     notice(error.message, true);
   });

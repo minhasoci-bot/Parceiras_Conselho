@@ -12,7 +12,8 @@ async function supabaseRequest(path, { method = "GET", body, token, representati
   });
   const result = await response.json().catch(() => null);
   if (!response.ok) {
-    const error = new Error("O Supabase não concluiu a operação.");
+    const errorMsg = result?.msg || result?.message || result?.error_description || "O Supabase não concluiu a operação.";
+    const error = new Error(errorMsg);
     error.status = response.status;
     error.code = result?.error_code ?? result?.code;
     throw error;
@@ -29,20 +30,29 @@ function discardLegacySignInRedirect() {
 
 function storeSession(result) {
   if (!result?.access_token || !result.refresh_token) throw new Error("O Supabase não retornou uma sessão.");
-  session = { access_token: result.access_token, refresh_token: result.refresh_token,
-    expires_at: result.expires_at ?? Math.floor(Date.now() / 1000) + result.expires_in };
-  sessionStorage.setItem(sessionKey, JSON.stringify(session));
+  session = {
+    access_token: result.access_token,
+    refresh_token: result.refresh_token,
+    expires_at: result.expires_at ?? Math.floor(Date.now() / 1000) + result.expires_in,
+  };
+  try { localStorage.setItem(sessionKey, JSON.stringify(session)); } catch {}
+  try { sessionStorage.setItem(sessionKey, JSON.stringify(session)); } catch {}
 }
 
 function restoreSession() {
-  try { session = JSON.parse(sessionStorage.getItem(sessionKey) || "null"); }
-  catch { clearSession(); }
+  try {
+    const raw = localStorage.getItem(sessionKey) || sessionStorage.getItem(sessionKey);
+    session = JSON.parse(raw || "null");
+  } catch {
+    clearSession();
+  }
   return !!session;
 }
 
 function clearSession() {
   session = null;
-  sessionStorage.removeItem(sessionKey);
+  try { localStorage.removeItem(sessionKey); } catch {}
+  try { sessionStorage.removeItem(sessionKey); } catch {}
 }
 
 async function accessToken() {
@@ -63,6 +73,61 @@ async function accessToken() {
 
 async function signInWithPassword(email, password) {
   storeSession(await supabaseRequest("/auth/v1/token?grant_type=password", { method: "POST", body: { email, password } }));
+}
+
+async function createAccount(email, password) {
+  const result = await supabaseRequest("/auth/v1/signup", { method: "POST", body: { email, password } });
+  if (result.access_token) storeSession(result);
+}
+
+async function getAccessRole() {
+  const token = await accessToken();
+  const [members, admins] = await Promise.all([
+    supabaseRequest("/rest/v1/mutirao_mentoria_members?select=user_id&limit=1", { token }),
+    supabaseRequest("/rest/v1/mutirao_mentoria_admins?select=user_id&limit=1", { token }),
+  ]);
+  if (admins.length) return "admin";
+  return members.length ? "member" : "pending";
+}
+
+async function requestDashboardAccess() {
+  await supabaseRequest("/rest/v1/rpc/mutirao_mentoria_request_access", { method: "POST", body: {}, token: await accessToken() });
+}
+
+async function listAccessRequests() {
+  return supabaseRequest("/rest/v1/mutirao_mentoria_access_requests?select=user_id,email,requested_at&approved_at=is.null&order=requested_at.asc", { token: await accessToken() });
+}
+
+async function approveDashboardAccess(userId) {
+  return supabaseRequest("/rest/v1/rpc/mutirao_mentoria_approve_access", {
+    method: "POST", body: { applicant_id: userId }, token: await accessToken(),
+  });
+}
+
+async function rejectDashboardAccess(userId) {
+  return supabaseRequest("/rest/v1/rpc/mutirao_mentoria_reject_access", {
+    method: "POST", body: { applicant_id: userId }, token: await accessToken(),
+  });
+}
+
+async function listMembers() {
+  let token;
+  if (session) {
+    try { token = await accessToken(); } catch { /* sem token válido */ }
+  }
+  return supabaseRequest("/rest/v1/rpc/mutirao_mentoria_list_members", {
+    method: "POST", body: {}, token,
+  });
+}
+
+async function removeMember(userId) {
+  return supabaseRequest("/rest/v1/rpc/mutirao_mentoria_remove_member", {
+    method: "POST", body: { target_user_id: userId }, token: await accessToken(),
+  });
+}
+
+async function countParticipants() {
+  return supabaseRequest("/rest/v1/rpc/mutirao_mentoria_team_count");
 }
 
 async function signOut() {
