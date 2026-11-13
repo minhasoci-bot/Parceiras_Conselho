@@ -39,19 +39,10 @@ function fixedPrice(ranges) {
   return Math.round(total / ranges.length);
 }
 
-function exampleService(title, quantity, days) {
-  const [, , ranges] = catalog.find((entry) => entry[1] === title);
-  return { type: "servico", title, price: fixedPrice(ranges) * 100, quantity, days };
-}
-
-const ideas = [
-  { title: "Diagnóstico + plano de 30 dias", delivery: "15 análises de perfil e 15 calendários de conteúdo.",
-    items: [exampleService("Análise de perfil", 15, 7), exampleService("Calendário de conteúdos", 15, 7)] },
-  { title: "VSL pronta para publicar", delivery: "6 copys para VSL e 6 edições de vídeo de até 40 minutos.",
-    items: [exampleService("Copy de VSL", 6, 10), exampleService("Edição de VSL", 6, 10)] },
-  { title: "Diagnóstico + workshop", delivery: "10 análises de perfil e 45 vagas no workshop com kit de conteúdo.",
-    items: [
-      exampleService("Análise de perfil", 10, 7),
-      { ...products[1], type: "infoproduto", quantity: 45, days: 10 },
-    ] },
-];
+const catalogOffers = {
+  servico: catalog.map(([, title, ranges, detail, unit]) => ({
+    type: "servico", title, price: fixedPrice(ranges) * 100,
+    delivery: detail + (unit ? ". Preço de referência mensal." : ""),
+  })),
+  infoproduto: products.map((item) => ({ ...item, type: "infoproduto" })),
+};

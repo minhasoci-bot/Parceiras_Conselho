@@ -114,7 +114,6 @@
           </section>
         </div>
         <section class="roomy card ledger"><div class="section-header"><div><h2>Cenários salvos</h2><p>Compare as possibilidades com a meta do mutirão.</p></div></div><div id="saved-scenarios"></div></section>
-        <section class="ideas-section"><div class="section-header"><div><h2>Combinações para experimentar</h2><p>Exemplos editáveis com preços da tabela e do guia de ofertas.</p></div></div><div id="ideas-list" class="ideas-list"></div></section>
       </section>
     </main>
   </div>
@@ -126,7 +125,7 @@
         <label>Tipo <select name="type"><option value="servico">Serviço</option><option value="infoproduto">Infoproduto</option></select></label>
         <button class="text-link danger" type="button" data-action="remove-item">Remover</button>
       </div>
-      <label>Nome do item <input name="item-title" required maxlength="120" placeholder="Ex.: Edição de VSL ou workshop"></label>
+      <label>Item do catálogo <select name="item-title" required></select></label>
       <div class="form-grid">
         <label>Preço unitário (R$) <input name="price" type="number" min=".01" max="1000000" step=".01" required placeholder="0,00"></label>
         <label>Quantidade de vendas <input name="quantity" type="number" min="1" max="10000" step="1" required value="1"></label>

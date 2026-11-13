@@ -212,8 +212,8 @@ function renderCatalog() {
   const matches = catalog.map((item, index) => ({ item, index })).filter(({ item }) =>
     (!categoryFilter || categoryFilter === item[0]) && searchKey(item.flat(3).join(" ")).includes(query));
   $("#catalog-list").innerHTML = matches.length ? matches.map(({ item, index }) => {
-    const [category, name, ranges, detail, unit = ""] = item;
-    const price = compactMoney.format(fixedPrice(ranges)) + (unit ? " " + unit : "");
+    const [category, name, , detail, unit = ""] = item;
+    const price = compactMoney.format(catalogOffers.servico[index].price / 100) + (unit ? " " + unit : "");
     return `<article class="card roomy catalog-card"><span class="category">${esc(category)}</span><h2>${esc(name)}</h2><p>${esc(detail)}</p><button class="ref" type="button" data-action="use-price" data-index="${index}" aria-label="Adicionar ${esc(name)} ao cenário"><span>Adicionar ao cenário</span><span><strong>${price}</strong><span aria-hidden="true">＋</span></span></button></article>`;
   }).join("") : empty("Nenhum serviço encontrado.");
 }
@@ -237,16 +237,17 @@ function renderProjection() {
   const remaining = Math.max(0, TEAM_TARGET - stats(data).received);
   const offers = Array.from(itemList.children, (row) => {
     const item = readOffer(row);
-    const valid = [...row.querySelectorAll('input[type="number"]')].every((input) => input.validity.valid);
+    const valid = !!item.title && [...row.querySelectorAll('input[type="number"]')].every((input) => input.validity.valid);
     return { row, item, valid };
   });
   const included = offers.filter((offer) => offer.valid);
   const today = todayAt();
   const { gross, net, byDeadline, quantity, coverage, lateItems, lines } = projectScenario(included.map(({ item }) => item), remaining, today);
-  for (const { row, valid } of offers) {
+  for (const { row, item, valid } of offers) {
     const result = $(".offer-result", row);
     result.classList.remove("warning");
-    result.textContent = valid ? "" : "Preencha preço, quantidade e prazo para calcular.";
+    if (!item.title) result.textContent = "Selecione um item do catálogo.";
+    else result.textContent = valid ? "" : "Preencha preço, quantidade e prazo para calcular.";
   }
   for (const [index, { row }] of included.entries()) {
     const line = lines[index];
@@ -284,10 +285,22 @@ function renderScenarios() {
   }).join("") : empty("Nenhum cenário salvo.");
 }
 
+function setOfferOptions(row, type, title = "") {
+  const select = $('[name="item-title"]', row);
+  const placeholder = new Option("Selecione " + (type === "servico" ? "um serviço" : "um infoproduto"), "");
+  placeholder.disabled = true;
+  const options = catalogOffers[type].map((item) => new Option(item.title, item.title));
+  if (title && !options.some((option) => option.value === title)) {
+    options.unshift(new Option(title + " (item salvo)", title));
+  }
+  select.replaceChildren(placeholder, ...options);
+  select.value = title;
+}
+
 function appendOffer(item) {
   const row = $("#scenario-item-template").content.firstElementChild.cloneNode(true);
   $('[name="type"]', row).value = item.type;
-  $('[name="item-title"]', row).value = item.title ?? "";
+  setOfferOptions(row, item.type, item.title);
   for (const key of ["quantity", "days", "audience", "promise", "delivery"]) {
     if (item[key] !== undefined) $(`[name="${key}"]`, row).value = item[key];
   }
@@ -515,11 +528,10 @@ document.addEventListener("click", async (event) => {
     $("#catalog-search").placeholder = catalogMode === "products" ? "Ex.: workshop ou guia" : "Ex.: Reels ou estratégia";
     return renderCatalog();
   }
-  if (action === "use-product") return addOffer({ ...products[Number(index)], type: "infoproduto" }, true);
-  if (["use-idea", "reset-sim", "edit-scenario"].includes(action)) {
+  if (action === "use-product") return addOffer(catalogOffers.infoproduto[Number(index)], true);
+  if (action === "reset-sim" || action === "edit-scenario") {
     if (busy) return;
     if (scenarioDirty && !window.confirm("Descartar as alterações do cenário atual?")) return;
-    if (action === "use-idea") return showScenario(ideas[Number(index)]);
     if (action === "reset-sim") return showScenario();
     return showScenario(data.scenarios.find((item) => item.id === id));
   }
@@ -530,17 +542,27 @@ document.addEventListener("click", async (event) => {
     }, "Cenário excluído.");
     if (saved && editingScenario === id) fillScenario();
   }
-  if (action === "use-price") {
-    const [, title, ranges, detail, unit = ""] = catalog[Number(index)];
-    return addOffer({ type: "servico", title, price: cents(fixedPrice(ranges)),
-      delivery: detail + (unit ? ". Preço de referência mensal." : "") }, true);
-  }
+  if (action === "use-price") return addOffer(catalogOffers.servico[Number(index)], true);
 });
 
 $("#status-filter").addEventListener("change", renderSales);
 $("#catalog-search").addEventListener("input", renderCatalog);
 $("#category-filter").addEventListener("change", renderCatalog);
-simForm.addEventListener("input", () => {
+simForm.addEventListener("input", (event) => {
+  scenarioDirty = true;
+  if (event.target.tagName !== "SELECT") renderProjection();
+});
+simForm.addEventListener("change", (event) => {
+  if (event.target.tagName !== "SELECT") return;
+  const row = event.target.closest(".scenario-item");
+  const type = $('[name="type"]', row).value;
+  if (event.target.name === "type") setOfferOptions(row, type);
+  const title = $('[name="item-title"]', row).value;
+  const item = catalogOffers[type].find((offer) => offer.title === title);
+  $('[name="price"]', row).value = item ? item.price / 100 : "";
+  for (const key of ["audience", "promise", "delivery"]) {
+    $(`[name="${key}"]`, row).value = item?.[key] ?? "";
+  }
   scenarioDirty = true;
   renderProjection();
 });
@@ -573,11 +595,6 @@ $("#services-options").innerHTML = [...catalog.map(([, title]) => title), ...pro
   .map((title) => `<option value="${esc(title)}"></option>`).join("");
 $("#category-filter").insertAdjacentHTML("beforeend", [...new Set(catalog.map(([category]) => category))]
   .map((category) => `<option>${esc(category)}</option>`).join(""));
-$("#ideas-list").innerHTML = ideas.map((idea, index) => {
-  const items = scenarioItems(idea);
-  const gross = items.reduce((total, item) => total + item.price * item.quantity, 0);
-  return `<article class="idea"><h3>${esc(idea.title)}</h3><strong>${money(gross)} de faturamento bruto</strong><p>${esc(idea.delivery)}</p><button class="button" type="button" data-action="use-idea" data-index="${index}">Usar no simulador ↗</button></article>`;
-}).join("");
 route();
 renderCatalog();
 updateItems();
