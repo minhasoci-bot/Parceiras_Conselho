@@ -17,10 +17,12 @@ Abra o painel local: [http://127.0.0.1:4188/](http://127.0.0.1:4188/)
 
 O sistema possui cadastro e login com e-mail e senha integrados ao Supabase, com aprovação direta pelo painel:
 
-1. **Cadastro e Login do Usuário**:
+1. **Cadastro, Login e Recuperação de Senha**:
    - Qualquer pessoa do grupo clica em **Entrar** no topo da página.
    - Se ainda não tiver conta, clica em **Criar conta**, insere seu e-mail e define uma senha.
-   - Ao fazer login, se a conta ainda não foi aprovada, o sistema envia automaticamente a solicitação e exibe a mensagem **"Aguardando aprovação do administrador"**.
+   - Se esqueceu a senha, clica em **Esqueci minha senha**, digita seu e-mail e recebe o link de redefinição para cadastrar uma nova senha.
+   - Ao fazer login, o perfil do usuário fica visível no topo (avatar, e-mail, papel de acesso e botão de logout), além de destacar seu nome com a etiqueta **Você** na lista da equipe.
+   - Se a conta ainda não foi aprovada, o sistema envia automaticamente a solicitação e exibe a mensagem **"Aguardando aprovação do administrador"**.
    - A tela do usuário verifica periodicamente e desbloqueia em tempo real assim que for aprovada.
 
 2. **Aprovação pelo Administrador**:

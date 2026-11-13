@@ -16,6 +16,8 @@ const itemList = $("#scenario-items");
 const authDialog = $("#auth-dialog");
 const authForm = $("#auth-form");
 const accessDialog = $("#access-dialog");
+const resetPasswordDialog = $("#reset-password-dialog");
+const resetPasswordForm = $("#reset-password-form");
 const field = (form, name) => form.elements.namedItem(name);
 const dateBR = (date) => date.split("-").reverse().join("/");
 const searchKey = (value) => value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
@@ -30,7 +32,7 @@ let editingScenario = null;
 let scenarioDirty = false;
 let catalogMode = "services";
 let activeView = "";
-let creatingAccount = false;
+let authMode = "login";
 let accessRole = null;
 let checkingPendingAccess = false;
 
@@ -86,23 +88,52 @@ async function save(change) {
 function openAuth() {
   if (authDialog.open) return;
   authForm.reset();
-  setAuthMode(false);
+  setAuthMode("login");
   authDialog.showModal();
 }
 
-function setAuthMode(create) {
-  creatingAccount = create;
+function setAuthMode(mode) {
+  authMode = mode;
+  const passwordRow = $("#auth-password-row");
   const password = field(authForm, "password");
+  const authModeBtn = $("#auth-mode");
+  const authForgotBtn = $("#auth-forgot");
+  const submitBtn = $("#auth-submit");
+  const heading = $("#auth-heading");
+  const desc = $("#auth-description");
+
   password.value = "";
-  password.autocomplete = create ? "new-password" : "current-password";
-  password.minLength = create ? 8 : 0;
-  $("#auth-heading").textContent = create ? "Criar conta" : "Entrar no painel";
-  $("#auth-description").textContent = create
-    ? "Escolha uma senha de pelo menos 8 caracteres. Após confirmar seu e-mail, entre para solicitar acesso."
-    : "Use o e-mail e a senha da sua conta.";
-  $("#auth-submit").textContent = create ? "Criar conta" : "Entrar";
-  $("#auth-mode").textContent = create ? "Já tenho conta" : "Criar conta";
   formError(authForm, "");
+
+  if (mode === "create") {
+    passwordRow.hidden = false;
+    password.required = true;
+    password.autocomplete = "new-password";
+    password.minLength = 8;
+    heading.textContent = "Criar conta";
+    desc.textContent = "Escolha uma senha de pelo menos 8 caracteres. Após confirmar seu e-mail, entre para solicitar acesso.";
+    submitBtn.textContent = "Criar conta";
+    authModeBtn.textContent = "Já tenho conta";
+    if (authForgotBtn) authForgotBtn.hidden = true;
+  } else if (mode === "forgot") {
+    passwordRow.hidden = true;
+    password.required = false;
+    heading.textContent = "Recuperar senha";
+    desc.textContent = "Digite o e-mail da sua conta para receber o link de redefinição de senha.";
+    submitBtn.textContent = "Enviar link de recuperação";
+    authModeBtn.textContent = "Voltar para o login";
+    if (authForgotBtn) authForgotBtn.hidden = true;
+  } else {
+    passwordRow.hidden = false;
+    password.required = true;
+    password.autocomplete = "current-password";
+    password.minLength = 0;
+    heading.textContent = "Entrar no painel";
+    desc.textContent = "Use o e-mail e a senha da sua conta.";
+    submitBtn.textContent = "Entrar";
+    authModeBtn.textContent = "Criar conta";
+    if (authForgotBtn) authForgotBtn.hidden = false;
+  }
 }
 
 let pendingTimer = null;
@@ -135,12 +166,48 @@ function stopPendingPolling() {
 
 function renderAccess() {
   const isAdmin = accessRole === "admin";
-  $("#auth-action").textContent = session ? "Sair" : "Entrar";
+  const user = currentSessionUser();
+  const isLoggedIn = !!session && !!user;
+
+  const authAction = $("#auth-action");
+  const userBadge = $("#user-badge");
+  const userAvatar = $("#user-avatar");
+  const userEmail = $("#user-email");
+  const userRolePill = $("#user-role-pill");
+
+  if (isLoggedIn) {
+    authAction.hidden = true;
+    userBadge.hidden = false;
+
+    const email = user.email || "Usuário";
+    const initial = email.charAt(0).toUpperCase() || "U";
+    userAvatar.textContent = initial;
+    userEmail.textContent = email;
+    userEmail.title = email;
+
+    if (isAdmin) {
+      userRolePill.textContent = "Admin";
+      userRolePill.className = "pill admin-pill user-role-pill";
+    } else if (accessRole === "member") {
+      userRolePill.textContent = "Participante";
+      userRolePill.className = "pill recebido user-role-pill";
+    } else {
+      userRolePill.textContent = "Aguardando";
+      userRolePill.className = "pill fechado user-role-pill";
+    }
+  } else {
+    userBadge.hidden = true;
+    authAction.hidden = !shared;
+    authAction.textContent = "Entrar";
+  }
+
   $("#manage-access").hidden = !isAdmin || !ready;
   const adminAction = $("#admin-action");
   if (adminAction) adminAction.hidden = !isAdmin || !ready;
-  $("#storage-label").textContent = ready ? "Dados compartilhados" :
+
+  $("#storage-label").textContent = ready ? (isLoggedIn ? "Conectado (" + (user?.email || "") + ")" : "Dados compartilhados") :
     accessRole === "pending" ? "Aguardando aprovação" : "Aguardando acesso";
+
   if (isAdmin && ready) {
     updatePendingBadge();
   }
@@ -179,12 +246,17 @@ function renderConfirmedMembers(members) {
     return;
   }
 
+  const user = currentSessionUser();
+  const currentEmail = user?.email?.toLowerCase();
+
   container.innerHTML = currentMembers.map((member) => {
     const rawName = member.email || "Participante";
     const initial = rawName.trim().charAt(0).toUpperCase() || "?";
     const dateText = member.joined_at ? new Date(member.joined_at).toLocaleDateString("pt-BR") : "";
+    const isYou = currentEmail && member.email && member.email.toLowerCase() === currentEmail;
+    const youBadge = isYou ? `<span class="pill you-pill">Você</span>` : "";
     const adminBadge = member.is_admin ? `<span class="pill admin-pill">Admin</span>` : "";
-    return `<article class="confirmed-member-item">
+    return `<article class="confirmed-member-item${isYou ? " is-current-user" : ""}">
       <div class="confirmed-member-info">
         <span class="confirmed-member-avatar" aria-hidden="true">${esc(initial)}</span>
         <div class="confirmed-member-text">
@@ -193,6 +265,7 @@ function renderConfirmedMembers(members) {
         </div>
       </div>
       <div class="confirmed-member-badges">
+        ${youBadge}
         ${adminBadge}
         <span class="pill recebido">Confirmado</span>
       </div>
@@ -590,21 +663,37 @@ function authErrorMessage(error) {
   return error.message;
 }
 
-$("#auth-mode").addEventListener("click", () => setAuthMode(!creatingAccount));
+$("#auth-mode").addEventListener("click", () => {
+  if (authMode === "login") setAuthMode("create");
+  else setAuthMode("login");
+});
+
+$("#auth-forgot")?.addEventListener("click", () => {
+  setAuthMode("forgot");
+});
+
 authForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const button = $("#auth-submit");
   if (button.disabled) return;
   button.disabled = true;
   $("#auth-mode").disabled = true;
+  if ($("#auth-forgot")) $("#auth-forgot").disabled = true;
   formError(authForm, "");
   const password = field(authForm, "password");
   try {
     const email = field(authForm, "email").value.trim();
-    if (creatingAccount) {
+    if (authMode === "forgot") {
+      await sendPasswordReset(email);
+      setAuthMode("login");
+      authDialog.close();
+      notice("Enviamos as instruções e o link de recuperação de senha para " + email + ". Confira seu e-mail.");
+      return;
+    }
+    if (authMode === "create") {
       await createAccount(email, password.value);
       if (!session) {
-        setAuthMode(false);
+        setAuthMode("login");
         authDialog.close();
         notice("Confira seu e-mail para confirmar a conta. Depois, entre para solicitar acesso.");
         return;
@@ -622,6 +711,26 @@ authForm.addEventListener("submit", async (event) => {
     password.value = "";
     button.disabled = false;
     $("#auth-mode").disabled = false;
+    if ($("#auth-forgot")) $("#auth-forgot").disabled = false;
+  }
+});
+
+resetPasswordForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const button = $("#reset-password-submit");
+  if (button.disabled) return;
+  button.disabled = true;
+  formError(resetPasswordForm, "");
+  const newPassword = field(resetPasswordForm, "password").value;
+  try {
+    await updatePassword(newPassword);
+    resetPasswordDialog.close();
+    notice("Sua senha foi redefinida com sucesso!");
+    await connect();
+  } catch (error) {
+    formError(resetPasswordForm, authErrorMessage(error));
+  } finally {
+    button.disabled = false;
   }
 });
 
@@ -701,13 +810,17 @@ $("#tab-members").addEventListener("click", () => switchAccessTab("members"));
 $("#manage-access").addEventListener("click", () => openAccessDialog("pending"));
 $("#admin-action")?.addEventListener("click", () => openAccessDialog("pending"));
 
-$("#auth-action").addEventListener("click", async (event) => {
+$("#auth-action").addEventListener("click", () => {
   if (busy) return;
-  if (!session) return openAuth();
+  if (!session) openAuth();
+});
+
+$("#auth-logout-btn")?.addEventListener("click", async (event) => {
+  if (busy) return;
   const button = event.currentTarget;
   button.disabled = true;
-  try { await signOut(); } catch { /* O dispositivo encerra a sessão mesmo sem resposta do servidor. */ }
-  finally { disconnect(); button.disabled = false; notice(""); }
+  try { await signOut(); } catch { /* logout local */ }
+  finally { disconnect(); button.disabled = false; notice("Sessão encerrada."); }
 });
 
 $("#delete-sale").addEventListener("click", (event) => {
@@ -858,7 +971,12 @@ $("#services-options").innerHTML = [...catalog.map(([, title]) => title), ...pro
   .map((title) => `<option value="${esc(title)}"></option>`).join("");
 $("#category-filter").insertAdjacentHTML("beforeend", [...new Set(catalog.map(([category]) => category))]
   .map((category) => `<option>${esc(category)}</option>`).join(""));
-if (shared) discardLegacySignInRedirect();
+if (shared) {
+  const redirectMode = checkAuthRedirect();
+  if (redirectMode === "recovery") {
+    resetPasswordDialog?.showModal();
+  }
+}
 route();
 renderCatalog();
 updateItems();

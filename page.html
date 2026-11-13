@@ -27,6 +27,14 @@
       <span id="breadcrumb">Visão geral</span>
       <div class="top-actions">
         <button class="button" type="button" id="admin-action" hidden><i class="icon people-icon" aria-hidden="true"></i> Equipe <span class="badge" id="header-pending-badge" hidden>0</span></button>
+        <div class="user-badge" id="user-badge" hidden>
+          <span class="user-avatar" id="user-avatar" aria-hidden="true">U</span>
+          <div class="user-info">
+            <span class="user-email" id="user-email"></span>
+            <span class="pill user-role-pill" id="user-role-pill">Participante</span>
+          </div>
+          <button class="button small auth-logout" type="button" id="auth-logout-btn" title="Encerrar sessão">Sair</button>
+        </div>
         <button class="button" type="button" id="auth-action" hidden>Entrar</button>
         <span class="date-chip"><i class="calendar-icon icon" aria-hidden="true"></i> Até 30 nov. 2026</span>
         <button class="button primary" type="button" data-action="new-sale"><span aria-hidden="true">＋</span> Registrar venda</button>
@@ -160,11 +168,25 @@
     <form id="auth-form" class="dialog-form">
       <div class="section-header"><div><h2 id="auth-heading">Entrar no painel</h2><p id="auth-description">Use o e-mail e a senha da sua conta.</p></div><button class="icon-button" type="button" data-close="auth-dialog" aria-label="Fechar">×</button></div>
       <label>E-mail <input name="email" autocomplete="username" type="email" required></label>
-      <label class="auth-field">Senha <input name="password" autocomplete="current-password" type="password" required></label>
+      <label class="auth-field" id="auth-password-row">Senha <input name="password" autocomplete="current-password" type="password" required></label>
+      <p class="form-error auth-field" role="alert" hidden></p>
+      <div class="form-footer auth-footer">
+        <div class="auth-links">
+          <button class="text-link" type="button" id="auth-mode">Criar conta</button>
+          <button class="text-link" type="button" id="auth-forgot">Esqueci minha senha</button>
+        </div>
+        <button class="button primary" type="submit" id="auth-submit">Entrar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="reset-password-dialog" aria-labelledby="reset-password-heading">
+    <form id="reset-password-form" class="dialog-form">
+      <div class="section-header"><div><h2 id="reset-password-heading">Criar nova senha</h2><p>Digite sua nova senha com pelo menos 8 caracteres.</p></div><button class="icon-button" type="button" data-close="reset-password-dialog" aria-label="Fechar">×</button></div>
+      <label class="auth-field">Nova senha <input name="password" autocomplete="new-password" type="password" minlength="8" required></label>
       <p class="form-error auth-field" role="alert" hidden></p>
       <div class="form-footer">
-        <button class="text-link" type="button" id="auth-mode">Criar conta</button>
-        <button class="button primary" type="submit" id="auth-submit">Entrar</button>
+        <button class="button primary" type="submit" id="reset-password-submit">Salvar nova senha</button>
       </div>
     </form>
   </dialog>

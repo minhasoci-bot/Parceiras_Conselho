@@ -186,6 +186,18 @@ dialog::backdrop { background:#152b21a0; }
 .member-tag.admin { background:#faefd9; color:#854d0e; }
 .icon-button { width:32px; height:32px; border:1px solid var(--line); background:var(--paper); border-radius:6px; font-size:20px; line-height:1; color:var(--ink); }
 
+.user-badge { display:inline-flex; align-items:center; gap:8px; padding:3px 6px 3px 8px; background:var(--paper); border:1px solid #c9d8c6; border-radius:30px; box-shadow:0 1px 3px rgba(0,0,0,.03); }
+.user-avatar { width:26px; height:26px; border-radius:50%; background:var(--green); color:var(--lime); font-weight:800; font-size:12px; display:grid; place-items:center; flex-shrink:0; text-transform:uppercase; }
+.user-info { display:flex; flex-direction:column; line-height:1.15; min-width:0; }
+.user-email { font-size:12px; font-weight:700; color:var(--ink); max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.user-role-pill { font-size:9px; padding:1px 5px; margin-top:1px; width:max-content; border-radius:4px; }
+.auth-logout { min-height:26px; padding:2px 8px; font-size:11px; font-weight:700; border-radius:6px; color:#853026; border-color:#e8cec8; background:transparent; }
+.auth-logout:hover { background:#fdf2ef; border-color:#d79e94; }
+.auth-footer { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; margin-top:14px; }
+.auth-links { display:flex; flex-direction:column; gap:4px; }
+.pill.you-pill { background:#d5f3d4; color:#1b6329; font-weight:800; border:1px solid #bde7bc; }
+.confirmed-member-item.is-current-user { border-color:#85bd88; background:#f4fbf3; }
+
 @media (max-width:1050px) {
   .rail { width:186px; } .workspace { margin-left:186px; }
   .masthead { padding-inline:24px; } main { padding-inline:24px; }
@@ -206,6 +218,8 @@ dialog::backdrop { background:#152b21a0; }
   .rail nav .icon,#breadcrumb { display:none; }
   .masthead { padding-inline:14px; justify-content:flex-end; }
   .top-actions { gap:7px; }
+  .user-email { max-width:85px; }
+  .user-role-pill { display:none; }
   main { padding:22px 14px 35px; }
   .view-heading { display:grid; align-items:start; gap:12px; margin-bottom:17px; }
   .view-heading .button { justify-self:start; }

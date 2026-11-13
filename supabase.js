@@ -21,28 +21,66 @@ async function supabaseRequest(path, { method = "GET", body, token, representati
   return result;
 }
 
-function discardLegacySignInRedirect() {
-  const params = new URLSearchParams(location.hash.slice(1));
-  if (params.has("access_token") || params.has("error_code")) {
-    history.replaceState(history.state, "", location.pathname + location.search + "#visao");
+function decodeJwt(token) {
+  try {
+    const part = token.split(".")[1];
+    if (!part) return {};
+    const base64 = part.replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(decodeURIComponent(escape(atob(base64))));
+  } catch {
+    return {};
   }
 }
 
+function checkAuthRedirect() {
+  const hash = location.hash.slice(1);
+  if (!hash) return null;
+  const params = new URLSearchParams(hash);
+  if (params.get("type") === "recovery" && params.has("access_token")) {
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token") || "";
+    storeSession({ access_token, refresh_token, expires_in: 3600 });
+    history.replaceState(history.state, "", location.pathname + location.search + "#visao");
+    return "recovery";
+  }
+  if (params.has("access_token") || params.has("error_code")) {
+    history.replaceState(history.state, "", location.pathname + location.search + "#visao");
+  }
+  return null;
+}
+
 function storeSession(result) {
-  if (!result?.access_token || !result.refresh_token) throw new Error("O Supabase não retornou uma sessão.");
+  if (!result?.access_token) throw new Error("O Supabase não retornou uma sessão.");
+  const payload = decodeJwt(result.access_token);
+  const email = result.user?.email || payload.email || session?.user?.email || "";
+  const id = result.user?.id || payload.sub || session?.user?.id || "";
   session = {
     access_token: result.access_token,
-    refresh_token: result.refresh_token,
-    expires_at: result.expires_at ?? Math.floor(Date.now() / 1000) + result.expires_in,
+    refresh_token: result.refresh_token || session?.refresh_token || "",
+    expires_at: result.expires_at ?? Math.floor(Date.now() / 1000) + (result.expires_in || 3600),
+    user: { id, email },
   };
   try { localStorage.setItem(sessionKey, JSON.stringify(session)); } catch {}
   try { sessionStorage.setItem(sessionKey, JSON.stringify(session)); } catch {}
+}
+
+function currentSessionUser() {
+  if (!session) return null;
+  if (!session.user?.email && session.access_token) {
+    const payload = decodeJwt(session.access_token);
+    session.user = { id: payload.sub || "", email: payload.email || "" };
+  }
+  return session.user || null;
 }
 
 function restoreSession() {
   try {
     const raw = localStorage.getItem(sessionKey) || sessionStorage.getItem(sessionKey);
     session = JSON.parse(raw || "null");
+    if (session?.access_token && !session?.user?.email) {
+      const payload = decodeJwt(session.access_token);
+      session.user = { id: payload.sub || "", email: payload.email || "" };
+    }
   } catch {
     clearSession();
   }
@@ -78,6 +116,20 @@ async function signInWithPassword(email, password) {
 async function createAccount(email, password) {
   const result = await supabaseRequest("/auth/v1/signup", { method: "POST", body: { email, password } });
   if (result.access_token) storeSession(result);
+}
+
+async function sendPasswordReset(email) {
+  const redirectTo = location.origin + location.pathname;
+  return supabaseRequest("/auth/v1/recover?redirect_to=" + encodeURIComponent(redirectTo), {
+    method: "POST", body: { email },
+  });
+}
+
+async function updatePassword(password) {
+  const token = await accessToken();
+  return supabaseRequest("/auth/v1/user", {
+    method: "PUT", body: { password }, token,
+  });
 }
 
 async function getAccessRole() {
