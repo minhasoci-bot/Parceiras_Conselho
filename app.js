@@ -38,6 +38,7 @@ let authMode = "login";
 let accessRole = null;
 let accessGeneration = 0;
 let checkingPendingAccess = false;
+let pendingCountRequest = 0;
 
 function notice(message, error = false) {
   const box = $("#notice");
@@ -212,21 +213,33 @@ function renderAccess() {
 
   if (isAdmin && ready) {
     updatePendingBadge();
+  } else {
+    renderPendingCount(0);
+  }
+}
+
+function renderPendingCount(count) {
+  for (const badgeId of ["team-nav-badge", "overview-pending-badge", "tab-pending-badge"]) {
+    const badge = document.getElementById(badgeId);
+    badge.textContent = badgeId === "team-nav-badge" && count > 99 ? "99+" : decimal.format(count);
+    badge.hidden = count === 0;
+  }
+  const link = $("#team-nav-link");
+  if (count) {
+    const label = count === 1 ? "1 solicitação pendente" : decimal.format(count) + " solicitações pendentes";
+    link.setAttribute("aria-label", "Equipe, " + label);
+  } else {
+    link.removeAttribute("aria-label");
   }
 }
 
 async function updatePendingBadge() {
-  if (accessRole !== "admin" || !session) return;
+  if (accessRole !== "admin" || !session || !ready) return;
+  const generation = accessGeneration;
+  const request = ++pendingCountRequest;
   try {
     const requests = await listAccessRequests();
-    const count = requests.length;
-    for (const badgeId of ["overview-pending-badge", "tab-pending-badge"]) {
-      const el = document.getElementById(badgeId);
-      if (el) {
-        el.textContent = count;
-        el.hidden = count === 0;
-      }
-    }
+    if (generation === accessGeneration && request === pendingCountRequest) renderPendingCount(requests.length);
   } catch {
     // Mantém estado anterior em caso de erro temporário.
   }
@@ -994,12 +1007,13 @@ resetPasswordDialog?.addEventListener("close", () => {
 
 async function renderAccessRequests() {
   const generation = accessGeneration;
+  const request = ++pendingCountRequest;
   $("#access-error").hidden = true;
   $("#access-list").textContent = "Carregando solicitações…";
   try {
     const requests = await listAccessRequests();
     if (generation !== accessGeneration) return;
-    updatePendingBadge();
+    if (request === pendingCountRequest) renderPendingCount(requests.length);
     $("#access-list").innerHTML = requests.length ? requests.map(({ user_id, email, requested_at }) => {
       const dateText = requested_at ? new Date(requested_at).toLocaleDateString("pt-BR") : "";
       return `<div class="access-request">
@@ -1215,6 +1229,7 @@ window.addEventListener("storage", async (event) => {
 });
 window.addEventListener("focus", async () => {
   if (!shared) return;
+  updatePendingBadge();
   refreshConfirmedMembers();
   if (accessRole === "pending" && session) {
     if (checkingPendingAccess) return;
@@ -1252,6 +1267,9 @@ updateItems();
 render();
 updateHeaderCountdown();
 setInterval(updateHeaderCountdown, 1000);
+if (shared) setInterval(() => {
+  if (!document.hidden) updatePendingBadge();
+}, 15000);
 if (shared) {
   $("#auth-action").hidden = false;
   initializeSharedAccess();
