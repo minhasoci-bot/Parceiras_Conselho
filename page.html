@@ -20,6 +20,7 @@
       <a href="#equipe" data-member-access hidden><i class="icon people-icon" aria-hidden="true"></i> Equipe</a>
       <a href="#servicos"><i class="icon catalog-icon" aria-hidden="true"></i> Catálogo</a>
       <a href="#simulador"><i class="icon sim-icon" aria-hidden="true"></i> Simulador</a>
+      <a href="#eventos" data-member-access hidden><i class="icon calendar-icon" aria-hidden="true"></i> Eventos</a>
     </nav>
   </aside>
 
@@ -156,6 +157,46 @@
           <div id="saved-scenarios" class="scenario-gallery-grid"></div>
         </section>
       </section>
+      <section id="eventos" class="view" aria-labelledby="events-heading" hidden>
+        <div class="view-heading">
+          <div><h1 id="events-heading">Planejamento de eventos</h1><p>Organize as entregas, a comunicação e o roteiro do evento em um só lugar.</p></div>
+          <button class="button primary" id="event-new" type="button">＋ Novo evento</button>
+        </div>
+        <div class="events-toolbar">
+          <label>Evento <select id="event-picker"><option value="">Selecione um evento</option></select></label>
+          <button class="button" id="event-reload" type="button">Atualizar</button>
+        </div>
+        <p id="event-feedback" class="form-error" role="alert" hidden></p>
+        <div id="event-empty" class="card roomy event-empty">
+          <h2>Nenhum evento planejado</h2>
+          <p>Crie um evento em branco ou comece com o modelo de lançamento.</p>
+        </div>
+        <div id="event-workspace" hidden>
+          <section class="event-hero" aria-labelledby="event-current-title">
+            <div><span id="event-current-status" class="pill"></span><h2 id="event-current-title"></h2><p id="event-current-date"></p></div>
+            <div id="event-overview-metrics" class="event-overview-metrics"></div>
+          </section>
+          <nav class="event-tabs" aria-label="Planejamento do evento" id="event-sections">
+            <button class="button" type="button" data-event-section="brief" aria-pressed="true">Estratégia</button>
+            <button class="button" type="button" data-event-section="task" aria-pressed="false">Tarefas</button>
+            <button class="button" type="button" data-event-section="message" aria-pressed="false">Comunicação</button>
+            <button class="button" type="button" data-event-section="agenda" aria-pressed="false">Roteiro do dia</button>
+            <button class="button" type="button" data-event-section="link" aria-pressed="false">Links</button>
+          </nav>
+          <section class="card roomy event-panel" aria-labelledby="event-panel-heading">
+            <div class="section-header">
+              <div><h3 id="event-panel-heading"></h3><p id="event-panel-description"></p></div>
+              <button class="button primary" id="event-add" type="button"></button>
+            </div>
+            <div class="event-filters" id="event-filters" hidden>
+              <label>Fase <select id="event-filter-phase"></select></label>
+              <label>Status <select id="event-filter-status"></select></label>
+              <label id="event-channel-filter" hidden>Canal <select id="event-filter-channel"></select></label>
+            </div>
+            <div id="event-panel-content"></div>
+          </section>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -245,6 +286,17 @@
       <p class="inline-note">Entradas recebidas até 30 de novembro contam para a meta. Para pagamento parcial, registre cada parcela em uma linha.</p>
       <p class="form-error" role="alert" hidden></p>
       <div class="form-footer"><button class="button danger" id="delete-sale" type="button" hidden>Excluir venda</button><button class="button primary" type="submit">Salvar venda</button></div>
+    </form>
+  </dialog>
+  <dialog id="event-dialog" aria-labelledby="event-dialog-heading">
+    <form id="event-form" class="dialog-form">
+      <div class="section-header"><h2 id="event-dialog-heading"></h2><button class="icon-button" type="button" data-close="event-dialog" aria-label="Fechar">×</button></div>
+      <div class="event-form-fields" id="event-form-fields"></div>
+      <p class="form-error auth-field" role="alert" hidden></p>
+      <div class="form-footer">
+        <button class="button danger outline" id="event-remove-item" type="button" hidden>Excluir item</button>
+        <button class="button primary" id="event-save" type="submit">Salvar</button>
+      </div>
     </form>
   </dialog>
   <script>/* SCRIPTS */</script>

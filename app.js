@@ -6,7 +6,7 @@ const money = (cents) => moneyFormat.format(cents / 100);
 const cents = (reais) => Math.round(Number(reais) * 100);
 const esc = (value) => String(value).replace(/[&<>"']/g, (part) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[part]);
 const statusLabel = { proposta: "Proposta", fechado: "Fechado", recebido: "Recebido" };
-const views = { visao: "Visão geral", vendas: "Vendas", equipe: "Equipe", servicos: "Catálogo", simulador: "Simulador" };
+const views = { visao: "Visão geral", vendas: "Vendas", equipe: "Equipe", servicos: "Catálogo", simulador: "Simulador", eventos: "Eventos" };
 const memberPositions = { estrategia: "Estratégia", comercial: "Comercial", design: "Design", copy: "Copy", video: "Vídeo", dev: "Dev" };
 const shared = !!supabaseConfig;
 const storageKey = "mutirao-mentoria-nov-2026";
@@ -349,6 +349,7 @@ async function refreshConfirmedMembers() {
 function disconnect() {
   if (scenarioDialog.open) scenarioDialog.close();
   accessGeneration += 1;
+  document.dispatchEvent(new Event("mutirao:disconnect"));
   stopPendingPolling();
   clearSession();
   accessRole = null;
@@ -419,11 +420,12 @@ function routedScenarioId() {
 function route(fromHashChange = false) {
   const scenarioId = routedScenarioId();
   const fragment = scenarioId ? "simulador" : location.hash.slice(1);
-  const privateView = fragment === "vendas" || fragment === "equipe";
+  const privateView = fragment === "vendas" || fragment === "equipe" || fragment === "eventos";
   const blocked = privateView && (!ready || !session);
   const view = !blocked && Object.hasOwn(views, fragment) ? fragment : "visao";
   if (blocked && !checkingInitialAccess) history.replaceState(history.state, "", "#visao");
   showView(view);
+  document.dispatchEvent(new CustomEvent("mutirao:route", { detail: view }));
   syncScenarioRoute(scenarioId, fromHashChange);
 }
 
