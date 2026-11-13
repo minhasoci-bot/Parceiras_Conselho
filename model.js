@@ -1,4 +1,9 @@
-const TEAM_TARGET = 2245500;
+const COURSE_PLANS = {
+  "6m": { id: "6m", label: "6 meses", price: 149700, description: "R$ 1.497 por participante" },
+  "1y": { id: "1y", label: "1 ano", price: 299700, description: "R$ 2.997 por participante" },
+};
+const DEFAULT_PLAN = "6m";
+const TEAM_TARGET = 149700;
 const DEADLINE = "2026-11-30";
 const STATUSES = ["proposta", "fechado", "recebido"];
 const DAY = 86400000;
@@ -12,8 +17,27 @@ function countDays(from, through) {
   return Math.max(0, Math.round((Date.parse(through) - Date.parse(from)) / DAY) + 1);
 }
 
+function calculateTeamTarget(members = [], defaultPlan = DEFAULT_PLAN, memberPlans = {}) {
+  const planDefault = COURSE_PLANS[defaultPlan] ? defaultPlan : DEFAULT_PLAN;
+  const plans = memberPlans && typeof memberPlans === "object" ? memberPlans : {};
+
+  if (!Array.isArray(members) || members.length === 0) {
+    return 0;
+  }
+
+  let total = 0;
+  for (const member of members) {
+    const rawId = typeof member === "object" ? (member.email || member.user_id || "") : member;
+    const id = String(rawId || "").trim().toLowerCase();
+    const explicitPlan = (id && plans[id]) || (typeof member === "object" && member.plan);
+    const resolvedKey = COURSE_PLANS[explicitPlan] ? explicitPlan : planDefault;
+    total += COURSE_PLANS[resolvedKey].price;
+  }
+  return total;
+}
+
 function initialState() {
-  return { people: [], sales: [], scenarios: [] };
+  return { people: [], sales: [], scenarios: [], default_plan: DEFAULT_PLAN, member_plans: {} };
 }
 
 function stats(data) {
@@ -75,14 +99,22 @@ function validScenario(scenario) {
 }
 
 function validState(data) {
-  return data && Array.isArray(data.people)
-    && data.people.every((name) => isText(name, 70, true))
-    && Array.isArray(data.sales) && data.sales.length <= 2000
-    && data.sales.every((sale) => sale && isText(sale.id, 50, true) && isText(sale.title, 120, true)
+  if (!data || typeof data !== "object") return false;
+  if (!Array.isArray(data.people) || !data.people.every((name) => isText(name, 70, true))) return false;
+  if (!Array.isArray(data.sales) || data.sales.length > 2000) return false;
+  if (!data.sales.every((sale) => sale && isText(sale.id, 50, true) && isText(sale.title, 120, true)
       && isText(sale.client, 100) && isInt(sale.amount, 1, 100000000)
-      && STATUSES.includes(sale.status) && isDate(sale.date))
-    && new Set(data.sales.map((sale) => sale.id)).size === data.sales.length
-    && Array.isArray(data.scenarios) && data.scenarios.length <= 100
-    && data.scenarios.every(validScenario)
-    && new Set(data.scenarios.map((item) => item.id)).size === data.scenarios.length;
+      && STATUSES.includes(sale.status) && isDate(sale.date))) return false;
+  if (new Set(data.sales.map((sale) => sale.id)).size !== data.sales.length) return false;
+  if (!Array.isArray(data.scenarios) || data.scenarios.length > 100) return false;
+  if (!data.scenarios.every(validScenario)) return false;
+  if (new Set(data.scenarios.map((item) => item.id)).size !== data.scenarios.length) return false;
+  if (data.default_plan !== undefined && !COURSE_PLANS[data.default_plan]) return false;
+  if (data.member_plans !== undefined) {
+    if (typeof data.member_plans !== "object" || data.member_plans === null || Array.isArray(data.member_plans)) return false;
+    for (const [key, plan] of Object.entries(data.member_plans)) {
+      if (!isText(key, 120, true) || !COURSE_PLANS[plan]) return false;
+    }
+  }
+  return true;
 }

@@ -53,9 +53,15 @@
         <div class="goal">
           <div class="orbit-art" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b><b></b><b></b></div>
           <div class="goal-content">
-            <div class="goal-label"><span class="target-mark" aria-hidden="true"></span> Meta coletiva</div>
-            <div class="goal-number">R$ 22.455</div>
-            <div class="goal-note">Entrada do grupo na mentoria</div>
+            <div class="goal-header-row">
+              <div class="goal-label"><span class="target-mark" aria-hidden="true"></span> Meta coletiva</div>
+              <div class="course-plan-switch" id="course-plan-switch" role="group" aria-label="Modalidade do curso">
+                <button type="button" class="plan-toggle-btn active" data-plan="6m" title="Definir modalidade padrão de 6 meses (R$ 1.497/membro)">6 meses (R$ 1.497)</button>
+                <button type="button" class="plan-toggle-btn" data-plan="1y" title="Definir modalidade padrão de 1 ano (R$ 2.997/membro)">1 ano (R$ 2.997)</button>
+              </div>
+            </div>
+            <div class="goal-number" id="goal-target">R$ 0,00</div>
+            <div class="goal-note" id="goal-note">Calculada por participante confirmado (R$ 1.497 em 6m ou R$ 2.997 em 1 ano)</div>
             <div class="leader"><span id="goal-total">R$ 0,00 recebidos</span><strong id="goal-percent">0%</strong></div>
             <progress id="goal-progress" value="0" max="100" aria-label="Progresso da meta coletiva"></progress>
           </div>
@@ -64,8 +70,8 @@
 
         <div class="metrics">
           <article class="metric"><div class="metric-label"><span class="metric-icon" aria-hidden="true">↙</span> Recebido</div><strong id="received">R$ 0,00</strong><small>Pagamentos até 30 de novembro</small></article>
-          <article class="metric"><div class="metric-label"><span class="metric-icon amber" aria-hidden="true">◔</span> Falta para a meta</div><strong id="remaining">R$ 22.455,00</strong><small id="closed-note">R$ 0,00 fechados a receber até o prazo</small></article>
-          <article class="metric"><div class="metric-label"><span class="metric-icon blue" aria-hidden="true">↗</span> Ritmo necessário</div><strong id="pace">R$ 1.247,50/dia</strong><small id="pace-note">Inclui hoje e o dia 30</small></article>
+          <article class="metric"><div class="metric-label"><span class="metric-icon amber" aria-hidden="true">◔</span> Falta para a meta</div><strong id="remaining">R$ 0,00</strong><small id="closed-note">R$ 0,00 fechados a receber até o prazo</small></article>
+          <article class="metric"><div class="metric-label"><span class="metric-icon blue" aria-hidden="true">↗</span> Ritmo necessário</div><strong id="pace">—</strong><small id="pace-note">Calculado com base na meta</small></article>
         </div>
 
         <div class="overview-grid">
@@ -124,9 +130,9 @@
           </form>
           <section class="card roomy projection" aria-labelledby="projection-heading">
             <h2 id="projection-heading">Projeção</h2>
-            <p class="projection-balance">Falta para a meta coletiva <strong id="projection-balance">R$ 22.455,00</strong></p>
+            <p class="projection-balance">Falta para a meta coletiva <strong id="projection-balance">R$ 0,00</strong></p>
             <div class="projection-value"><span>Líquido estimado até 30 de novembro</span><strong id="estimate">R$ 0,00</strong></div>
-            <dl><div><dt>Faturamento bruto total</dt><dd id="gross">R$ 0,00</dd></div><div><dt>Líquido total</dt><dd id="net-total">R$ 0,00</dd></div><div><dt>Vendas planejadas</dt><dd id="planned-sales">—</dd></div><div><dt>Cobertura do saldo</dt><dd id="coverage">—</dd></div><div><dt>Saldo após o cenário</dt><dd id="projected-balance">R$ 22.455,00</dd></div></dl>
+            <dl><div><dt>Faturamento bruto total</dt><dd id="gross">R$ 0,00</dd></div><div><dt>Líquido total</dt><dd id="net-total">R$ 0,00</dd></div><div><dt>Vendas planejadas</dt><dd id="planned-sales">—</dd></div><div><dt>Cobertura do saldo</dt><dd id="coverage">—</dd></div><div><dt>Saldo após o cenário</dt><dd id="projected-balance">R$ 0,00</dd></div></dl>
             <p class="inline-note">Cada item é projetado a partir de hoje. O valor entra na meta quando o prazo inteiro cabe até 30 de novembro.</p>
             <p class="projection-note" id="projection-note" aria-live="polite"></p>
           </section>

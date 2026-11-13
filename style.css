@@ -61,6 +61,14 @@ main { max-width:1470px; padding:36px 36px 54px; margin:auto; }
 .goal { min-height:258px; position:relative; overflow:hidden; isolation:isolate; padding:26px 29px 25px; border-radius:15px; background:#17382d; color:#f8fff2; }
 .goal-content { position:relative; z-index:1; width:min(64%,630px); }
 .goal-label { display:flex; align-items:center; gap:9px; color:#e3eedc; font-size:14px; font-weight:700; }
+.goal-header-row { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
+.course-plan-switch { display:inline-flex; align-items:center; background:#122f25; border:1px solid #3c614f; border-radius:30px; padding:2px; gap:2px; }
+.plan-toggle-btn { background:transparent; border:0; color:#b5cfbe; border-radius:20px; padding:4px 10px; font-size:11px; font-weight:700; cursor:pointer; transition:all .15s ease; white-space:nowrap; }
+.plan-toggle-btn:hover { color:#fff; }
+.plan-toggle-btn.active { background:var(--lime); color:#133324; box-shadow:0 1px 3px rgba(0,0,0,.25); }
+.member-plan-select { background:#fff; border:1px solid #c9d8c4; border-radius:6px; font-size:11px; font-weight:700; color:#224634; padding:2px 6px; cursor:pointer; }
+.member-plan-select:focus { outline:none; border-color:var(--green); }
+.pill.plan-pill { background:#e8f4e5; color:#1c5236; font-size:11px; font-weight:700; }
 .target-mark { width:15px; height:15px; border:1px solid var(--lime); border-radius:50%; background:radial-gradient(circle,var(--lime) 0 2px, transparent 2.5px); }
 .goal-number { margin:5px 0 0; color:var(--lime); font-size:clamp(48px,6.5vw,80px); font-weight:800; letter-spacing:-.085em; line-height:1.08; white-space:nowrap; }
 .goal-note { color:#cad9cb; font-size:14px; margin-top:5px; }
@@ -226,6 +234,8 @@ dialog::backdrop { background:#152b21a0; }
   .goal { padding:17px; min-height:207px; }
   .goal-content { width:100%; } .goal-countdown { top:13px; right:13px; width:78px; padding:6px 4px; }
   .goal-countdown strong { font-size:20px; } .goal-countdown span { font-size:9px; }
+  .course-plan-switch { margin-top:6px; width:100%; }
+  .plan-toggle-btn { flex:1; text-align:center; padding:5px 6px; font-size:10px; }
   .goal-number { margin-top:15px; } .leader { margin-top:22px; }
   .orbit-art { opacity:.55; } .orbit-art i { width:76%; right:-25%; }
   .metrics { gap:6px; } .metric { padding:9px 6px; } .metric-label { gap:3px; font-size:10px; }

@@ -232,6 +232,38 @@ async function updatePendingBadge() {
 
 let currentMembers = [];
 
+function getTeamTarget() {
+  const defaultPlan = data?.default_plan || DEFAULT_PLAN;
+  const memberPlans = data?.member_plans || {};
+  return calculateTeamTarget(currentMembers, defaultPlan, memberPlans);
+}
+
+function formatGoalNote(target, members, defaultPlan, memberPlans) {
+  const count = members?.length || 0;
+  if (!count) {
+    return "Meta calculada por participante: R$ 1.497,00 (6 meses) ou R$ 2.997,00 (1 ano). Nenhum participante confirmado ainda.";
+  }
+  const planDefault = COURSE_PLANS[defaultPlan] ? defaultPlan : DEFAULT_PLAN;
+  const plans = memberPlans || {};
+  let count6m = 0;
+  let count1y = 0;
+  for (const m of members) {
+    const rawId = typeof m === "object" ? (m.email || m.user_id || "") : m;
+    const id = String(rawId || "").trim().toLowerCase();
+    const explicitPlan = (id && plans[id]) || (typeof m === "object" && m.plan);
+    const key = COURSE_PLANS[explicitPlan] ? explicitPlan : planDefault;
+    if (key === "1y") count1y += 1;
+    else count6m += 1;
+  }
+  if (count6m && count1y) {
+    return `${decimal.format(count)} participantes · ${count6m} no plano 6 meses (R$ 1.497) e ${count1y} no plano 1 ano (R$ 2.997)`;
+  }
+  if (count1y) {
+    return `${decimal.format(count)} participantes confirmados no plano de 1 ano (${money(299700)} por pessoa)`;
+  }
+  return `${decimal.format(count)} participantes confirmados no plano de 6 meses (${money(149700)} por pessoa)`;
+}
+
 function renderConfirmedMembers(members) {
   currentMembers = members || [];
   const count = currentMembers.length;
@@ -248,14 +280,27 @@ function renderConfirmedMembers(members) {
 
   const user = currentSessionUser();
   const currentEmail = user?.email?.toLowerCase();
+  const defaultPlan = data?.default_plan || DEFAULT_PLAN;
+  const memberPlans = data?.member_plans || {};
 
   container.innerHTML = currentMembers.map((member) => {
     const rawName = member.email || "Participante";
+    const memberId = (member.email || member.user_id || rawName).trim().toLowerCase();
+    const explicitPlan = memberPlans[memberId] || member.plan;
+    const currentMemberPlan = COURSE_PLANS[explicitPlan] ? explicitPlan : defaultPlan;
     const initial = rawName.trim().charAt(0).toUpperCase() || "?";
     const dateText = member.joined_at ? new Date(member.joined_at).toLocaleDateString("pt-BR") : "";
     const isYou = currentEmail && member.email && member.email.toLowerCase() === currentEmail;
     const youBadge = isYou ? `<span class="pill you-pill">Você</span>` : "";
     const adminBadge = member.is_admin ? `<span class="pill admin-pill">Admin</span>` : "";
+
+    const planSelector = `
+      <select class="member-plan-select" data-member-id="${esc(memberId)}" aria-label="Plano de curso de ${esc(rawName)}" title="Modalidade do curso">
+        <option value="6m"${currentMemberPlan === "6m" ? " selected" : ""}>6 meses · R$ 1.497</option>
+        <option value="1y"${currentMemberPlan === "1y" ? " selected" : ""}>1 ano · R$ 2.997</option>
+      </select>
+    `;
+
     return `<article class="confirmed-member-item${isYou ? " is-current-user" : ""}">
       <div class="confirmed-member-info">
         <span class="confirmed-member-avatar" aria-hidden="true">${esc(initial)}</span>
@@ -267,6 +312,7 @@ function renderConfirmedMembers(members) {
       <div class="confirmed-member-badges">
         ${youBadge}
         ${adminBadge}
+        ${planSelector}
         <span class="pill recebido">Confirmado</span>
       </div>
     </article>`;
@@ -315,7 +361,15 @@ async function refreshConfirmedMembers() {
     }
   }
 
+  currentMembers = list;
   renderConfirmedMembers(list);
+  const target = getTeamTarget();
+  const defaultPlan = data?.default_plan || DEFAULT_PLAN;
+  const memberPlans = data?.member_plans || {};
+  const targetEl = $("#goal-target");
+  if (targetEl) targetEl.textContent = money(target);
+  const noteEl = $("#goal-note");
+  if (noteEl) noteEl.textContent = formatGoalNote(target, currentMembers, defaultPlan, memberPlans);
 }
 
 function disconnect() {
@@ -328,9 +382,9 @@ function disconnect() {
   if (saleDialog.open) saleDialog.close();
   if (accessDialog.open) accessDialog.close();
   fillScenario();
+  currentMembers = [];
   render();
   renderAccess();
-  currentMembers = [];
   refreshConfirmedMembers();
 }
 
@@ -388,9 +442,24 @@ function route() {
 
 function render() {
   const { received, pipeline, late } = stats(data);
-  const remaining = Math.max(0, TEAM_TARGET - received);
+  const target = getTeamTarget();
+  const remaining = Math.max(0, target - received);
   const days = countDays(todayAt(), DEADLINE);
-  const percentage = received / TEAM_TARGET * 100;
+  const percentage = target > 0 ? (received / target * 100) : 0;
+  const defaultPlan = data?.default_plan || DEFAULT_PLAN;
+  const memberPlans = data?.member_plans || {};
+
+  const targetEl = $("#goal-target");
+  if (targetEl) targetEl.textContent = money(target);
+  const noteEl = $("#goal-note");
+  if (noteEl) noteEl.textContent = formatGoalNote(target, currentMembers, defaultPlan, memberPlans);
+
+  for (const btn of document.querySelectorAll("#course-plan-switch [data-plan]")) {
+    const isCurrent = btn.dataset.plan === defaultPlan;
+    btn.classList.toggle("active", isCurrent);
+    btn.setAttribute("aria-pressed", String(isCurrent));
+  }
+
   $("#goal-progress").value = Math.min(100, percentage);
   $("#goal-percent").textContent = decimal.format(percentage) + "%";
   $("#goal-total").textContent = money(received) + " recebidos";
@@ -399,8 +468,8 @@ function render() {
   $("#received").textContent = money(received);
   $("#remaining").textContent = money(remaining);
   $("#closed-note").textContent = money(pipeline) + " fechados a receber até o prazo";
-  $("#pace").textContent = days ? money(Math.ceil(remaining / days)) + "/dia" : "—";
-  $("#pace-note").textContent = days ? "Inclui hoje e o dia 30" : "Prazo encerrado em 30/11";
+  $("#pace").textContent = target > 0 && days ? money(Math.ceil(remaining / days)) + "/dia" : "—";
+  $("#pace-note").textContent = target > 0 ? (days ? "Inclui hoje e o dia 30" : "Prazo encerrado em 30/11") : "Defina participantes para calcular o ritmo";
   $("#late-note").hidden = !late;
   $("#late-note").textContent = money(late) + " recebidos após o prazo.";
   renderSales();
@@ -458,7 +527,10 @@ function readScenario() {
 }
 
 function renderProjection() {
-  const remaining = Math.max(0, TEAM_TARGET - stats(data).received);
+  const target = getTeamTarget();
+  const effectiveTarget = target > 0 ? target : COURSE_PLANS[data?.default_plan || DEFAULT_PLAN].price;
+  const isHypothetical = target === 0;
+  const remaining = Math.max(0, (target > 0 ? target : effectiveTarget) - stats(data).received);
   const offers = Array.from(itemList.children, (row) => {
     const item = readOffer(row);
     const valid = !!item.title && [...row.querySelectorAll('input[type="number"]')].every((input) => input.validity.valid);
@@ -480,30 +552,44 @@ function renderProjection() {
     result.textContent = money(line.net) + " líquidos · " + decimal.format(line.perDay)
       + " vendas/dia · " + (line.within ? "Dentro do prazo" : "Após o prazo");
   }
-  $("#projection-balance").textContent = money(remaining);
+  $("#projection-balance").textContent = money(target > 0 ? remaining : 0);
   $("#estimate").textContent = money(byDeadline);
   $("#gross").textContent = money(gross);
   $("#net-total").textContent = money(net);
   $("#planned-sales").textContent = decimal.format(quantity);
   $("#coverage").textContent = remaining && included.length ? decimal.format(coverage) + "%" : "—";
-  $("#projected-balance").textContent = money(Math.max(0, remaining - byDeadline));
+  $("#projected-balance").textContent = money(Math.max(0, (target > 0 ? remaining : 0) - byDeadline));
   const note = $("#projection-note");
   const partial = included.length !== offers.length;
   note.classList.toggle("warning", lateItems > 0 || partial);
-  if (!offers.length) note.textContent = "Adicione um serviço ou infoproduto para simular.";
-  else if (partial) note.textContent = "Projeção parcial. Complete os campos dos demais itens.";
-  else if (lateItems === 1) note.textContent = "Um item ultrapassa o prazo.";
-  else if (lateItems > 1) note.textContent = lateItems + " itens ultrapassam o prazo.";
-  else if (!remaining) note.textContent = "A meta coletiva já foi atingida.";
-  else if (remaining <= byDeadline) note.textContent = "O cenário cobre o saldo da meta coletiva.";
-  else note.textContent = "";
+  if (!offers.length) {
+    note.textContent = isHypothetical
+      ? "Adicione um serviço ou infoproduto para simular (referência: " + money(effectiveTarget) + " para 1 participante)."
+      : "Adicione um serviço ou infoproduto para simular.";
+  } else if (partial) {
+    note.textContent = "Projeção parcial. Complete os campos dos demais itens.";
+  } else if (lateItems === 1) {
+    note.textContent = "Um item ultrapassa o prazo.";
+  } else if (lateItems > 1) {
+    note.textContent = lateItems + " itens ultrapassam o prazo.";
+  } else if (isHypothetical) {
+    note.textContent = "Simulação sobre 1 participante (" + money(effectiveTarget) + "). A meta real será calculada pelos membros confirmados.";
+  } else if (!remaining) {
+    note.textContent = "A meta coletiva já foi atingida.";
+  } else if (remaining <= byDeadline) {
+    note.textContent = "O cenário cobre o saldo da meta coletiva.";
+  } else {
+    note.textContent = "";
+  }
 }
 
 function renderScenarios() {
   const today = todayAt();
+  const target = getTeamTarget();
+  const baselineTarget = target > 0 ? target : COURSE_PLANS[data?.default_plan || DEFAULT_PLAN].price;
   $("#saved-scenarios").innerHTML = data.scenarios.length ? data.scenarios.map((scenario) => {
     const items = scenarioItems(scenario);
-    const { byDeadline, quantity, lateItems } = projectScenario(items, TEAM_TARGET, today);
+    const { byDeadline, quantity, lateItems } = projectScenario(items, baselineTarget, today);
     const details = items.map((item) => item.quantity + " × " + item.title).join(" · ");
     return `<article class="scenario-line"><div><strong>${esc(scenario.title)}</strong><small>${esc(details)}</small><small>${quantity} vendas planejadas${lateItems ? " · Inclui itens após o prazo" : ""}</small></div><div><strong>${money(byDeadline)}</strong><small>Líquido até o prazo</small></div><div class="scenario-actions"><button class="text-link" type="button" data-action="edit-scenario" data-id="${esc(scenario.id)}">Editar</button><button class="text-link danger" type="button" data-action="delete-scenario" data-id="${esc(scenario.id)}">Excluir</button></div></article>`;
   }).join("") : empty("Nenhum cenário salvo.");
@@ -941,6 +1027,48 @@ simForm.addEventListener("change", (event) => {
   renderProjection();
 });
 field(saleForm, "status").addEventListener("change", dateLabel);
+
+$("#course-plan-switch")?.addEventListener("click", async (event) => {
+  const btn = event.target.closest("[data-plan]");
+  if (!btn) return;
+  const newPlan = btn.dataset.plan;
+  if (!COURSE_PLANS[newPlan] || newPlan === data?.default_plan) return;
+  if (!session) {
+    data.default_plan = newPlan;
+    render();
+    return;
+  }
+  try {
+    await save((next) => {
+      next.default_plan = newPlan;
+    });
+  } catch (error) {
+    notice(error.message, true);
+  }
+});
+
+$("#confirmed-members-list")?.addEventListener("change", async (event) => {
+  const select = event.target.closest(".member-plan-select");
+  if (!select) return;
+  const memberId = select.dataset.memberId;
+  const plan = select.value;
+  if (!memberId || !COURSE_PLANS[plan]) return;
+  if (!session) {
+    if (!data.member_plans) data.member_plans = {};
+    data.member_plans[memberId] = plan;
+    render();
+    return;
+  }
+  try {
+    await save((next) => {
+      if (!next.member_plans) next.member_plans = {};
+      next.member_plans[memberId] = plan;
+    });
+  } catch (error) {
+    notice(error.message, true);
+    renderConfirmedMembers(currentMembers);
+  }
+});
 window.addEventListener("hashchange", route);
 window.addEventListener("storage", async (event) => {
   if (shared || event.key !== storageKey || busy || saleDialog.open || editingScenario) return;

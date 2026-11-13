@@ -1,6 +1,9 @@
 # Mutirão da Mentoria
 
-O painel acompanha a meta coletiva de R$ 22.455 até 30 de novembro de 2026 para garantir a entrada dos participantes confirmados na mentoria.
+O painel acompanha a meta coletiva do grupo até 30 de novembro de 2026 para garantir a entrada dos participantes confirmados na mentoria:
+- **R$ 1.497,00** por usuário registrado para **6 meses de curso**.
+- **R$ 2.997,00** por usuário registrado para **1 ano de curso**.
+A meta e o ritmo diário são calculados dinamicamente conforme os participantes entram e escolhem sua modalidade.
 
 ## Abrir localmente
 
