@@ -273,8 +273,8 @@ async function removeMember(userId) {
   });
 }
 
-async function countParticipants() {
-  return supabaseRequest("/rest/v1/rpc/mutirao_mentoria_team_count");
+async function loadPublicDashboardSummary() {
+  return supabaseRequest("/rest/v1/rpc/mutirao_mentoria_dashboard_summary");
 }
 
 async function signOut() {

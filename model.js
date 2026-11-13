@@ -17,23 +17,19 @@ function countDays(from, through) {
   return Math.max(0, Math.round((Date.parse(through) - Date.parse(from)) / DAY) + 1);
 }
 
-function calculateTeamTarget(members = [], defaultPlan = DEFAULT_PLAN, memberPlans = {}) {
+function countMemberPlans(members = [], defaultPlan = DEFAULT_PLAN, memberPlans = {}) {
   const planDefault = COURSE_PLANS[defaultPlan] ? defaultPlan : DEFAULT_PLAN;
   const plans = memberPlans && typeof memberPlans === "object" ? memberPlans : {};
 
-  if (!Array.isArray(members) || members.length === 0) {
-    return 0;
-  }
-
-  let total = 0;
+  const counts = { "6m": 0, "1y": 0 };
   for (const member of members) {
     const rawId = typeof member === "object" ? (member.email || member.user_id || "") : member;
     const id = String(rawId || "").trim().toLowerCase();
     const explicitPlan = (id && plans[id]) || (typeof member === "object" && member.plan);
     const resolvedKey = COURSE_PLANS[explicitPlan] ? explicitPlan : planDefault;
-    total += COURSE_PLANS[resolvedKey].price;
+    counts[resolvedKey] += 1;
   }
-  return total;
+  return counts;
 }
 
 function initialState() {

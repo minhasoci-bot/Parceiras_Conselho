@@ -209,11 +209,6 @@ function renderAccess() {
   }
 
   $("#manage-access").hidden = !isAdmin || !ready;
-  const adminAction = $("#admin-action");
-  if (adminAction) adminAction.hidden = !isAdmin || !ready;
-
-  $("#storage-label").textContent = ready ? (isLoggedIn ? "Conectado (" + (user?.email || "") + ")" : "Dados compartilhados") :
-    accessRole === "pending" ? "Aguardando aprovação" : "Aguardando acesso";
 
   if (isAdmin && ready) {
     updatePendingBadge();
@@ -225,7 +220,7 @@ async function updatePendingBadge() {
   try {
     const requests = await listAccessRequests();
     const count = requests.length;
-    for (const badgeId of ["overview-pending-badge", "header-pending-badge", "tab-pending-badge"]) {
+    for (const badgeId of ["overview-pending-badge", "tab-pending-badge"]) {
       const el = document.getElementById(badgeId);
       if (el) {
         el.textContent = count;
@@ -238,48 +233,43 @@ async function updatePendingBadge() {
 }
 
 let currentMembers = [];
-let publicParticipantCount = 0;
+let publicSummary;
+let publicSummaryUnavailable = false;
 let membersRefresh = 0;
 
-function getTeamTarget() {
-  const defaultPlan = data?.default_plan || DEFAULT_PLAN;
-  const memberPlans = data?.member_plans || {};
-  return calculateTeamTarget(currentMembers, defaultPlan, memberPlans);
+function getPlanCounts() {
+  if (shared && !ready) return publicSummary?.plans ?? { "6m": 0, "1y": 0 };
+  return countMemberPlans(currentMembers, data.default_plan, data.member_plans);
 }
 
-function formatGoalNote(target, members, defaultPlan, memberPlans) {
-  const count = members?.length || 0;
+function getTeamTarget() {
+  const plans = getPlanCounts();
+  return plans["6m"] * COURSE_PLANS["6m"].price + plans["1y"] * COURSE_PLANS["1y"].price;
+}
+
+function getDashboardStats() {
+  return shared && !ready && publicSummary ? publicSummary : stats(data);
+}
+
+function formatGoalNote(plans) {
+  const { "6m": count6m, "1y": count1y } = plans;
+  const count = count6m + count1y;
   if (!count) {
-    if (publicParticipantCount && shared && !ready) {
-      return "Entre com uma conta aprovada para ver a meta atual do mutirão.";
-    }
     return "Meta calculada por participante: R$ 1.497,00 (6 meses) ou R$ 2.997,00 (1 ano). Nenhum participante confirmado ainda.";
-  }
-  const planDefault = COURSE_PLANS[defaultPlan] ? defaultPlan : DEFAULT_PLAN;
-  const plans = memberPlans || {};
-  let count6m = 0;
-  let count1y = 0;
-  for (const m of members) {
-    const rawId = typeof m === "object" ? (m.email || m.user_id || "") : m;
-    const id = String(rawId || "").trim().toLowerCase();
-    const explicitPlan = (id && plans[id]) || (typeof m === "object" && m.plan);
-    const key = COURSE_PLANS[explicitPlan] ? explicitPlan : planDefault;
-    if (key === "1y") count1y += 1;
-    else count6m += 1;
   }
   if (count6m && count1y) {
     return `${decimal.format(count)} participantes · ${count6m} no plano 6 meses (R$ 1.497) e ${count1y} no plano 1 ano (R$ 2.997)`;
   }
   if (count1y) {
-    return `${decimal.format(count)} participantes confirmados no plano de 1 ano (${money(299700)} por pessoa)`;
+    return `${decimal.format(count)} ${count === 1 ? "participante confirmado" : "participantes confirmados"} no plano de 1 ano (${money(299700)} por pessoa)`;
   }
-  return `${decimal.format(count)} participantes confirmados no plano de 6 meses (${money(149700)} por pessoa)`;
+  return `${decimal.format(count)} ${count === 1 ? "participante confirmado" : "participantes confirmados"} no plano de 6 meses (${money(149700)} por pessoa)`;
 }
 
 function renderConfirmedMembers(members) {
   const hasMemberAccess = !shared || ready;
-  const count = hasMemberAccess ? members.length : publicParticipantCount;
-  $("#participant-count").textContent = decimal.format(count);
+  const count = hasMemberAccess ? members.length : (publicSummary ? publicSummary.plans["6m"] + publicSummary.plans["1y"] : null);
+  $("#participant-count").textContent = count === null ? "—" : decimal.format(count);
   $("#participant-label").textContent = count === 1 ? "participante confirmado" : "participantes confirmados";
 
   const container = $("#confirmed-members-list");
@@ -296,26 +286,15 @@ function renderConfirmedMembers(members) {
 
   const user = currentSessionUser();
   const currentEmail = user?.email?.toLowerCase();
-  const defaultPlan = data?.default_plan || DEFAULT_PLAN;
-  const memberPlans = data?.member_plans || {};
 
   container.innerHTML = currentMembers.map((member) => {
     const rawName = member.email || "Participante";
-    const memberId = (member.email || member.user_id || rawName).trim().toLowerCase();
-    const explicitPlan = memberPlans[memberId] || member.plan;
-    const currentMemberPlan = COURSE_PLANS[explicitPlan] ? explicitPlan : defaultPlan;
     const initial = rawName.trim().charAt(0).toUpperCase() || "?";
     const dateText = member.joined_at ? new Date(member.joined_at).toLocaleDateString("pt-BR") : "";
     const isYou = currentEmail && member.email && member.email.toLowerCase() === currentEmail;
     const youBadge = isYou ? `<span class="pill you-pill">Você</span>` : "";
     const adminBadge = member.is_admin ? `<span class="pill admin-pill">Admin</span>` : "";
 
-    const planSelector = `
-      <select class="member-plan-select" data-member-id="${esc(memberId)}" aria-label="Plano de curso de ${esc(rawName)}" title="Modalidade do curso">
-        <option value="6m"${currentMemberPlan === "6m" ? " selected" : ""}>6 meses · R$ 1.497</option>
-        <option value="1y"${currentMemberPlan === "1y" ? " selected" : ""}>1 ano · R$ 2.997</option>
-      </select>
-    `;
 
     return `<article class="confirmed-member-item${isYou ? " is-current-user" : ""}">
       <div class="confirmed-member-info">
@@ -328,7 +307,6 @@ function renderConfirmedMembers(members) {
       <div class="confirmed-member-badges">
         ${youBadge}
         ${adminBadge}
-        ${planSelector}
         <span class="pill recebido">Confirmado</span>
       </div>
     </article>`;
@@ -345,16 +323,19 @@ async function refreshConfirmedMembers() {
       if (request !== membersRefresh || !ready) return;
       const membersChanged = JSON.stringify(list) !== JSON.stringify(currentMembers);
       currentMembers = list;
-      publicParticipantCount = list.length;
       if (activeView === "equipe" && membersChanged) renderMembersList();
     } else {
-      const count = await countParticipants();
+      const summary = await loadPublicDashboardSummary();
       if (request !== membersRefresh || ready) return;
-      publicParticipantCount = count;
+      publicSummary = summary;
+      publicSummaryUnavailable = false;
     }
     render();
   } catch {
-    // Mantém a última contagem em caso de falha de rede.
+    if (request === membersRefresh && shared && !ready && !publicSummary) {
+      publicSummaryUnavailable = true;
+      render();
+    }
   }
 }
 
@@ -441,41 +422,48 @@ function route() {
 }
 
 function render() {
-  const { received, pipeline, late } = stats(data);
+  const { received, pipeline, late } = getDashboardStats();
   const target = getTeamTarget();
+  const hasTotals = !shared || ready || !!publicSummary;
   const remaining = Math.max(0, target - received);
   const days = countDays(todayAt(), DEADLINE);
   const percentage = target > 0 ? (received / target * 100) : 0;
-  const defaultPlan = data?.default_plan || DEFAULT_PLAN;
-  const memberPlans = data?.member_plans || {};
-
-  const targetEl = $("#goal-target");
-  if (targetEl) targetEl.textContent = money(target);
-  const noteEl = $("#goal-note");
-  if (noteEl) noteEl.textContent = formatGoalNote(target, currentMembers, defaultPlan, memberPlans);
-
-  for (const btn of document.querySelectorAll("#course-plan-switch [data-plan]")) {
-    const isCurrent = btn.dataset.plan === defaultPlan;
-    btn.classList.toggle("active", isCurrent);
-    btn.setAttribute("aria-pressed", String(isCurrent));
-  }
+  $("#goal-target").textContent = hasTotals ? money(target) : "—";
+  $("#goal-note").textContent = hasTotals ? formatGoalNote(getPlanCounts())
+    : publicSummaryUnavailable ? "Não foi possível carregar a meta agora." : "Carregando meta coletiva…";
 
   $("#goal-progress").value = Math.min(100, percentage);
-  $("#goal-percent").textContent = decimal.format(percentage) + "%";
-  $("#goal-total").textContent = money(received) + " recebidos";
+  $("#goal-percent").textContent = hasTotals ? decimal.format(percentage) + "%" : "—";
+  $("#goal-total").textContent = hasTotals ? money(received) + " recebidos" : "—";
   $("#days-left").textContent = days;
   $("#days-caption").textContent = days === 1 ? "dia restante" : days ? "dias restantes" : "prazo encerrado";
-  $("#received").textContent = money(received);
-  $("#remaining").textContent = money(remaining);
-  $("#closed-note").textContent = money(pipeline) + " fechados a receber até o prazo";
+  $("#received").textContent = hasTotals ? money(received) : "—";
+  $("#remaining").textContent = hasTotals ? money(remaining) : "—";
+  $("#closed-note").textContent = hasTotals ? money(pipeline) + " fechados a receber até o prazo" : "";
   $("#pace").textContent = target > 0 && days ? money(Math.ceil(remaining / days)) + "/dia" : "—";
-  $("#pace-note").textContent = target > 0 ? (days ? "Inclui hoje e o dia 30" : "Prazo encerrado em 30/11") : "Defina participantes para calcular o ritmo";
+  $("#pace-note").textContent = target > 0 ? (days ? "Inclui hoje e o dia 30" : "Prazo encerrado em 30/11") : "Calculado com base na meta";
   $("#late-note").hidden = !late;
   $("#late-note").textContent = money(late) + " recebidos após o prazo.";
   renderSales();
   renderScenarios();
   renderProjection();
   renderConfirmedMembers(currentMembers);
+}
+
+function updateHeaderCountdown() {
+  // O prazo inclui o dia 30 inteiro em São Paulo.
+  const end = Date.parse(DEADLINE + "T23:59:59.999-03:00");
+  const seconds = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+  const countdown = $("#header-countdown");
+  if (!seconds) {
+    countdown.textContent = "Prazo encerrado";
+    return;
+  }
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor(seconds / 3600) % 24;
+  const minutes = Math.floor(seconds / 60) % 60;
+  const format = (value) => String(value).padStart(2, "0");
+  countdown.textContent = `${days}d ${format(hours)}h ${format(minutes)}m ${format(seconds % 60)}s`;
 }
 
 function saleLine(sale, compact = false) {
@@ -528,9 +516,10 @@ function readScenario() {
 
 function renderProjection() {
   const target = getTeamTarget();
-  const effectiveTarget = target > 0 ? target : COURSE_PLANS[data?.default_plan || DEFAULT_PLAN].price;
+  const defaultPlan = (shared && !ready ? publicSummary?.defaultPlan : data.default_plan) || DEFAULT_PLAN;
+  const effectiveTarget = target > 0 ? target : COURSE_PLANS[defaultPlan].price;
   const isHypothetical = target === 0;
-  const remaining = Math.max(0, (target > 0 ? target : effectiveTarget) - stats(data).received);
+  const remaining = Math.max(0, effectiveTarget - getDashboardStats().received);
   const offers = Array.from(itemList.children, (row) => {
     const item = readOffer(row);
     const valid = !!item.title && [...row.querySelectorAll('input[type="number"]')].every((input) => input.validity.valid);
@@ -1125,47 +1114,6 @@ simForm.addEventListener("change", (event) => {
 });
 field(saleForm, "status").addEventListener("change", dateLabel);
 
-$("#course-plan-switch")?.addEventListener("click", async (event) => {
-  const btn = event.target.closest("[data-plan]");
-  if (!btn) return;
-  const newPlan = btn.dataset.plan;
-  if (!COURSE_PLANS[newPlan] || newPlan === data?.default_plan) return;
-  if (!session) {
-    data.default_plan = newPlan;
-    render();
-    return;
-  }
-  try {
-    await save((next) => {
-      next.default_plan = newPlan;
-    });
-  } catch (error) {
-    notice(error.message, true);
-  }
-});
-
-$("#confirmed-members-list")?.addEventListener("change", async (event) => {
-  const select = event.target.closest(".member-plan-select");
-  if (!select) return;
-  const memberId = select.dataset.memberId;
-  const plan = select.value;
-  if (!memberId || !COURSE_PLANS[plan]) return;
-  if (!session) {
-    if (!data.member_plans) data.member_plans = {};
-    data.member_plans[memberId] = plan;
-    render();
-    return;
-  }
-  try {
-    await save((next) => {
-      if (!next.member_plans) next.member_plans = {};
-      next.member_plans[memberId] = plan;
-    });
-  } catch (error) {
-    notice(error.message, true);
-    renderConfirmedMembers(currentMembers);
-  }
-});
 window.addEventListener("hashchange", route);
 window.addEventListener("storage", async (event) => {
   if (shared || event.key !== storageKey || busy || saleDialog.open || editingScenario) return;
@@ -1208,9 +1156,10 @@ route();
 renderCatalog();
 updateItems();
 render();
+updateHeaderCountdown();
+setInterval(updateHeaderCountdown, 1000);
 if (shared) {
   $("#auth-action").hidden = false;
-  $("#storage-label").textContent = "Aguardando acesso";
   initializeSharedAccess();
   refreshConfirmedMembers();
 } else {
@@ -1218,7 +1167,6 @@ if (shared) {
     render();
     refreshConfirmedMembers();
   }).catch((error) => {
-    $("#storage-label").textContent = "Dados indisponíveis";
     notice(error.message, true);
   });
 }

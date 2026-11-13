@@ -20,14 +20,12 @@
       <a href="#servicos"><i class="icon catalog-icon" aria-hidden="true"></i> Catálogo</a>
       <a href="#simulador"><i class="icon sim-icon" aria-hidden="true"></i> Simulador</a>
     </nav>
-    <div class="rail-bottom"><span class="pulse" aria-hidden="true"></span><span id="storage-label">Salvo neste navegador</span></div>
   </aside>
 
   <div class="workspace">
     <header class="masthead">
       <span id="breadcrumb">Visão geral</span>
       <div class="top-actions">
-        <a class="button" href="#equipe" id="admin-action" hidden><i class="icon people-icon" aria-hidden="true"></i> Equipe <span class="badge" id="header-pending-badge" hidden>0</span></a>
         <div class="user-badge" id="user-badge" hidden>
           <span class="user-avatar" id="user-avatar" aria-hidden="true">U</span>
           <div class="user-info">
@@ -37,7 +35,7 @@
           <button class="button small auth-logout" type="button" id="auth-logout-btn" title="Encerrar sessão">Sair</button>
         </div>
         <button class="button" type="button" id="auth-action" hidden>Entrar</button>
-        <span class="date-chip"><i class="calendar-icon icon" aria-hidden="true"></i> Até 30 nov. 2026</span>
+        <span class="date-chip"><i class="calendar-icon icon" aria-hidden="true"></i><span id="header-countdown" role="timer" aria-label="Tempo restante para a meta">—</span></span>
         <button class="button primary" type="button" data-action="new-sale" data-sales-access hidden><span aria-hidden="true">＋</span> Registrar venda</button>
       </div>
     </header>
@@ -54,24 +52,18 @@
         <div class="goal">
           <div class="orbit-art" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b><b></b><b></b></div>
           <div class="goal-content">
-            <div class="goal-header-row">
-              <div class="goal-label"><span class="target-mark" aria-hidden="true"></span> Meta coletiva</div>
-              <div class="course-plan-switch" id="course-plan-switch" role="group" aria-label="Modalidade do curso">
-                <button type="button" class="plan-toggle-btn active" data-plan="6m" title="Definir modalidade padrão de 6 meses (R$ 1.497/membro)">6 meses (R$ 1.497)</button>
-                <button type="button" class="plan-toggle-btn" data-plan="1y" title="Definir modalidade padrão de 1 ano (R$ 2.997/membro)">1 ano (R$ 2.997)</button>
-              </div>
-            </div>
-            <div class="goal-number" id="goal-target">R$ 0,00</div>
-            <div class="goal-note" id="goal-note">Calculada por participante confirmado (R$ 1.497 em 6m ou R$ 2.997 em 1 ano)</div>
-            <div class="leader"><span id="goal-total">R$ 0,00 recebidos</span><strong id="goal-percent">0%</strong></div>
+            <div class="goal-label"><span class="target-mark" aria-hidden="true"></span> Meta coletiva</div>
+            <div class="goal-number" id="goal-target">—</div>
+            <div class="goal-note" id="goal-note">Carregando meta coletiva…</div>
+            <div class="leader"><span id="goal-total">—</span><strong id="goal-percent">—</strong></div>
             <progress id="goal-progress" value="0" max="100" aria-label="Progresso da meta coletiva"></progress>
           </div>
           <div class="goal-countdown"><strong id="days-left">18</strong><span id="days-caption">dias restantes</span></div>
         </div>
 
         <div class="metrics">
-          <article class="metric"><div class="metric-label"><span class="metric-icon" aria-hidden="true">↙</span> Recebido</div><strong id="received">R$ 0,00</strong><small>Pagamentos até 30 de novembro</small></article>
-          <article class="metric"><div class="metric-label"><span class="metric-icon amber" aria-hidden="true">◔</span> Falta para a meta</div><strong id="remaining">R$ 0,00</strong><small id="closed-note">R$ 0,00 fechados a receber até o prazo</small></article>
+          <article class="metric"><div class="metric-label"><span class="metric-icon" aria-hidden="true">↙</span> Recebido</div><strong id="received">—</strong><small>Pagamentos até 30 de novembro</small></article>
+          <article class="metric"><div class="metric-label"><span class="metric-icon amber" aria-hidden="true">◔</span> Falta para a meta</div><strong id="remaining">—</strong><small id="closed-note"></small></article>
           <article class="metric"><div class="metric-label"><span class="metric-icon blue" aria-hidden="true">↗</span> Ritmo necessário</div><strong id="pace">—</strong><small id="pace-note">Calculado com base na meta</small></article>
         </div>
 
@@ -89,8 +81,8 @@
             <p class="team-count"><strong id="participant-count">0</strong> <span id="participant-label">participantes confirmados</span></p>
             <div id="confirmed-members-list" class="confirmed-members-list" aria-live="polite"></div>
           </section>
-          <section class="card overview-card">
-            <div class="section-header"><div><h2>Vendas recentes</h2><p>Propostas, contratos e recebimentos.</p></div><button class="text-link" data-action="new-sale" type="button" data-sales-access hidden>Adicionar <span aria-hidden="true">＋</span></button></div>
+          <section class="card overview-card" data-sales-access hidden>
+            <div class="section-header"><div><h2>Vendas recentes</h2><p>Propostas, contratos e recebimentos.</p></div><button class="text-link" data-action="new-sale" type="button">Adicionar <span aria-hidden="true">＋</span></button></div>
             <div id="recent-sales"></div>
           </section>
         </div>

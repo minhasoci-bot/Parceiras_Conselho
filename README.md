@@ -30,7 +30,7 @@ O sistema possui cadastro e login com e-mail e senha integrados ao Supabase, com
 
 2. **Aprovação pelo Administrador**:
    - O administrador faz login com sua conta autorizada.
-   - No topo e no card **Equipe do mutirão**, surgirá o botão com o contador de solicitações pendentes (ex.: **Equipe (2)**).
+   - No card **Equipe do mutirão**, o botão **Solicitações** mostra o contador de acessos pendentes.
    - Na página **Equipe**, disponível também no menu lateral, o administrador pode:
      - Conferir por um canal conhecido que a solicitação é da pessoa esperada e clicar em **Aprovar**. O usuário entra imediatamente como participante.
      - **Recusar** uma solicitação pendente.
@@ -43,7 +43,7 @@ O sistema possui cadastro e login com e-mail e senha integrados ao Supabase, com
 
 ### 1. Aplicar o SQL
 
-Em um banco novo, execute [supabase/setup.sql](supabase/setup.sql) e depois [a migração de cargos](supabase/migrations/20261113185556_member_positions.sql) no **SQL Editor**. Em um banco já configurado com aprovação de acesso, aplique apenas a migração de cargos.
+Em um banco novo, execute [supabase/setup.sql](supabase/setup.sql), [a migração de cargos](supabase/migrations/20261113185556_member_positions.sql) e [a migração do resumo público](supabase/migrations/20261113190131_public_dashboard_summary.sql), nessa ordem, no **SQL Editor**. Em um banco já configurado, aplique as migrações que faltarem.
 
 ### 2. Definir o primeiro Administrador
 
