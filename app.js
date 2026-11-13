@@ -106,6 +106,7 @@ function setAuthMode(mode) {
   code.disabled = !checkingCode;
   $("#auth-submit").textContent = passwords ? "Entrar" : checkingCode ? "Confirmar acesso" : "Enviar e-mail";
   $("#auth-switch").textContent = passwords ? "Entrar por e-mail" : checkingCode ? "Pedir outro e-mail" : "Usar senha";
+  $("#auth-use-existing").hidden = mode !== "send";
   $("#auth-help").hidden = passwords;
   $("#auth-help").textContent = checkingCode
     ? "Abra o link no e-mail ou digite o código recebido. Você também pode colar o endereço de um link novo aqui."
@@ -417,19 +418,44 @@ simForm.addEventListener("submit", async (event) => {
 $("#auth-switch").addEventListener("click", () => {
   setAuthMode(authMode === "password" || authMode === "verify" ? "send" : "password");
 });
+function useExistingAccessCode(email) {
+  loginEmail = email;
+  setAuthMode("verify");
+  field(authForm, "code").focus();
+}
+
+$("#auth-use-existing").addEventListener("click", () => {
+  const email = field(authForm, "email");
+  if (email.reportValidity()) useExistingAccessCode(email.value.trim());
+});
+
+function authErrorMessage(error, mode) {
+  if (mode === "send" && error.code === "over_email_send_rate_limit") {
+    return "O Supabase atingiu o limite de envio de e-mails do projeto. Use um código ou link já recebido ou tente mais tarde.";
+  }
+  if (mode === "send" && error.code === "email_address_not_authorized") {
+    return "O serviço de e-mail do projeto ainda não envia links para este endereço. Use sua senha, se já tiver uma.";
+  }
+  if (error.status === 429) return "O Supabase limitou temporariamente esta solicitação. Aguarde antes de tentar novamente.";
+  if (mode === "send") return "Não foi possível enviar o e-mail. Verifique seu cadastro e tente novamente.";
+  if (!error.status || error.status === 403) return error.message;
+  if (mode === "verify") return "Código ou link inválido ou expirado.";
+  return "Não foi possível entrar. Verifique os dados da sua conta.";
+}
+
 authForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const button = event.submitter;
+  const button = $("#auth-submit");
+  if (button.disabled) return;
   button.disabled = true;
   $("#auth-switch").disabled = true;
+  $("#auth-use-existing").disabled = true;
   formError(authForm, "");
   try {
     const email = field(authForm, "email").value.trim();
     if (authMode === "send") {
       await sendAccessCode(email);
-      loginEmail = email;
-      setAuthMode("verify");
-      field(authForm, "code").focus();
+      useExistingAccessCode(email);
       return;
     }
     if (authMode === "password") await signInWithPassword(email, field(authForm, "password").value);
@@ -440,15 +466,11 @@ authForm.addEventListener("submit", async (event) => {
     notice("");
   } catch (error) {
     if (session) disconnect();
-    let message = error.message;
-    if (error.status === 429) message = "Muitas tentativas. Aguarde antes de tentar novamente.";
-    else if (error.status !== 403 && authMode === "send") message = "Não foi possível enviar o e-mail. Verifique seu cadastro e tente novamente.";
-    else if (error.status && error.status !== 403 && authMode === "verify") message = "Código ou link inválido ou expirado.";
-    else if (error.status && error.status !== 403) message = "Não foi possível entrar. Verifique os dados da sua conta.";
-    formError(authForm, message);
+    formError(authForm, authErrorMessage(error, authMode));
   } finally {
     button.disabled = false;
     $("#auth-switch").disabled = false;
+    $("#auth-use-existing").disabled = false;
   }
 });
 

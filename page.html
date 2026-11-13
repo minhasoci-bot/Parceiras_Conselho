@@ -155,7 +155,11 @@
       <label class="auth-field" hidden>Código ou link recebido por e-mail <input name="code" autocomplete="one-time-code" maxlength="3000" disabled></label>
       <p class="inline-note auth-field" id="auth-help" hidden></p>
       <p class="form-error auth-field" role="alert" hidden></p>
-      <div class="form-footer"><button class="text-link" type="button" id="auth-switch">Usar código por e-mail</button><button class="button primary" type="submit" id="auth-submit">Entrar</button></div>
+      <div class="form-footer">
+        <button class="text-link" type="button" id="auth-use-existing" hidden>Já tenho um código ou link</button>
+        <button class="text-link" type="button" id="auth-switch">Usar código por e-mail</button>
+        <button class="button primary" type="submit" id="auth-submit">Entrar</button>
+      </div>
     </form>
   </dialog>
 
