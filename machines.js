@@ -112,7 +112,6 @@
         <div class="event-card-actions" role="group" aria-label="Ações para ${esc(machine.title)}">
           <button class="button small" type="button" data-machine-manage="rename" data-id="${esc(machine.id)}">Renomear</button>
           <button class="button small" type="button" data-machine-manage="duplicate" data-id="${esc(machine.id)}">Duplicar</button>
-          <button class="button small" type="button" data-machine-manage="settings" data-id="${esc(machine.id)}">Editar status</button>
           <button class="button small danger" type="button" data-machine-manage="delete" data-id="${esc(machine.id)}">Apagar</button>
         </div>
       </article>`;
@@ -284,9 +283,9 @@
       title = "Apagar projeto";
       fields = `<p>Apagar <strong>${esc(machine.title)}</strong> e todo o seu planejamento? A exclusão é definitiva.</p>`;
     } else if (["new", "settings", "rename", "duplicate"].includes(kind)) {
-      title = { new: "Nova máquina", settings: fromGallery ? "Editar status" : "Editar projeto", rename: "Renomear projeto", duplicate: "Duplicar projeto" }[kind];
+      title = { new: "Nova máquina", settings: "Editar projeto", rename: "Renomear projeto", duplicate: "Duplicar projeto" }[kind];
       const name = kind === "duplicate" ? machine.title.slice(0, 112).trimEnd() + " (cópia)" : machine?.title;
-      fields = fromGallery && kind === "settings" ? "" : field("title", "Nome do projeto", "Ex.: Kit de portfólio para Social Media", "input", name);
+      fields = field("title", "Nome do projeto", "Ex.: Kit de portfólio para Social Media", "input", name);
       if (kind === "new") fields += field("template", "Como começar", "", [["blank", "Projeto guiado em branco"], ["sample", "Exemplo preenchido · Portfólio Social Media"]], "blank");
       if (kind === "settings") fields += field("status", "Status do projeto", "", Object.entries(states), machine.status);
       if (kind === "duplicate") fields += '<p class="machine-edit-hint">A cópia começa como rascunho e traz o planejamento, o checklist e as premissas do original.</p>';
