@@ -7,7 +7,7 @@ const cents = (reais) => Math.round(Number(reais) * 100);
 const esc = (value) => String(value).replace(/[&<>"']/g, (part) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[part]);
 const statusLabel = { proposta: "Proposta", fechado: "Fechado", recebido: "Recebido" };
 const views = {
-  visao: "Visão geral", vendas: "Vendas", equipe: "Equipe", eventos: "Eventos",
+  visao: "Visão geral", vendas: "Vendas", equipe: "Equipe", eventos: "Eventos", infoprodutos: "Máquina de Infoprodutos",
   "vendas/catalogo": "Vendas / Catálogo", "vendas/simulador": "Vendas / Simulador",
 };
 const legacySalesRoutes = { servicos: "vendas/catalogo", simulador: "vendas/simulador" };
@@ -441,7 +441,7 @@ function route(fromHashChange = false) {
   const hash = location.hash.slice(1);
   const destination = Object.hasOwn(legacySalesRoutes, hash) ? legacySalesRoutes[hash] : hash;
   const fragment = scenarioId ? "vendas/simulador" : destination;
-  const privateView = fragment === "vendas" || fragment === "equipe" || fragment === "eventos";
+  const privateView = ["vendas", "equipe", "eventos"].includes(fragment) || (shared && fragment === "infoprodutos");
   const blocked = privateView && (!ready || !session);
   const view = !blocked && Object.hasOwn(views, fragment) ? fragment : "visao";
   if (blocked && !checkingInitialAccess) history.replaceState(history.state, "", "#visao");
