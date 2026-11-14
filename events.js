@@ -36,7 +36,9 @@
   const statusFilter = $("#event-filter-status");
   const channelFilter = $("#event-filter-channel");
   const eventRoute = "/rest/v1/mutirao_mentoria_events";
+  const copyReferenceRoute = "/rest/v1/mutirao_mentoria_event_copy_references?select=template_code,source_code,source_url";
   let events = [];
+  let copyReferences = new Map();
   let selectedEventId = null;
   let section = "brief";
   let editor = null;
@@ -86,7 +88,6 @@
       const date = new Date(eventDay + offset * DAY).toISOString().split("T")[0];
       return isDate(date) ? date : "";
     };
-    const launchDate = dateBR(eventDate);
     const tasks = [
       ["Definir objetivo, metas, narrativa e oferta", "captura", "estrategia", -12],
       ["Criar identidade visual, peças e materiais", "captura", "design", -11],
@@ -102,49 +103,8 @@
       ["Consolidar resultados e aprendizados", "pos", "estrategia", 12],
     ].map(([title, phase, team, offset]) => item("task", title, phase, { team, date: dateAt(offset) }));
 
-    const groupMessages = [
-      ["Convite inicial", "captura", -9, "18:00", `Oi! No dia ${launchDate}, vou mostrar como [benefício]. Garanta sua vaga em [link da inscrição].`],
-      ["Para quem é o evento", "captura", -8, "12:00", "Se você quer [objetivo] e trava em [dificuldade], este encontro foi feito para você. Inscreva-se em [link]."],
-      ["Antes e depois", "captura", -7, "12:00", "O que muda quando você [ação]? Vou comparar os dois caminhos com um exemplo ao vivo. Inscreva-se em [link]."],
-      ["Dúvida frequente", "captura", -6, "12:00", "Muita gente me pergunta [dúvida]. No encontro, vou mostrar como resolver isso. Reserve sua vaga em [link]."],
-      ["Bastidores dos materiais", "captura", -5, "12:00", "Olha o que estou preparando para o encontro: [material]. Você vai usá-lo para [ação]. Inscreva-se em [link]."],
-      ["O que vamos aprender", "captura", -3, "12:00", "Vamos passar por [tema 1], [tema 2] e [tema 3]. Venha com uma dúvida para aplicar no seu caso. Inscrições em [link]."],
-      ["Prévia de um exemplo", "captura", -2, "12:00", "Já reparou em [exemplo]? Vou abrir o passo a passo ao vivo. Participe em [link da inscrição]."],
-      ["Amanhã é o evento", "captura", -1, "12:00", "Amanhã, às [hora], começa [evento]. Se ainda precisa se inscrever, use [link]."],
-      ["Inscrições no dia do evento", "captura", 0, "12:00", "É hoje! [Evento] começa às [hora]. Sua inscrição é feita em [link]."],
-      ["Última chamada para inscrições", "captura", 0, "18:00", "Começamos às [hora]. Se ainda quiser participar, faça sua inscrição em [link]."],
-      ["Boas-vindas ao grupo do evento", "aquecimento", -3, "12:00", `Bem-vinda ao grupo de [evento]! Salve ${launchDate} às [hora] e conte pra gente qual é sua maior dúvida sobre [tema].`],
-      ["Faltam dois dias", "aquecimento", -2, "12:00", "Faltam dois dias para [evento]. Conte como podemos ajudar respondendo à pesquisa em [link]."],
-      ["Lembrete da véspera", "aquecimento", -1, "12:00", "Nosso encontro é amanhã às [hora]. Deixe o link [transmissão] salvo para entrar na hora."],
-      ["Áudio de boas-vindas", "evento", 0, "12:00", "Grave um áudio curto com a promessa do encontro, o horário e o que levar. Envie [link da transmissão] na mesma mensagem."],
-      ["Faltam algumas horas", "evento", 0, "16:00", "Nos vemos em algumas horas. Separe [material] para acompanhar a prática e entre por [link]."],
-      ["Bastidores e aviso de 30 minutos", "evento", 0, "19:30", "Mostre em um vídeo curto o que já está pronto. Inclua a chamada: começamos em 30 minutos. Entre em [link]."],
-      ["Sala aberta", "evento", 0, "19:55", "A sala está aberta. Entre em [link] e diga no chat de onde você está acompanhando."],
-      ["Transmissão ao vivo", "evento", 0, "20:05", "Já estamos ao vivo! Entre em [link] para acompanhar [tópico em andamento]."],
-      ["Convite para entrar durante a live", "evento", 0, "20:20", "Ainda dá tempo de ver [bloco]. Já estamos mostrando [exemplo]. Entre em [link]."],
-      ["Oferta e abertura das vendas", "vendas", 0, "21:00", "As inscrições para [oferta] abriram. Você recebe [entregáveis]. Confira o valor e as condições em [link]."],
-      ["Bônus e garantia", "vendas", 0, "22:30", "Para quem entrar até [prazo], [bônus aprovado]. As condições de garantia estão em [link]."],
-      ["Enquete sobre matrícula", "vendas", 1, "12:00", "Você conseguiu concluir a matrícula? Responda: já concluí, tenho dúvidas ou preciso de ajuda com o pagamento."],
-      ["Opções de pagamento", "vendas", 1, "15:00", "Se você precisa de outra forma de pagamento, confira as opções em [link] ou fale com [contato]."],
-      ["Replay e próximo passo", "pos", 1, "18:00", "O replay está em [link] até [prazo]. Para colocar em prática com [oferta], veja [página de vendas]."],
-      ["Dúvidas antes do encerramento", "vendas", 2, "12:00", "As inscrições ficam abertas até [data e hora]. Qual dúvida você quer esclarecer antes de decidir?"],
-      ["Lembrete de condição de pagamento", "vendas", 4, "12:00", "A condição [condição aprovada] vai até [prazo]. Se precisar de suporte para concluir, chame [contato]."],
-      ["Últimas horas para entrar", "vendas", 4, "18:00", "As inscrições encerram às [hora]. Se já decidiu participar, finalize em [link]."],
-    ];
-    const privateMessages = [
-      ["Reativar contato", "captura", -7, "", "Oi, [nome]. Lembrei de você porque vamos falar de [tema]. Quer que eu te mande o link do encontro?"],
-      ["Apresentar entregáveis", "captura", -3, "", "Oi, [nome]. No encontro você vai sair com [material] para [ação]. Ainda faz sentido para você?"],
-      ["Última chamada no privado", "captura", 0, "", "Oi, [nome]. Passando porque o encontro é hoje às [hora]. Se quiser participar, aqui está [link]."],
-      ["Abertura e condições de pagamento", "vendas", 0, "22:00", "Oi, [nome]. As inscrições para [oferta] abriram. Quer ajuda para entender as condições de pagamento?"],
-      ["Enviar replay", "pos", 1, "15:00", "Oi, [nome]. Aqui está o replay [link]. No trecho [minutagem] falamos sobre [dúvida da pessoa]."],
-      ["Ajudar com pagamento pendente", "vendas", 4, "12:00", "Oi, [nome]. Você conseguiu concluir a inscrição? Posso te ajudar com [etapa pendente]."],
-      ["Último contato sobre a turma", "pos", 11, "12:00", "Oi, [nome]. Estou fechando o acompanhamento desta turma. Você quer que eu te avise sobre uma próxima edição?"],
-    ];
-    const messagesFor = (entries, channel, prefix) => entries.map(([title, phase, offset, time, notes], index) =>
-      item("message", title, phase, {
-        channel, date: dateAt(offset), time, notes,
-        code: prefix + "-" + String(index + 1).padStart(2, "0"),
-      }));
+    const messages = messageTemplates(eventDate).map(({ title, phase, offset, ...fields }) =>
+      item("message", title, phase, { ...fields, date: dateAt(offset) }));
 
     const agenda = [
       ["Abertura e boas-vindas", 5, "Apresente a equipe, confirme a duração e oriente o uso do chat."],
@@ -182,11 +142,57 @@
         narrative: "Problema: [dor do público]. Promessa: [transformação]. Provas e exemplos: [materiais aprovados].",
         offer: "Oferta: [nome e entregáveis]. Investimento: [valor e condições]. Bônus: [itens e validade]. Garantia: [regras aprovadas].",
         identity: "Identidade visual: [referências]. Materiais: [páginas, peças de divulgação, slides e vídeos].",
-        followup: "Inscrições até [data e hora]. Replay até [data]. Atendimento em [canal]. Follow-up para [segmentos e prazos].",
+        followup: "Inscrições até [data e hora]. Replay até [data]. Nas mensagens de venda em grupo, convide para conversar no privado. Informe valores, formas de pagamento e checkout no atendimento individual.",
       },
-      items: [...tasks, ...messagesFor(groupMessages, "grupos", "GRUPO"),
-        ...messagesFor(privateMessages, "privado", "PRIVADO"), ...agenda, ...links],
+      items: [...tasks, ...messages, ...agenda, ...links],
     };
+  }
+
+  function messageTemplates(eventDate) {
+    const launchDate = formatDate(eventDate) || "[data do evento]";
+    const groupMessages = [
+      ["Convite inicial", "captura", -9, "18:00", `O que muda no seu trabalho quando [mudança do mercado] vira rotina? Quero te mostrar como se preparar e onde existe espaço para cobrar pela sua estratégia.\n\nNo dia ${launchDate}, às [hora do evento], vou abrir esse plano ao vivo em [evento]. No grupo VIP você recebe [materiais VIP] e o link de acesso. Entre aqui: [link do grupo VIP].`],
+      ["Da execução à estratégia", "captura", -8, "12:00", `Se o cliente só te procura para executar, o seu trabalho acaba sendo comparado pelo preço. Em [evento], vou mostrar como sair desse lugar e assumir as decisões que dão direção ao projeto.\n\nÉ dia ${launchDate}, às [hora do evento]. No grupo você recebe [materiais VIP] e o acesso à aula: [link do grupo VIP].`],
+      ["Quando o cliente pede só um post", "captura", -7, "12:00", "O cliente pede um post para hoje. Qual seria sua primeira resposta?\nA) Faço e mando.\nB) Pergunto o que ele quer alcançar e proponho o melhor formato.\n\nDaqui a uma semana vou mostrar como transformar essa segunda resposta em uma entrega que o cliente valoriza. Entre no grupo: [link do grupo VIP]."],
+      ["Volume de clientes ou valor por projeto", "captura", -6, "12:00", `Dois profissionais podem ter o mesmo faturamento com rotinas completamente diferentes. Um atende muitos clientes com pedidos pequenos. O outro conduz poucos projetos com mais impacto. Qual parte da sua entrega hoje sustenta o preço que você quer cobrar?\n\nVou abrir essa conversa em [evento], dia ${launchDate}. Entre no grupo: [link do grupo VIP].`],
+      ["Bastidores dos materiais", "captura", -5, "12:00", "Estou preparando [material VIP] e encontrei [oportunidade ou exemplo] que vale compartilhar. A ideia é você sair da aula com algo para aplicar em [ação concreta].\n\nO material e o acesso serão enviados pelo grupo: [link do grupo VIP]."],
+      ["Quando estudar mais já não resolve", "captura", -3, "12:00", `Você já tem aulas salvas e anotações suficientes. Qual decisão ainda falta tomar para mudar [problema do público]? Em [evento], vou propor um ponto de partida e mostrar como usar [material VIP].\n\nReserve ${launchDate}, às [hora do evento]. Entre no grupo: [link do grupo VIP].`],
+      ["Quando o pacote vira uma lista sem fim", "captura", -2, "12:00", "O pacote começou com posts. Vieram Stories, Reels, directs e até suporte ao tráfego. O preço continuou igual. Se isso te soa familiar, faltam dois dias para a aula em que vou mostrar como organizar e defender o escopo.\n\nEntre no grupo para receber o acesso: [link do grupo VIP]."],
+      ["Amanhã é o evento", "captura", -1, "12:00", "Amanhã, às [hora do evento], vamos trabalhar [tema] ao vivo. Quem já está no grupo recebe [materiais VIP] e o link da sala. Se falta confirmar sua participação, entre por aqui: [link do grupo VIP]."],
+      ["Inscrições no dia do evento", "captura", 0, "12:00", "O encontro é hoje, às [hora do evento]. Vou mostrar [caso real] e como aplicar [aprendizado] no seu trabalho. Separei [materiais VIP] para quem acompanhar.\n\nO acesso à sala sai pelo grupo: [link do grupo VIP]."],
+      ["Última chamada para inscrições", "captura", 0, "18:00", "A aula começa hoje às [hora do evento]. Se você quer acompanhar [resultado da aula], entre no grupo antes de começarmos. Vou enviar o acesso por lá: [link do grupo VIP]."],
+      ["Boas-vindas e enquete do grupo VIP", "aquecimento", -3, "12:00", `Que bom ter você no grupo de [evento]! Reserve ${launchDate}, às [hora do evento]. Quero entender quem vai estar na aula. Em qual momento você está hoje?\n\n• Começando na área\n• Atendendo clientes por conta própria\n• Coordenando uma equipe ou agência\n• Migrando de outra área do marketing`],
+      ["Faltam dois dias", "aquecimento", -2, "12:00", "Daqui a dois dias a gente se encontra! Estou terminando [material VIP] e separei [exemplo] para mostrar na aula. Bloqueie o horário de [hora do evento] e traga uma pergunta sobre [tema]."],
+      ["Lembrete da véspera", "aquecimento", -1, "12:00", "Amanhã, às [hora do evento], a gente vai trabalhar [promessa do evento]. Separe um caderno, bloqueie o horário na agenda e ative as notificações do grupo. O acesso à aula vai aparecer por aqui."],
+      ["Áudio e mensagem no dia do evento", "evento", 0, "12:00", "Áudio curto\nOi, pessoal! Estou fechando os últimos detalhes da aula de hoje. Separei um exemplo de [mudança que você testou] e vou mostrar como usar isso para [resultado]. Venham com uma pergunta e espaço para anotar. A gente se encontra às [hora do evento].\n\nMensagem para enviar depois do áudio\nHoje tem aula! Deixe o horário de [hora do evento] livre, separe o material para anotar e acompanhe o grupo para pegar o acesso."],
+      ["Faltam algumas horas", "evento", 0, "16:00", "Já já a gente se encontra. Agenda livre? Material à mão? Notificações do grupo ligadas? Às [hora do evento], mando por aqui o acesso para você acompanhar [atividade da aula]."],
+      ["Bastidores e aviso de 30 minutos", "evento", 0, "19:30", "Grave um vídeo curto mostrando o ambiente e [material VIP] antes de enviar.\n\nA equipe já está com tudo pronto por aqui. Em 30 minutos, começamos [evento] e vou mostrar [o que será apresentado]. Te vejo na sala!"],
+      ["Sala aberta", "evento", 0, "19:55", "Pode entrar, a sala está aberta: [link da transmissão]. Chegue agora para acompanhar a primeira parte e mande um oi no chat."],
+      ["Transmissão ao vivo", "evento", 0, "20:05", "A aula já começou. Estamos falando de [tópico em andamento] e ainda dá para pegar o exemplo completo. Entre aqui: [link da transmissão]."],
+      ["Convite para entrar durante a live", "evento", 0, "20:20", "Ainda estamos ao vivo e a próxima parte mostra [demonstração ou próximo bloco]. Se você se atrasou, entre agora para acompanhar: [link da transmissão]."],
+      ["Oferta e abertura das vendas", "vendas", 0, "21:00", "As vagas para [oferta] estão abertas. É para quem [perfil] e quer alcançar [resultado aprovado].\n\nO programa inclui [entregáveis] e, nesta edição, [bônus aprovados]. A garantia funciona conforme [condições da garantia].\n\nTemos [vagas disponíveis]. Se quiser saber como participar, me chama no privado."],
+      ["Bônus e garantia", "vendas", 0, "22:30", "Se você ficou com dúvidas depois da apresentação, vale olhar dois pontos: [garantia e critérios] e [bônus ou prioridade à vista]. Quer saber quais condições de entrada se aplicam ao seu caso? Me chama no privado que eu te explico."],
+      ["Enquete sobre matrícula", "vendas", 1, "12:00", "Em que ponto você está com [oferta]?\n\n• Já confirmei minha vaga\n• Ainda estou decidindo\n• Quero entender a condição de entrada\n• Tenho uma dúvida sobre o programa\n\nSe precisar de ajuda, me manda uma mensagem no privado."],
+      ["Opções de pagamento", "vendas", 1, "15:00", "Se o cartão está travando sua decisão, vale conversar sobre [alternativa de pagamento aprovada]. Posso explicar como funciona a entrada, quando vence o saldo e quais são os critérios. Me chama no privado."],
+      ["Replay e próximo passo", "pos", 1, "18:00", "Se o replay for liberado, confirme o prazo antes de enviar.\n\nA gravação de [evento] está disponível até [prazo do replay]: [link do replay]. Assista e veja como aplicar [aprendizado]. Se quiser conversar sobre [oferta], me chama no privado."],
+      ["Vagas restantes e prioridade à vista", "vendas", 2, "12:00", "Agora restam [vagas disponíveis] para [oferta]. Para quem escolher o pagamento à vista, [prioridade ou benefício aprovado]. Se quiser saber como entrar e quando começa, me chama no privado."],
+      ["Lembrete de condição de pagamento", "vendas", 4, "12:00", "O prazo para entrar em [oferta] é [data e hora do encerramento]. Se sua dúvida é como pagar, ainda dá para conversar sobre [alternativa aprovada]. Me chama no privado que eu te explico."],
+      ["Últimas horas para entrar", "vendas", 4, "18:00", "As inscrições de [oferta] fecham às [hora do encerramento]. Se você quer chegar a [resultado aprovado] e ainda precisa esclarecer algo para decidir, me chama no privado até esse horário."],
+    ];
+    const privateMessages = [
+      ["Reativar contato", "captura", -7, "", `Oi, [nome]! Você tinha me contado que queria [interesse anterior]. Lembrei disso ao preparar [evento], porque vou mostrar [aprendizado] ao vivo no dia ${launchDate}, às [hora do evento]. No grupo você já recebe [materiais VIP] e o acesso à aula: [link do grupo VIP]. Você consegue participar?`],
+      ["Apresentar os materiais VIP", "captura", -3, "", "Oi, [nome]! Separei [material 1] para te ajudar com [objetivo], além de [material 2] para explorar [oportunidade]. Vou usar os dois na aula de [evento]. Se quiser receber, entre aqui: [link do grupo VIP]."],
+      ["Última chamada no privado", "captura", 0, "", "Oi, [nome], nosso encontro é hoje às [hora do evento]. Vou enviar o acesso à sala pelo grupo. Se você ainda estiver de fora, pode entrar aqui: [link do grupo VIP]. Te vejo na aula?"],
+      ["Abertura e condições de pagamento", "vendas", 0, "22:00", "Oi, [nome]! Você chegou a ver a aula? Abri as vagas para [oferta] e lembrei do que você falou sobre [objetivo]. Temos [condição aprovada] para quem precisa de outra forma de pagamento. Quer que eu te explique como funciona?"],
+      ["Enviar replay", "pos", 1, "15:00", "Use se o replay estiver disponível.\n\nOi, [nome]! A gravação de ontem fica disponível até [prazo]: [link do replay]. Tem uma parte sobre [tema do interesse da pessoa] em [minutagem]. Se assistir, me conta o que quer testar primeiro."],
+      ["Ajudar com pagamento pendente", "vendas", 4, "12:00", "Oi, [nome]! Como ficaram suas dúvidas sobre [oferta]? As vagas estão perto de fechar e ainda posso te orientar sobre [forma de pagamento aprovada]. Me responde por aqui se quiser que eu veja o seu caso."],
+      ["Último contato sobre a turma", "pos", 11, "12:00", "Oi, [nome]! Estou encerrando as conversas desta turma hoje. Se você ainda quiser entrar, pode me responder até [hora do encerramento]. Se agora não for o momento, tudo bem também."],
+    ];
+    const messagesFor = (entries, channel, prefix) => entries.map(([title, phase, offset, time, notes], index) => ({
+      title, phase, offset, time, notes, channel,
+      code: prefix + "-" + String(index + 1).padStart(2, "0"),
+    }));
+    return [...messagesFor(groupMessages, "grupos", "GRUPO"), ...messagesFor(privateMessages, "privado", "PRIVADO")];
   }
 
   function renderGallery() {
@@ -231,12 +237,14 @@
     loading.hidden = events.length > 0;
     if (!loading.hidden) $("#event-empty").hidden = true;
     try {
-      const result = await supabaseRequest(
-        eventRoute + "?select=id,title,event_date,status,revision,plan&order=created_at.desc",
-        { token: await accessToken() },
-      );
+      const auth = { token: await accessToken() };
+      const [result, references] = await Promise.all([
+        supabaseRequest(eventRoute + "?select=id,title,event_date,status,revision,plan&order=created_at.desc", auth),
+        supabaseRequest(copyReferenceRoute, auth).catch(() => null),
+      ]);
       if (operation !== request || generation !== accessGeneration || !allowed()) return;
       events = result;
+      if (Array.isArray(references)) copyReferences = new Map(references.map((reference) => [reference.template_code, reference]));
       if (!active()) selectedEventId = null;
       renderGallery();
       renderEvent();
@@ -321,6 +329,8 @@
       const meta = [stateName(phases, item.phase), stateName(channels, item.channel), stateName(teams, item.team),
         formatDate(item.date), item.time, item.duration ? item.duration + " min" : "", eligibleOwner(item), item.code].filter(Boolean);
       const link = safeUrl(item.url);
+      const reference = section === "message" ? copyReferences.get(item.code) : null;
+      const source = reference && safeUrl(reference.source_url);
       const notes = item.notes || "";
       const completed = item.status === "feito" || item.status === "enviado" || (section === "link" && item.status === "pronto");
       const stateClass = completed ? " recebido"
@@ -330,6 +340,7 @@
         <div class="event-list-copy">
           <h4>${esc(item.title)}</h4><p>${meta.map(esc).join(" · ")}</p>
           ${link ? `<a class="text-link event-resource" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Abrir link ↗</a>` : ""}
+          ${source && source !== link ? `<a class="text-link event-resource" href="${esc(source)}" target="_blank" rel="noopener noreferrer">Copy original (${esc(reference.source_code)}) ↗</a>` : ""}
           ${notes ? `<details><summary>${section === "message" ? "Ver copy" : "Ver observações"}</summary><p>${esc(notes)}</p></details>` : ""}
         </div>
         <span class="pill${stateClass}">${esc(stateName(states, item.status) || "Sem status")}</span>
@@ -381,6 +392,18 @@
         + pair(select("phase", "Fase", phases), status(panel[kind].states)) + extra[kind]
         + (kind === "link" || kind === "message" ? input("url", kind === "message" ? "Link da copy ou material" : "Endereço", "url", "maxlength=2000") : "")
         + area("notes", kind === "message" ? "Copy da mensagem" : "Observações");
+      if (kind === "message" && item?.code) {
+        const template = messageTemplates(event.event_date).find(({ code, channel }) => code === item.code && channel === item.channel);
+        if (template && template.notes !== item.notes) {
+          fields.insertAdjacentHTML("beforeend", '<button class="button small" type="button" id="event-apply-copy">Usar copy do modelo</button>');
+          $("#event-apply-copy", fields).addEventListener("click", () => {
+            const copy = field(form, "notes");
+            if (copy.value.trim() && copy.value !== template.notes && !window.confirm("Substituir o texto desta mensagem pela copy do modelo?")) return;
+            copy.value = template.notes;
+            copy.focus();
+          });
+        }
+      }
     }
     const values = kind === "brief" ? { ...event, ...event.plan.brief } : item || {};
     for (const inputField of fields.querySelectorAll("[name]")) {
@@ -570,6 +593,7 @@
   document.addEventListener("mutirao:disconnect", () => {
     request += 1;
     events = [];
+    copyReferences.clear();
     selectedEventId = null;
     if (dialog.open) dialog.close();
     editor = null;
