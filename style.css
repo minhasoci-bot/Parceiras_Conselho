@@ -571,7 +571,6 @@ dialog::backdrop { background:#152b21a0; }
   .machine-checklist .pill { grid-column:2; justify-self:start; }
   #machine-dialog { width:100%; max-height:calc(100dvh - 16px); }
 }
-
 /* =============================================
    TIMELINE / GANTT
    ============================================= */
@@ -745,7 +744,7 @@ dialog::backdrop { background:#152b21a0; }
 }
 .timeline-detail-dl { display:grid; gap:10px; }
 .timeline-detail-dl div { display:flex; flex-direction:column; gap:2px; }
-.timeline-detail-dl dt { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+.timeline-detail-dt { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
 .timeline-detail-dl dd { font-size:13px; margin:0; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .timeline-detail-field { display:flex; flex-direction:column; gap:4px; }
 .timeline-detail-field label { font-size:12px; font-weight:700; color:var(--muted); display:flex; flex-direction:column; gap:4px; }

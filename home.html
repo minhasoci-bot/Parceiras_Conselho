@@ -6,6 +6,17 @@
   <meta name="theme-color" content="#000000">
   <meta name="description" content="Aprenda Design, Copy, Marketing, Landing Pages, Infoprodutos e Vendas com IA. Mais espaço para criar. Mais tempo para viver.">
   <title>IA para TDAH — Formação</title>
+  <script>
+    // Links antigos (confirmação de e-mail, recuperação de senha, cenários e seções) apontavam para "/".
+    (function () {
+      var h = location.hash.slice(1), q = new URLSearchParams(location.search), p = new URLSearchParams(h);
+      var painel = ["visao", "vendas", "equipe", "servicos", "simulador", "eventos", "infoprodutos", "timeline", "vendas/catalogo", "vendas/simulador"];
+      if (p.has("access_token") || p.has("error_code") || p.has("token_hash") || q.has("code") || q.has("token_hash")
+        || h.indexOf("cenario/") === 0 || painel.indexOf(h) !== -1) {
+        location.replace("painel/" + location.search + location.hash);
+      }
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=DM+Sans:wght@300;400;500;700;800&display=swap" rel="stylesheet">
