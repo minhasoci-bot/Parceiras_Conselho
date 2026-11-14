@@ -14,7 +14,9 @@ node build.mjs
 node preview.mjs
 ```
 
-Abra o painel local: [http://127.0.0.1:4188/](http://127.0.0.1:4188/)
+Abra a página inicial em [http://127.0.0.1:4188/](http://127.0.0.1:4188/) e o painel em [http://127.0.0.1:4188/painel/](http://127.0.0.1:4188/painel/).
+
+A página inicial fica em `home.html`, `home.css` e `home.js` e usa os dados de `model.js` e `catalog.js`. Links antigos para `/` com sessão, recuperação de senha, cenário ou seção do painel são encaminhados para `/painel/`.
 
 ## Fluxo de Login e Aprovação de Acesso
 
