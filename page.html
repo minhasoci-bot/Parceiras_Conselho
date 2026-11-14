@@ -232,8 +232,11 @@
             </div>
           </div>
           <section class="machine-hero" aria-labelledby="machine-title">
-            <div><span class="pill" id="machine-state"></span><h2 id="machine-title" tabindex="-1"></h2><p id="machine-promise"></p></div>
-            <div class="machine-hero-progress"><strong id="machine-progress-text"></strong><progress id="machine-progress" max="8" value="0" aria-label="Preparação para ir ao ar"></progress></div>
+            <div><span class="pill" id="machine-state"></span><h2 id="machine-title" tabindex="-1"></h2></div>
+            <button class="machine-hero-progress" id="machine-checklist-link" type="button" aria-controls="machine-panel">
+              <span>Checklist <span aria-hidden="true">↗</span></span><strong id="machine-progress-text"></strong>
+              <progress id="machine-progress" max="8" value="0" aria-label="Preparação para ir ao ar"></progress>
+            </button>
           </section>
           <nav class="machine-tabs" id="machine-tabs" aria-label="Etapas da máquina"></nav>
           <section class="card roomy machine-panel" aria-labelledby="machine-panel-heading" id="machine-panel"></section>

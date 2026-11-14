@@ -13,15 +13,19 @@ const machineModel = (() => {
           ["desire", "Desejo existente", "O que ela já procura ou está tentando resolver?"],
           ["evidence", "Evidência de demanda", "Registre conversas, buscas, pedidos, pré-vendas ou o teste a realizar."],
         ] },
-        { title: "Primeira vitória e oferta", fields: [
+        { title: "Transformação", fields: [
+          ["promise", "Promessa da oferta", "Ex.: Monte um portfólio que você consiga enviar a um cliente", "input"],
           ["before", "Antes", "Em que situação a pessoa começa?"],
           ["after", "Depois", "Qual resultado concreto ela consegue atingir e em que condição?"],
-          ["promise", "Promessa da oferta", "Ex.: Monte um portfólio que você consiga enviar a um cliente", "input"],
-          ["purpose", "Função do low ticket", "Ex.: Validar a dor e converter leads em compradores"],
+        ] },
+        { title: "Oferta e entrega", fields: [
           ["format", "Formato", "", productFormats],
+          ["positioning", "Posicionamento e preço", "Explique o valor da oferta e a hipótese que sustenta o preço. Registre o preço no Simulador."],
           ["delivery", "Entregáveis e organização", "Liste materiais, módulos e bônus que ajudam a chegar ao resultado."],
           ["scale", "Entrega escalável", "Explique como o cliente recebe e aplica sem depender de atendimento individual."],
-          ["positioning", "Posicionamento e preço", "Explique o valor da oferta e a hipótese que sustenta o preço. Registre o preço no Simulador."],
+        ] },
+        { title: "Papel na esteira", fields: [
+          ["purpose", "Função do low ticket", "Ex.: Validar a dor e converter leads em compradores"],
           ["connection", "Conexão com a próxima oferta", "Que novo problema aparece depois da primeira vitória?"],
         ] },
       ],
@@ -33,11 +37,15 @@ const machineModel = (() => {
           ["traffic", "Fontes de tráfego", "Conteúdo, anúncios, indicações, parcerias, busca, comunidade ou materiais gratuitos."],
           ["awareness", "Conteúdo para cada nível", "Planeje pautas de consciência, autoridade, desejo e oferta ligadas à mesma dor."],
         ] },
-        { title: "Captura e conversão", fields: [
+        { title: "Captação", fields: [
           ["lead", "Como captar o lead?", "Defina o convite, o canal de captura e como retomar o contato."],
-          ["offer", "Argumento da página de vendas", "Inclua problema, promessa, solução, benefícios, entregas, diferenciais, provas disponíveis e preço."],
           ["idea", "Grande ideia da copy", "Qual é o argumento que permanece coerente em conteúdo, anúncios, página, checkout e mensagens?"],
+        ] },
+        { title: "Página de vendas", fields: [
+          ["offer", "Argumento da página de vendas", "Inclua problema, promessa, solução, benefícios, entregas, diferenciais, provas disponíveis e preço."],
           ["cta", "Chamada para ação", "Ex.: Quero montar meu portfólio", "input"],
+        ] },
+        { title: "Checkout e complementos", fields: [
           ["checkout", "Checkout e integrações", "Registre plataforma, formas de pagamento, order bump, rastreamento e entrega do acesso."],
           ["bump", "Order bump no checkout", "Qual complemento ajuda a obter a primeira vitória?"],
           ["upsell", "Upsell após a compra", "Qual oferta complementar faz sentido logo após a compra?"],

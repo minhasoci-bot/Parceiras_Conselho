@@ -121,7 +121,6 @@
     }
     $("#machine-title").textContent = machine.title;
     $("#machine-state").textContent = states[machine.status] || states.rascunho;
-    $("#machine-promise").textContent = machine.plan.produto.promise || "Defina a promessa do produto de entrada.";
     const { complete, skipped } = completion(machine.plan);
     $("#machine-progress-text").textContent = `${complete} de ${checklist.length} itens resolvidos${skipped ? ` · ${skipped} sem aplicação` : ""}`;
     $("#machine-progress").max = checklist.length;
@@ -138,27 +137,40 @@
     if (stage === "checklist") content = renderChecklist(machine);
     else if (stage === "metricas") content = renderMetrics(machine);
     else content = renderStage(machine, groups);
-    panel.innerHTML = `<div class="section-header">
-      <div><h3 id="machine-panel-heading">${title}</h3><p>${intro}</p></div>
-      ${stage === "checklist" ? "" : '<button type="button" class="button primary" data-machine-edit>Editar etapa</button>'}
+    panel.innerHTML = `<div class="section-header planning-heading">
+      <div><h3 id="machine-panel-heading" tabindex="-1">${title}</h3><p>${intro}</p></div>
+      ${stage === "metricas" ? '<button type="button" class="button primary" data-machine-edit>Editar premissas</button>' : ""}
       </div>${content}`;
   }
 
   function renderStage(machine, groups) {
     const data = machine.plan[stage];
-    const journey = stage === "funil"
-      ? '<ol class="machine-flow" aria-label="Jornada de compra"><li>Atração</li><li>Consciência</li><li>Lead</li><li>Página de vendas</li><li>Checkout</li><li>Comprador</li></ol>'
+    const hasJourney = ["funil", "esteira", "ascensao"].includes(stage);
+    const journey = hasJourney
+      ? `<ol class="machine-flow" aria-label="Sequência de ${stages[stage].label.toLowerCase()}">${groups.map(({ title }, index) =>
+        `<li><a href="#machine-block-${index}" data-machine-jump="${index}">${title}</a></li>`).join("")}</ol>`
       : "";
     const ladder = stage === "esteira"
-      ? `<ol class="machine-flow machine-ladder" aria-label="Esteira de ofertas">
+      ? `<ol class="machine-ladder" aria-label="Esteira de ofertas">
         ${[["Low", machine.title], ["Mid", data.midName], ["High", data.highName], ["Acompanhamento", data.careName]].map(([tier, name]) =>
           `<li><span>${tier}</span><strong>${esc(name || "A definir")}</strong></li>`).join("")}
       </ol>`
       : "";
-    return journey + ladder + groups.map(({ title, fields }) => `<div class="machine-group">
-      <h4>${title}</h4><dl class="machine-facts">${fields.map(([key, label, hint]) =>
-        `<div><dt>${label}</dt><dd${data[key] ? "" : ' class="machine-unfilled"'}>${esc(data[key] || hint || "A definir")}</dd></div>`).join("")}</dl>
-    </div>`).join("");
+    const groupsHtml = groups.map(({ title, fields }, index) => {
+      const highlights = ["promise", "lead", "offer", "lowMidSignal", "midHighSignal", "highCareSignal"];
+      const filled = fields.filter(([key]) => data[key]).length;
+      return `<section class="planning-block" aria-labelledby="machine-block-${index}">
+        <header class="planning-block-header">
+          <h4 id="machine-block-${index}" tabindex="-1">${title}</h4>
+          <button class="button small" type="button" data-machine-edit="${index}" aria-label="Editar ${title}">Editar</button>
+        </header>
+        ${filled ? `<dl class="planning-facts">${fields.map(([key, label]) =>
+          `<div${highlights.includes(key) ? ' class="planning-highlight"' : ""}><dt>${label}</dt>
+            <dd${data[key] ? "" : ' class="planning-missing"'}>${esc(data[key] || "A definir")}</dd></div>`).join("")}</dl>`
+          : `<p class="planning-missing">${esc(fields[0][2] || "Preencha este bloco para continuar o planejamento.")}</p>`}
+      </section>`;
+    }).join("");
+    return ladder + journey + `<div class="planning-stack">${groupsHtml}</div>`;
   }
 
   function renderChecklist(machine) {
@@ -194,13 +206,18 @@
       ["CPA de equilíbrio inicial", currency(summary.breakEven)],
       ["LTV bruto esperado", currency(summary.ltv)],
     ];
-    return `<div class="machine-indicators">${indicators.map(([label, value]) =>
-      `<div><span>${label}</span><strong>${hasValues ? value : "—"}</strong></div>`).join("")}</div>
-      <p class="machine-metric-note">O ticket inclui complementos ponderados pela adesão. O saldo desconta tráfego, taxas e custos variáveis informados. O LTV bruto soma a receita esperada das próximas compras da mesma coorte.</p>
+    const metric = ([label, value], primary = false) =>
+      `<div${primary ? ' class="machine-metric-primary"' : ""}><span>${label}</span><strong>${hasValues ? value : "—"}</strong></div>`;
+    return `<div class="machine-metric-results">
+      ${metric(indicators[3], true)}
+      <div class="machine-indicators">${indicators.filter((_, index) => index !== 3).map((indicator) => metric(indicator)).join("")}</div>
+      </div>
+      <p class="machine-metric-note">O saldo desconta tráfego, taxas e custos variáveis. O ticket inclui complementos ponderados pela adesão. O LTV bruto inclui as compras esperadas ao longo da esteira.</p>
+      <details class="machine-metric-details"><summary>Ver premissas usadas na projeção</summary>
       ${metricGroups.map(({ title, fields }) => `<div class="machine-group">
         <h4>${title}</h4><dl class="machine-assumptions">${fields.map(([key, label]) =>
           `<div><dt>${label}</dt><dd>${values[key] == null ? "—" : esc(label.includes("R$") ? currency(Number(values[key])) : decimal.format(Number(values[key])) + (label.includes("%") ? "%" : ""))}</dd></div>`).join("")}</dl>
-      </div>`).join("")}`;
+      </div>`).join("")}</details>`;
   }
 
   function field(name, label, hint, type = "textarea", value = "") {
@@ -223,11 +240,11 @@
     return `<fieldset class="machine-edit-group"><legend>${title}</legend><div>${fields.join("")}</div></fieldset>`;
   }
 
-  function showEditor(kind, key) {
+  function showEditor(kind, key, groupIndex) {
     if (!allowed() || pendingSave || dialog.open) return;
     const machine = active();
     if (kind !== "new" && !machine) return;
-    editor = { kind, key, machine };
+    editor = { kind, key, groupIndex, machine };
     let title, fields;
     if (kind === "new" || kind === "settings") {
       title = kind === "new" ? "Nova máquina" : "Editar projeto";
@@ -253,11 +270,11 @@
       fields = metricGroups.map(({ title, fields }) => group(title, fields.map(([name, label, max, step]) =>
         field(name, label, "", { type: "number", min: 0, max, step, inputmode: "decimal" }, data[name])))).join("");
     } else {
-      const { title: sectionTitle, groups } = stages[key];
-      title = sectionTitle;
+      const selected = stages[key].groups[groupIndex];
+      title = "Editar " + selected.title;
       const data = machine.plan[key];
-      fields = groups.map(({ title, fields }) => group(title, fields.map(([name, label, hint, type]) =>
-        field(name, label, hint, Array.isArray(type) ? [["", "Selecione…"], ...type] : type, data[name])))).join("");
+      fields = selected.fields.map(([name, label, hint, type]) =>
+        field(name, label, hint, Array.isArray(type) ? [["", "Selecione…"], ...type] : type, data[name])).join("");
     }
     $("#machine-dialog-heading").textContent = title;
     formFields.innerHTML = fields;
@@ -278,9 +295,9 @@
       if (data.owner) data.ownerLabel = form.elements.owner.selectedOptions[0].textContent;
       return { plan: { ...machine.plan, checklist: { ...machine.plan.checklist, [key]: data } } };
     }
-    const values = Object.entries(data).filter(([, value]) => value !== "");
-    let section = Object.fromEntries(values);
+    let section = { ...machine.plan[key], ...data };
     if (key === "metricas") {
+      const values = Object.entries(data).filter(([, value]) => value !== "");
       section = Object.fromEntries(values.map(([name, value]) => [name, Number(value)]));
       if (section.paidBuyers > estimate(section).buyers + 0.000001) {
         throw new Error("Os compradores atribuídos à mídia não podem superar o total previsto.");
@@ -344,7 +361,7 @@
       } else if (edit.kind === "task") {
         $(`[data-machine-task="${edit.key}"]`, panel)?.focus({ preventScroll: true });
       } else if (edit.kind === "section") {
-        $("[data-machine-edit]", panel)?.focus({ preventScroll: true });
+        $(`[data-machine-edit="${edit.groupIndex ?? ""}"]`, panel)?.focus({ preventScroll: true });
       }
       feedback(edit.kind === "new" ? "Máquina criada." : "Alterações salvas.");
     } catch (error) {
@@ -412,6 +429,10 @@
   $("#machine-refresh").addEventListener("click", () => load());
   $("#machine-settings").addEventListener("click", () => showEditor("settings"));
   $("#machine-export").addEventListener("click", exportPlan);
+  $("#machine-checklist-link").addEventListener("click", () => {
+    selectStage("checklist");
+    $("#machine-panel-heading").focus();
+  });
   $("#machine-back").addEventListener("click", () => {
     const previous = currentId;
     currentId = null;
@@ -428,17 +449,29 @@
     render();
     $("#machine-title").focus();
   });
-  tabs.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-machine-stage]");
-    if (!button || !allowed()) return;
-    stage = button.dataset.machineStage;
+  function selectStage(next) {
+    if (!allowed() || next === stage) return;
+    stage = next;
     feedback();
     render();
+  }
+  tabs.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-machine-stage]");
+    if (button) selectStage(button.dataset.machineStage);
   });
   panel.addEventListener("click", (event) => {
+    const jump = event.target.closest("[data-machine-jump]");
+    if (jump) {
+      event.preventDefault();
+      const heading = $(`#machine-block-${jump.dataset.machineJump}`, panel);
+      heading.focus({ preventScroll: true });
+      heading.scrollIntoView({ block: "start" });
+      return;
+    }
     const task = event.target.closest("[data-machine-task]");
+    const edit = event.target.closest("[data-machine-edit]");
     if (task) showEditor("task", task.dataset.machineTask);
-    else if (event.target.closest("[data-machine-edit]")) showEditor("section", stage);
+    else if (edit) showEditor("section", stage, edit.dataset.machineEdit);
   });
   form.addEventListener("submit", save);
   dialog.addEventListener("cancel", (event) => { if (pendingSave) event.preventDefault(); });
@@ -464,7 +497,6 @@
     formFields.replaceChildren();
     panel.replaceChildren();
     $("#machine-title").textContent = "";
-    $("#machine-promise").textContent = "";
     $("#machine-loading").hidden = true;
     $("#machine-refresh").disabled = false;
     feedback();
