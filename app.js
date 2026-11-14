@@ -5,6 +5,20 @@ const decimal = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
 const money = (cents) => moneyFormat.format(cents / 100);
 const cents = (reais) => Math.round(Number(reais) * 100);
 const esc = (value) => String(value).replace(/[&<>"']/g, (part) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[part]);
+
+const planningHeaderObserver = new ResizeObserver((entries) => {
+  for (const { target } of entries) {
+    target.parentElement.style.setProperty("--planning-header-height", target.offsetHeight + "px");
+  }
+});
+for (const header of document.querySelectorAll(".planning-header")) planningHeaderObserver.observe(header);
+
+function revealPlanningPanel(panel) {
+  const header = panel.previousElementSibling;
+  if (panel.getBoundingClientRect().top < header.getBoundingClientRect().bottom) {
+    panel.scrollIntoView({ block: "start" });
+  }
+}
 const statusLabel = { proposta: "Proposta", fechado: "Fechado", recebido: "Recebido" };
 const views = {
   visao: "Visão geral", vendas: "Vendas", equipe: "Equipe", eventos: "Eventos", infoprodutos: "Máquina de Infoprodutos",

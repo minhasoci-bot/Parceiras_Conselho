@@ -458,7 +458,8 @@
   $("#machine-export").addEventListener("click", exportPlan);
   $("#machine-checklist-link").addEventListener("click", () => {
     selectStage("checklist");
-    $("#machine-panel-heading").focus();
+    revealPlanningPanel(panel);
+    $("#machine-panel-heading").focus({ preventScroll: true });
   });
   $("#machine-back").addEventListener("click", () => {
     const previous = currentId;
@@ -481,6 +482,7 @@
     stage = next;
     feedback();
     render();
+    revealPlanningPanel(panel);
   }
   tabs.addEventListener("click", (event) => {
     const button = event.target.closest("[data-machine-stage]");

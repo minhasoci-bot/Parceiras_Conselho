@@ -702,7 +702,9 @@
   });
   $("#event-sections").addEventListener("click", (event) => {
     const button = event.target.closest("[data-event-section]");
-    if (button) selectSection(button.dataset.eventSection);
+    if (!button || button.dataset.eventSection === section) return;
+    selectSection(button.dataset.eventSection);
+    revealPlanningPanel(panelContent.closest(".event-panel"));
   });
   $("#event-filters").addEventListener("change", renderPanel);
   panelContent.addEventListener("click", (event) => {
