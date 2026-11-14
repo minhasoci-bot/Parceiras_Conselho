@@ -2,8 +2,8 @@ import { readFile, mkdir, writeFile } from "node:fs/promises";
 
 const root = new URL("./", import.meta.url);
 const read = (name) => readFile(new URL(name, root), "utf8");
-const [template, css, model, catalog, storage, app, events] = await Promise.all(
-  ["page.html", "style.css", "model.js", "catalog.js", "supabase.js", "app.js", "events.js"].map(read),
+const [template, css, model, catalog, storage, app, copyEditor, events] = await Promise.all(
+  ["page.html", "style.css", "model.js", "catalog.js", "supabase.js", "app.js", "event-copy-editor.js", "events.js"].map(read),
 );
 const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, VERCEL } = process.env;
 const hasEnvironmentConfig = VERCEL === "1" || SUPABASE_URL !== undefined || SUPABASE_PUBLISHABLE_KEY !== undefined;
@@ -18,7 +18,7 @@ if (config && (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(config.url)
   throw new Error("Configure SUPABASE_URL e SUPABASE_PUBLISHABLE_KEY (sb_publishable_...).");
 }
 const publicConfig = config ? { url: config.url, key: config.key } : null;
-const script = ["const supabaseConfig = " + JSON.stringify(publicConfig) + ";", model, catalog, storage, app, events].join("\n");
+const script = ["const supabaseConfig = " + JSON.stringify(publicConfig) + ";", model, catalog, storage, app, copyEditor, events].join("\n");
 const page = template
   .replace("/* STYLE */", () => css)
   .replace("/* SCRIPTS */", () => script.replaceAll("</script", "<\\/script"));
