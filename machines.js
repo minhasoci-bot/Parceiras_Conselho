@@ -14,13 +14,13 @@
   const close = $("#machine-close");
   const localKey = "mutirao-infoproduct-machines";
   const allowed = () => !shared || (ready && !!session && ["member", "admin"].includes(accessRole));
-  const uuid = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
   const currency = (value) => moneyFormat.format(value);
   let machines = [];
   let currentId = null;
   let stage = "produto";
   let editor = null;
   let request = 0;
+  let scenarioRequest = 0;
   let pendingSave = null;
   let loaded = false;
 
@@ -29,6 +29,35 @@
     const rows = JSON.parse(localStorage.getItem(localKey) || "[]");
     if (!Array.isArray(rows)) throw new Error("Os projetos locais estão em um formato inválido.");
     return rows;
+  }
+
+  async function readMachines(fields, filter = "") {
+    if (!shared) return readLocal();
+    return supabaseRequest(route + "?select=" + fields + "&order=created_at.desc,id.desc" + filter, { token: await accessToken() });
+  }
+
+  async function loadScenarioOffers() {
+    if (!allowed()) return;
+    const version = ++scenarioRequest;
+    const status = $("#scenario-machine-status");
+    setScenarioMachineOffers([]);
+    status.hidden = false;
+    status.textContent = "Carregando produtos criados em Infoprodutos…";
+    try {
+      const rows = await readMachines("id,title,status,price:plan->metricas->price", "&status=eq.no_ar");
+      if (version !== scenarioRequest || !allowed()) return;
+      const offers = rows.filter(({ id, status, title }) => (
+        MACHINE_ID_PATTERN.test(id) && status === "no_ar" && isText(title, 120, true)
+      )).map(({ id, title, price, plan }) => ({
+        id, title, price: cents(price ?? plan?.metricas?.price),
+      }));
+      setScenarioMachineOffers(offers);
+      status.textContent = offers.length ? "" : "Para usar um produto criado em Infoprodutos, marque o projeto como No ar.";
+      status.hidden = !!offers.length;
+    } catch {
+      if (version !== scenarioRequest || !allowed()) return;
+      status.textContent = "Não foi possível carregar os produtos criados. Reabra o Simulador para tentar de novo.";
+    }
   }
 
   function feedback(message = "", error = false) {
@@ -92,11 +121,9 @@
     loading.hidden = false;
     if (!preserveFeedback) feedback();
     try {
-      const rows = shared
-        ? await supabaseRequest(route + "?select=" + columns + "&order=created_at.desc,id.desc", { token: await accessToken() })
-        : readLocal();
+      const rows = await readMachines(columns);
       if (version !== request || !allowed()) return;
-      machines = rows.filter(({ id }) => uuid.test(id)).map(normalized);
+      machines = rows.filter(({ id }) => MACHINE_ID_PATTERN.test(id)).map(normalized);
       loaded = true;
       render();
     } catch (error) {
@@ -484,9 +511,13 @@
   });
   document.addEventListener("mutirao:route", (event) => {
     if (event.detail === "infoprodutos" && !dialog.open) load();
+    if (event.detail === "vendas/simulador") loadScenarioOffers();
   });
   document.addEventListener("mutirao:disconnect", () => {
     request += 1;
+    scenarioRequest += 1;
+    setScenarioMachineOffers([]);
+    $("#scenario-machine-status").hidden = true;
     pendingSave = null;
     machines = [];
     currentId = null;
@@ -505,5 +536,6 @@
   if (!shared) {
     $("[data-machine-nav]").hidden = false;
     if (activeView === "infoprodutos") load();
+    if (activeView === "vendas/simulador") loadScenarioOffers();
   }
 })();

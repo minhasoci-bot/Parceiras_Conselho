@@ -628,10 +628,21 @@ function renderCatalog() {
   }).join("") : empty("Nenhum serviço encontrado.");
 }
 
+let scenarioMachineOffers = [];
+
+function setScenarioMachineOffers(offers) {
+  scenarioMachineOffers = offers;
+  for (const row of itemList.children) {
+    const { type, title, machineId } = readOffer(row);
+    if (type === "infoproduto") setOfferOptions(row, type, title, machineId);
+  }
+}
+
 function readOffer(row) {
   const value = (name) => $(`[name="${name}"]`, row).value.trim();
+  const { machineId, title } = $('[name="item-title"]', row).selectedOptions[0]?.dataset ?? {};
   return {
-    type: value("type"), title: value("item-title"),
+    type: value("type"), title: title ?? value("item-title"), ...(machineId ? { machineId } : {}),
     audience: value("audience"), promise: value("promise"), delivery: value("delivery"),
     price: cents(value("price")), cost: cents(value("cost")), fee: cents(value("fee")),
     quantity: Number(value("quantity")), days: Number(value("days")),
@@ -660,7 +671,7 @@ function renderProjection() {
   for (const { row, item, valid } of offers) {
     const result = $(".offer-result", row);
     result.classList.remove("warning");
-    if (!item.title) result.textContent = "Selecione um item do catálogo.";
+    if (!item.title) result.textContent = "Selecione uma oferta.";
     else result.textContent = valid ? "" : "Preencha preço, quantidade e prazo para calcular.";
   }
   for (const [index, { row }] of included.entries()) {
@@ -802,22 +813,46 @@ function fillScenarioDetails(scenario) {
   $("#scenario-dialog-share").dataset.id = scenario.id;
 }
 
-function setOfferOptions(row, type, title = "") {
+function setOfferOptions(row, type, title = "", machineId) {
   const select = $('[name="item-title"]', row);
+  $(".offer-select-label", row).textContent = type === "servico" ? "Serviço do catálogo" : "Infoproduto";
   const placeholder = new Option("Selecione " + (type === "servico" ? "um serviço" : "um infoproduto"), "");
   placeholder.disabled = true;
   const options = catalogOffers[type].map((item) => new Option(item.title, item.title));
-  if (title && !options.some((option) => option.value === title)) {
-    options.unshift(new Option(title + " (item salvo)", title));
+  select.replaceChildren(placeholder);
+  if (type === "servico") {
+    if (title && !options.some((option) => option.value === title)) options.unshift(new Option(title + " (item salvo)", title));
+    select.append(...options);
+  } else {
+    const machineGroup = document.createElement("optgroup");
+    machineGroup.label = "Criados em Infoprodutos";
+    for (const item of scenarioMachineOffers) {
+      const option = new Option(item.title, "machine:" + item.id);
+      option.dataset.machineId = item.id;
+      option.dataset.title = item.id === machineId ? title : item.title;
+      machineGroup.append(option);
+    }
+    if (machineId && !scenarioMachineOffers.some((item) => item.id === machineId)) {
+      const option = new Option(title + " (item salvo)", "machine:" + machineId);
+      option.dataset.machineId = machineId;
+      option.dataset.title = title;
+      option.disabled = true;
+      machineGroup.prepend(option);
+    }
+    if (machineGroup.children.length) select.append(machineGroup);
+    const catalogGroup = document.createElement("optgroup");
+    catalogGroup.label = "Catálogo";
+    if (!machineId && title && !options.some((option) => option.value === title)) options.unshift(new Option(title + " (item salvo)", title));
+    catalogGroup.append(...options);
+    select.append(catalogGroup);
   }
-  select.replaceChildren(placeholder, ...options);
-  select.value = title;
+  select.value = machineId ? "machine:" + machineId : title;
 }
 
 function appendOffer(item) {
   const row = $("#scenario-item-template").content.firstElementChild.cloneNode(true);
   $('[name="type"]', row).value = item.type;
-  setOfferOptions(row, item.type, item.title);
+  setOfferOptions(row, item.type, item.title, item.machineId);
   for (const key of ["quantity", "days", "audience", "promise", "delivery"]) {
     if (item[key] !== undefined) $(`[name="${key}"]`, row).value = item[key];
   }
@@ -1242,9 +1277,12 @@ simForm.addEventListener("change", (event) => {
   const row = event.target.closest(".scenario-item");
   const type = $('[name="type"]', row).value;
   if (event.target.name === "type") setOfferOptions(row, type);
-  const title = $('[name="item-title"]', row).value;
-  const item = catalogOffers[type].find((offer) => offer.title === title);
-  $('[name="price"]', row).value = item ? item.price / 100 : "";
+  const select = $('[name="item-title"]', row);
+  const option = select.selectedOptions[0];
+  const machine = scenarioMachineOffers.find(({ id }) => id === option?.dataset.machineId);
+  const item = machine || catalogOffers[type].find((offer) => offer.title === select.value);
+  if (machine) option.dataset.title = machine.title;
+  $('[name="price"]', row).value = item?.price ? item.price / 100 : "";
   for (const key of ["audience", "promise", "delivery"]) {
     $(`[name="${key}"]`, row).value = item?.[key] ?? "";
   }

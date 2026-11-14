@@ -122,6 +122,7 @@
             <form id="sim-form" class="card roomy">
               <div class="section-header"><h3>Montar cenário</h3><button type="button" class="text-link" data-action="reset-sim">Novo cenário</button></div>
               <label>Nome do cenário <input name="title" required maxlength="120" placeholder="Ex.: Serviços e workshop de novembro"></label>
+              <p id="scenario-machine-status" class="inline-note" role="status" hidden></p>
               <div id="scenario-items" class="scenario-items"></div>
               <div class="scenario-tools">
                 <button class="button" type="button" data-action="add-service">＋ Serviço</button>
@@ -252,7 +253,7 @@
         <label>Tipo <select name="type"><option value="servico">Serviço</option><option value="infoproduto">Infoproduto</option></select></label>
         <button class="text-link danger" type="button" data-action="remove-item">Remover</button>
       </div>
-      <label>Item do catálogo <select name="item-title" required></select></label>
+      <label><span class="offer-select-label">Item do catálogo</span><select name="item-title" required></select></label>
       <div class="form-grid">
         <label>Preço unitário (R$) <input name="price" type="number" min=".01" max="1000000" step=".01" required placeholder="0,00"></label>
         <label>Quantidade de vendas <input name="quantity" type="number" min="1" max="10000" step="1" required value="1"></label>
