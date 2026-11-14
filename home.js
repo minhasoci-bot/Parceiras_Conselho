@@ -1,6 +1,6 @@
-// Página inicial. Depende de `catalog`, `products` (catalog.js) e `DEADLINE` (model.js).
-// Mecânicas de rolagem portadas da análise da Launchpad: Lenis + ScrollTrigger, galeria em coverflow
-// presa à rolagem, túnel 3D, título que explode com física, cards empilhados e faixa em loop.
+// Página inicial da Formação IA para TDAH.
+// Mecânicas de rolagem: Lenis + ScrollTrigger, galeria em coverflow, túnel 3D,
+// título com física Matter.js, cards empilhados e FAQ em loop.
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -9,32 +9,53 @@ if (!motion) document.documentElement.classList.add("static");
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 const easeOutCubic = (t) => 1 - (1 - t) ** 3;
 const smoothstep = (t) => t * t * (3 - 2 * t);
-const money = (value) => "R$ " + value.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
 const fold = (text) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-/* ---------- Dados do catálogo ---------- */
-const AREAS = ["Design", "Web", "Vídeo", "Copy e roteiro", "Fotografia", "Estratégia", "Gestão", "Infoprodutos"];
+/* ---------- Dados do Conteúdo da Formação ---------- */
+const AREAS = ["Fundamentos", "Criação", "Produtos e Web", "Marketing e Vendas", "Processos"];
 const TAGS = {
-  "Design": "arte artes post posts feed instagram story stories banner visual criativo carrossel carrosseis",
-  "Web": "site pagina paginas landing vendas venda internet",
-  "Fotografia": "foto fotos ensaio retrato perfil imagem imagens ia",
-  "Vídeo": "video videos reels reel edicao editar youtube vsl",
-  "Copy e roteiro": "texto textos copy legenda legendas roteiro escrever escrita",
-  "Estratégia": "planejamento planejar calendario estrategia analise conteudo diagnostico",
-  "Gestão": "gestao gerenciar redes social sociais trafego anuncio anuncios ads direct atendimento mensal",
-  "Infoprodutos": "curso workshop kit guia template templates precificacao oferta minicurso",
+  "Fundamentos": "ponto partida criatividade tdah ia misterio ferramentas possibilidades prompts colaboram contexto instrucoes metodo orbita ideia entrega",
+  "Criação": "pesquisa posicionamento publico estrategia design ia identidade direcao arte visual copy copywriting textos conectam conteudo multimidia canal canais",
+  "Produtos e Web": "servicos ofertas vender apresentar infoprodutos conhecimento produto landing pages paginas proposito ferramentas automacoes tarefas repetitivas",
+  "Marketing e Vendas": "marketing digital conteudo funis lancamentos planejamento campanhas vendas ofertas relacionamento comercial",
+  "Processos": "projetos entregas organizacao execucao projeto final ideia mundo",
 };
 const STOP = new Set("a o as os de da do das dos e em no na nos nas um uma uns umas para pra pro pros pras com que meu minha meus minhas eu quero preciso gostaria fazer criar algo sobre por ser".split(" "));
-const services = [
-  ...catalog.map(([area, title, ranges, detail, unit = ""]) => {
-    const low = Math.min(...ranges.map(([, value]) => value));
-    const options = ranges.map(([label, from, to]) => label + " " + money(from) + (to && to !== from ? "–" + to : "")).join(" · ");
-    return { area, title, detail, from: low, unit, options };
-  }),
-  ...products.map((item) => ({ area: "Infoprodutos", title: item.title, detail: item.delivery, from: item.price / 100, unit: "", options: item.category })),
-].map((item) => ({ ...item, haystack: fold([item.area, item.title, item.detail, item.options, TAGS[item.area]].join(" ")) }));
-const minOf = (area) => Math.min(...services.filter((item) => item.area === area).map((item) => item.from));
-const find = (title) => services.find((item) => item.title === title);
+
+const modules = [
+  // Fundamentos
+  { area: "Fundamentos", title: "Seu ponto de partida", detail: "Criatividade e TDAH." },
+  { area: "Fundamentos", title: "IA sem mistério", detail: "Ferramentas e possibilidades." },
+  { area: "Fundamentos", title: "Prompts que colaboram", detail: "Contexto e instruções." },
+  { area: "Fundamentos", title: "Método ÓRBITA", detail: "Da ideia à entrega." },
+
+  // Criação
+  { area: "Criação", title: "Pesquisa e posicionamento", detail: "Público e estratégia." },
+  { area: "Criação", title: "Design com IA", detail: "Identidade e direção de arte." },
+  { area: "Criação", title: "Copywriting", detail: "Textos que conectam." },
+  { area: "Criação", title: "Conteúdo e multimídia", detail: "Criação para cada canal." },
+
+  // Produtos e Web
+  { area: "Produtos e Web", title: "Serviços e ofertas", detail: "O que vender e como apresentar." },
+  { area: "Produtos e Web", title: "Infoprodutos", detail: "Conhecimento em produto." },
+  { area: "Produtos e Web", title: "Landing Pages", detail: "Páginas com propósito." },
+  { area: "Produtos e Web", title: "Ferramentas e automações", detail: "Menos tarefas repetitivas." },
+
+  // Marketing e Vendas
+  { area: "Marketing e Vendas", title: "Marketing digital", detail: "Conteúdo e funis." },
+  { area: "Marketing e Vendas", title: "Lançamentos", detail: "Planejamento e campanhas." },
+  { area: "Marketing e Vendas", title: "Vendas", detail: "Ofertas e relacionamento." },
+
+  // Processos
+  { area: "Processos", title: "Projetos e entregas", detail: "Da organização à execução." },
+  { area: "Processos", title: "Projeto final", detail: "Sua ideia no mundo." },
+];
+
+const services = modules.map((item) => ({
+  ...item,
+  options: item.area + " · " + item.detail,
+  haystack: fold([item.area, item.title, item.detail, TAGS[item.area] || ""].join(" ")),
+}));
 
 /* ---------- Rolagem suave (Lenis + ScrollTrigger) ---------- */
 let lenis = null;
@@ -78,7 +99,7 @@ onNavScroll();
 
 /* ---------- Hero ---------- */
 const heroTitle = $("#hero-title");
-"Descreva, o mutirão cria".split(" ").forEach((word, index) => {
+"Sua mente cria. A IA potencializa.".split(" ").forEach((word, index) => {
   if (index) heroTitle.append(" ");
   const span = document.createElement("span");
   span.className = "hero-in";
@@ -87,11 +108,11 @@ const heroTitle = $("#hero-title");
   heroTitle.append(span);
 });
 const phrases = [
-  "Preciso de artes de carrossel para o meu perfil",
-  "Quero uma landing page para vender meu curso",
-  "Edição de Reels para o mês inteiro",
-  "Um calendário de conteúdos para dezembro",
-  "Fotos profissionais para o meu perfil",
+  "Quero criar uma identidade visual.",
+  "Quero vender meu infoproduto.",
+  "Preciso de uma landing page.",
+  "Quero lançar uma ideia.",
+  "Quero organizar meus processos.",
 ];
 const typed = $("#typed");
 const promptInput = $("#prompt-input");
@@ -107,7 +128,7 @@ else setTimeout(function typeLoop(index = 0, length = 0, deleting = false) {
   setTimeout(() => typeLoop(index, length, deleting), wait);
 }, 1350);
 
-/* ---------- Catálogo e busca ---------- */
+/* ---------- Conteúdo e busca ---------- */
 const list = $("#service-list");
 const filters = $("#catalog-filters");
 const status = $("#catalog-status");
@@ -125,11 +146,11 @@ function render(items, matched = false) {
     const li = document.createElement("li");
     li.className = "service" + (matched ? " match" : "");
     li.style.animationDelay = Math.min(index, 12) * 30 + "ms";
-    li.innerHTML = `<small></small><h3></h3><p></p><span class="price">a partir de <strong>${money(item.from)}</strong>${item.unit ? " " + item.unit : ""}</span>`;
+    li.innerHTML = `<small></small><h3></h3><p></p><span class="price"><span class="pill pill-mid">Módulo prático</span></span>`;
     $("small", li).textContent = item.area;
     $("h3", li).textContent = item.title;
     $("p", li).textContent = item.detail;
-    li.title = item.options;
+    li.title = item.area + ": " + item.title + " — " + item.detail;
     return li;
   }));
   if (motion) ScrollTrigger.refresh();
@@ -152,17 +173,17 @@ function search(query) {
   activeArea = scored.length ? "" : "Todos";
   markFilter();
   if (!scored.length) {
-    status.textContent = "Não achamos um serviço exato para isso. Veja o catálogo completo abaixo.";
+    status.textContent = "Não achamos um módulo exato para isso. Veja todo o conteúdo abaixo.";
     render(services);
   } else {
-    status.textContent = scored.length === 1 ? "Este serviço combina com o que você descreveu:" : `Estes ${scored.length} serviços combinam com o que você descreveu:`;
+    status.textContent = scored.length === 1 ? "Este módulo combina com o que você quer aprender:" : `Estes ${scored.length} módulos combinam com o que você quer aprender:`;
     render(scored.map((entry) => entry.item), true);
   }
 }
 $("#prompt-form").addEventListener("submit", (event) => {
   event.preventDefault();
   search(promptInput.value.trim() || typed.textContent || phrases[0]);
-  scrollToTarget($("#catalogo"), 1.4);
+  scrollToTarget($("#conteudo"), 1.4);
 });
 $("#final-cta").addEventListener("click", (event) => {
   event.preventDefault();
@@ -222,7 +243,7 @@ if (!reduceMotion && matchMedia("(pointer: fine)").matches && !matchMedia("(forc
   setMode("default");
 }
 
-/* ---------- Brilho WebGL do topo (ruído "neuro" que segue o ponteiro) ---------- */
+/* ---------- Brilho WebGL do topo ---------- */
 const layerNeuro = $("#layer-neuro");
 (function neuro() {
   const canvas = $("#neuro");
@@ -297,7 +318,7 @@ const layerNeuro = $("#layer-neuro");
   }).observe(layerNeuro, { attributes: true, attributeFilter: ["style"] });
 })();
 
-/* ---------- Túnel 3D de serviços (three.js) ---------- */
+/* ---------- Túnel 3D de formação (three.js) ---------- */
 const layerGallery = $("#layer-gallery");
 const gallery = (function tunnel() {
   if (!motion || !window.THREE) return { seek() {} };
@@ -321,15 +342,15 @@ const gallery = (function tunnel() {
     ctx.fillStyle = ink; ctx.globalAlpha = .14;
     ctx.beginPath(); ctx.arc(200 + (index % 3) * 10, 250, 90, 0, Math.PI * 2); ctx.fill();
     ctx.globalAlpha = .7; ctx.font = "700 13px 'DM Sans', sans-serif"; ctx.fillText(item.area.toUpperCase(), 20, 34);
-    ctx.globalAlpha = 1; ctx.font = "34px 'Fraunces', Georgia, serif";
+    ctx.globalAlpha = 1; ctx.font = "28px 'Fraunces', Georgia, serif";
     const words = item.title.split(" "); let line = "", y = 120;
     for (const word of words) {
-      if (ctx.measureText(line + word).width > 216 && line) { ctx.fillText(line.trim(), 20, y); y += 38; line = ""; }
+      if (ctx.measureText(line + word).width > 216 && line) { ctx.fillText(line.trim(), 20, y); y += 36; line = ""; }
       line += word + " ";
     }
     ctx.fillText(line.trim(), 20, y);
-    ctx.globalAlpha = .75; ctx.font = "500 15px 'DM Sans', sans-serif";
-    ctx.fillText("a partir de " + money(item.from), 20, 292);
+    ctx.globalAlpha = .75; ctx.font = "500 14px 'DM Sans', sans-serif";
+    ctx.fillText(item.detail, 20, 292);
     const texture = new THREE.CanvasTexture(tile);
     texture.anisotropy = 4;
     return texture;
@@ -372,27 +393,31 @@ const gallery = (function tunnel() {
   return { seek(value) { target = clamp01(value); } };
 })();
 
-/* ---------- Galeria de áreas em coverflow (presa à rolagem) ---------- */
+/* ---------- Vitrine de Áreas — Coverflow ---------- */
 const TEMPLATES = [
-  { kind: "wordmark", label: "Design", need: "pro seu feed", brand: "Arte & Feed", word: "FEED", left: "Design", right: "Mutirão",
-    tagline: "Carrossel, estática\ne banner", address: "a partir de\n" + money(minOf("Design")) + " por arte", cats: ["Carrossel", "Stories"],
+  { kind: "wordmark", label: "Design", need: "Dê forma às suas ideias.", brand: "Design", word: "DESIGN", left: "Identidade", right: "Direção de arte",
+    tagline: "Dê forma às\nsuas ideias.", address: "Identidade · Direção de arte", cats: ["Identidade", "Direção de arte"],
     style: { bg: "#f3f6ef", ink: "#192421", shape: "#d8f386" } },
-  { kind: "statement", label: "Landing page", need: "pra vender online", brand: "Página no ar", word: money(find("Criação de landing page").from).replace("R$ ", "R$"),
-    body: find("Criação de landing page").detail, left: "Web", right: "Por página", style: { bg: "#183d30", ink: "#f3f6ef", shape: "#d8f386" } },
-  { kind: "editorial", label: "Edição de vídeo", need: "pros seus Reels e YouTube", brand: "Corte Certo", left: "Vídeo", right: "Edição",
-    headline: ["REELS,", "VSL E", "YOUTUBE"], accent: "edição que segura", cta: "VER SERVIÇOS", foot: ["EDIÇÃO SIMPLES OU ELABORADA", "A PARTIR DE " + money(minOf("Vídeo"))],
+  { kind: "statement", label: "Landing Pages", need: "Crie páginas que convertem.", brand: "Web", word: "WEB",
+    body: "Crie páginas que convertem. UX, estrutura e conversão para transformar visitantes em alunos e clientes.", left: "UX", right: "Conversão",
+    style: { bg: "#183d30", ink: "#f3f6ef", shape: "#d8f386" } },
+  { kind: "editorial", label: "Vídeo", need: "Crie roteiros e vídeos com IA.", brand: "Vídeo", left: "Reels", right: "Edição",
+    headline: ["CRIE", "ROTEIROS E", "VÍDEOS"], accent: "Reels e edição com IA", cta: "VER CONTEÚDO", foot: ["CRIE ROTEIROS E VÍDEOS COM IA", "REELS · EDIÇÃO"],
     style: { bg: "#e9e2d3", ink: "#2a241a", shape: "#c9b98f" } },
-  { kind: "editorial", label: "Estratégia de conteúdo", need: "pro seu calendário", brand: "Plano Claro", left: "Estratégia", right: "Mensal",
-    headline: ["CONTEÚDO", "COM", "CALENDÁRIO"], accent: "planejado mês a mês", cta: "VER SERVIÇOS", foot: ["CALENDÁRIO, ANÁLISE E ESTRATÉGIA", "A PARTIR DE " + money(minOf("Estratégia"))],
+  { kind: "editorial", label: "Marketing", need: "Planeje conteúdo e campanhas.", brand: "Marketing", left: "Estratégia", right: "Lançamentos",
+    headline: ["PLANEJE", "CONTEÚDO E", "CAMPANHAS"], accent: "estratégia e lançamentos", cta: "VER CONTEÚDO", foot: ["PLANEJE CONTEÚDO E CAMPANHAS", "ESTRATÉGIA · LANÇAMENTOS"],
     style: { bg: "#dcecdd", ink: "#183d30", shape: "#9fcfa9" } },
-  { kind: "statement", label: "Gestão de redes", need: "pras suas redes, todo mês", brand: "Rede Viva", word: "Redes",
-    body: "Gestão de redes, social selling, tráfego e head de conteúdo, com preço de referência mensal.", left: "Gestão", right: "/ mês",
+  { kind: "statement", label: "Infoprodutos", need: "Transforme saber em oferta.", brand: "Produtos", word: "PRODUTOS",
+    body: "Transforme saber em oferta. Cursos e produtos digitais estruturados para vender com autoridade.", left: "Cursos", right: "Produtos digitais",
     style: { bg: "#d8f386", ink: "#0f1f17", shape: "#183d30" } },
-  { kind: "wordmark", label: "Copy e roteiro", need: "pras suas páginas e posts", brand: "Boa Palavra", word: "COPY", left: "Texto", right: "Roteiro",
-    tagline: "Carrossel, VSL\ne landing page", address: "a partir de\n" + money(minOf("Copy e roteiro")), cats: ["Copy", "Roteiro"],
+  { kind: "wordmark", label: "Copy e Vendas", need: "Comunique melhor. Venda com clareza.", brand: "Copy", word: "COPY", left: "Copy", right: "Vendas",
+    tagline: "Comunique melhor.\nVenda com clareza.", address: "Copy · Vendas", cats: ["Copy", "Vendas"],
     style: { bg: "#111714", ink: "#f3f6ef", shape: "#4c9b6a" } },
 ];
-const ITEMS = [...TEMPLATES.map((t) => ({ label: t.label, need: t.need })), { label: "Catálogo completo", need: "todas as áreas do mutirão" }];
+const ITEMS = [
+  ...TEMPLATES.map((t) => ({ label: t.label, need: t.need })),
+  { label: "Explore a formação completa.", need: "Todas as habilidades, em um só lugar." },
+];
 const track = $("#picker-track");
 const esc = (text) => String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 function page(t) {
@@ -415,7 +440,7 @@ TEMPLATES.forEach((t) => {
   track.append(li);
 });
 const exploreLi = document.createElement("li");
-exploreLi.innerHTML = `<span class="tpl tpl--explore" data-cursor="scroll"><span class="tpl__page"><span class="tpl__explore-title">Explore o catálogo inteiro</span></span></span>`;
+exploreLi.innerHTML = `<span class="tpl tpl--explore" data-cursor="scroll"><span class="tpl__page"><span class="tpl__explore-title">Explore a formação completa.</span></span></span>`;
 track.append(exploreLi);
 const cards = [...track.children];
 const explorePage = $(".tpl__page", exploreLi);
@@ -443,7 +468,7 @@ function renderCaption(index) {
   activeCard = index;
   [...dots.children].forEach((dot, i) => { if (i === index) dot.setAttribute("data-on", ""); else dot.removeAttribute("data-on"); dot.setAttribute("aria-current", String(i === index)); });
   cards.forEach((card, i) => card.classList.toggle("is-active", i === index));
-  $("#picker-next").setAttribute("aria-label", index === ITEMS.length - 1 ? "Explorar o catálogo" : "Próxima área");
+  $("#picker-next").setAttribute("aria-label", index === ITEMS.length - 1 ? "Ver conteúdo" : "Próxima área");
   if (index === ITEMS.length - 1) { caption.replaceChildren(); return; }
   const item = ITEMS[index];
   const name = [...item.label].map((ch, i, all) => `<span class="picker__caption-char" style="--i:${i};--n:${all.length}" aria-hidden="true">${ch === " " ? "&nbsp;" : esc(ch)}</span>`).join("");
@@ -463,7 +488,7 @@ function goToCard(index) {
 }
 $("#picker-next").addEventListener("click", () => {
   if (activeCard === ITEMS.length - 1) {
-    if (!motion) { scrollToTarget($("#catalogo")); return; }
+    if (!motion) { scrollToTarget($("#conteudo")); return; }
     const top = rail.getBoundingClientRect().top + scrollY;
     lenis.scrollTo(top + total + exit, { duration: 1.1 });
   } else goToCard(activeCard + 1);
@@ -525,24 +550,24 @@ if (motion) {
   document.fonts.ready.then(() => { measurePicker(); ScrollTrigger.refresh(); });
 }
 
-/* ---------- Showcase: título digitado pela rolagem, explosão com física e leque de cards ---------- */
+/* ---------- Showcase: Da ideia à realização, com IA ao seu lado ---------- */
 const STEPS = [
-  { tint: "#f3f6ef", word: "Descreva", body: "Conte o que você precisa com as suas palavras. A gente encontra o serviço certo no catálogo." },
-  { tint: "#dcecdd", word: "Combine", body: "Escopo, prazo e preço acertados antes de começar, a partir dos valores de referência." },
-  { tint: "#d8f386", word: "Receba", body: "A entrega chega pronta para usar. E cada venda soma na meta coletiva do grupo." },
+  { tint: "#f3f6ef", num: "01", word: "Aprenda", body: "Entenda a tecnologia e desenvolva novas habilidades." },
+  { tint: "#dcecdd", num: "02", word: "Crie", body: "Aplique Design, Copy, Marketing e ferramentas em projetos." },
+  { tint: "#d8f386", num: "03", word: "Coloque no mundo", body: "Estruture, divulgue e aprenda a vender." },
 ];
 const wheel = $("#tb-wheel");
-const slots = STEPS.map((s, index) => {
+const slots = STEPS.map((s) => {
   const slot = document.createElement("div");
   slot.className = "tb-slot";
   slot.innerHTML = `<article class="tb-card" style="--tint:${s.tint}"><span class="tb-card__rule" aria-hidden="true"></span>
-    <div class="tb-card__center"><span class="tb-card__num">${index + 1}</span><h3 class="tb-card__word">${s.word}</h3></div>
+    <div class="tb-card__center"><span class="tb-card__num">${s.num}</span><h3 class="tb-card__word">${s.word}</h3></div>
     <p class="tb-card__body">${s.body}</p></article>`;
   wheel.append(slot);
   return slot;
 });
 const lines = $$(".tb-line");
-const LINES = ["Se você precisa,", "a gente cria."];
+const LINES = ["Da ideia à realização,", "com IA ao seu lado."];
 const chars = lines.flatMap((line, index) => {
   const out = [];
   for (const ch of LINES[index]) {
@@ -674,11 +699,18 @@ if (motion) {
   slots.forEach((s) => s.classList.add("on"));
 }
 
-/* ---------- Capacidades: cards que sobem e empilham ---------- */
+/* ---------- O Objetivo: cards que sobem e empilham ---------- */
 const capCards = $$(".cap-card");
 const capTitles = $$(".cap-title");
-$("#cap-grid").innerHTML = ["Arte de carrossel", "Criação de landing page", "Edição de Reels simples", "Copy de VSL", "Calendário de conteúdos", "Gestão de tráfego"]
-  .map((title) => { const s = find(title); return `<div><small>${esc(s.area)}</small><b>${esc(s.title)}</b><span>a partir de ${money(s.from)}</span></div>`; }).join("");
+$("#cap-grid").innerHTML = [
+  { area: "Fundamentos", title: "Criatividade e TDAH" },
+  { area: "Criação", title: "Design com IA" },
+  { area: "Criação", title: "Copywriting" },
+  { area: "Produtos e Web", title: "Landing Pages" },
+  { area: "Marketing e Vendas", title: "Lançamentos" },
+  { area: "Processos", title: "Projeto final" },
+].map((item) => `<div><small>${esc(item.area)}</small><b>${esc(item.title)}</b><span>Módulo prático</span></div>`).join("");
+
 if (motion) {
   const fadeWindow = (v) => clamp01((v - .35) / .45);
   const titleState = (cur, next) => { const n = clamp01((cur - .5) / .5), r = 1 - clamp01(next / .5); return { opacity: n * r, lift: (1 - n) * 10 - (1 - r) * 10 }; };
@@ -705,9 +737,6 @@ if (motion) {
     });
   }
 }
-const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-const daysLeft = Math.round((Date.parse(DEADLINE) - Date.parse(today)) / 86400000) + 1;
-$("#days-left").textContent = daysLeft > 1 ? daysLeft + " dias" : daysLeft === 1 ? "Último dia" : "Encerrado";
 
 /* ---------- Por que: carrossel com arraste e roda do mouse ---------- */
 const prev = $("#why-prev"), next = $("#why-next");
@@ -784,6 +813,7 @@ if (window.Swiper) {
     else { cancelAnimationFrame(raf); raf = 0; }
   }).observe($("#loop-svg"));
 })();
+
 $$(".faq-q").forEach((button) => {
   const item = button.parentElement;
   const panelEl = $(".faq-a", item);
@@ -811,7 +841,7 @@ $$(".faq-q").forEach((button) => {
   });
 });
 
-/* ---------- Chamada final: campo binário com ondas e brilho do ponteiro ---------- */
+/* ---------- Chamada final: campo binário ---------- */
 (function binary() {
   const canvas = $("#binary");
   const ctx = canvas.getContext("2d", { alpha: false });
@@ -882,7 +912,7 @@ $$(".faq-q").forEach((button) => {
   layout();
   if (reduceMotion) { draw(0); return; }
   new IntersectionObserver(([entry]) => {
-    if (entry.isIntersecting) { if (!raf) raf = requestAnimationFrame(frame); }
+    if (entry.isIntersecting) { if (!raf) { lastTime = 0; raf = requestAnimationFrame(frame); } }
     else { cancelAnimationFrame(raf); raf = 0; }
   }).observe(canvas);
 })();

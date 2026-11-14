@@ -49,6 +49,7 @@ function stats(data) {
 }
 
 const OFFER_TYPES = { servico: "Serviço", infoproduto: "Infoproduto" };
+const MACHINE_ID_PATTERN = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 const MAX_SCENARIO_ITEMS = 30;
 
 function scenarioItems(scenario) {
@@ -82,6 +83,7 @@ const isDate = (value) => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.tes
 
 function validOffer(item) {
   return item && isText(item.title, 120, true)
+    && (!Object.hasOwn(item, "machineId") || (item.type === "infoproduto" && typeof item.machineId === "string" && MACHINE_ID_PATTERN.test(item.machineId)))
     && isText(item.audience, 180) && isText(item.promise, 240) && isText(item.delivery, 500)
     && isInt(item.price, 1, 100000000) && isInt(item.quantity, 1, 10000) && isInt(item.days, 1, 365)
     && isInt(item.fee, 0, 10000) && isInt(item.cost, 0, 100000000);

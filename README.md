@@ -95,3 +95,22 @@ O arquivo local `supabase.config.json` contém a URL do projeto e sua chave **pu
 ```
 
 Rode `node build.mjs` sempre que alterar os arquivos para regenerar o `dist/index.html`.
+
+## Máquina de Infoprodutos
+
+Abra **Infoprodutos** no painel ou acesse `/painel/#infoprodutos`. Crie um projeto guiado ou use o exemplo de portfólio de Social Media. A equipe aprovada pode consultar e editar os mesmos projetos. Para habilitar o armazenamento compartilhado, aplique a [migração da máquina](supabase/migrations/20261114141712_infoproduct_machines.sql) depois da configuração de membros e publique o build do painel. Um build sem configuração Supabase guarda os projetos no navegador.
+
+O mapa do Hotseat Conselho Head organiza a máquina em oito ramos.
+
+| Ramo | Aplicação no painel |
+| --- | --- |
+| Estratégia e formatos de Low Ticket | Público, dor reconhecida, validação, primeira vitória, formato, entrega escalável e conexão com a próxima oferta. |
+| Como gerar caixa com produto de entrada | Visitas × conversão × ticket médio. O simulador pondera order bump e upsell pela adesão e permite testar volume, conversão e valor por comprador. |
+| Estrutura do funil | Atração, consciência, captura, argumento de vendas, checkout e acompanhamento do comprador. |
+| Esteira de produtos | Low, Mid, High e acompanhamento, com problema, transformação e entrega por nível. |
+| Ascensão e acompanhamento | Sinais de prontidão e convites por consumo, comportamento, tempo, resultado, nova necessidade ou campanha. |
+| Checklist para colocar o funil no ar | Produto, identidade, página de vendas, checkout, conteúdo orgânico, copy, anúncios e verba de tráfego. Cada frente tem status, prazo, responsável, link e notas. |
+| Visão da máquina | O projeto reúne a jornada, o preparo para ir ao ar e o LTV esperado. O plano pode ser baixado em Markdown. |
+| Próximo passo | A mentoria apresentada no mapa ilustra uma oferta de acompanhamento. O painel transforma diagnóstico, direção, implementação e feedback em campos reutilizáveis para cada projeto. |
+
+O simulador calcula o CPA usando compradores atribuídos à mídia paga. O CPA de equilíbrio inicial usa a contribuição da primeira compra após taxas e custo variável. No LTV bruto, as taxas de ascensão são condicionais ao nível anterior da mesma coorte.

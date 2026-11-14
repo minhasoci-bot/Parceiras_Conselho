@@ -4,19 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000">
-  <meta name="description" content="Design, copy, vídeo e estratégia feitos por um grupo de profissionais criativos rumo à mentoria.">
-  <title>Mutirão da Mentoria</title>
-  <script>
-    // Links antigos (confirmação de e-mail, recuperação de senha, cenários e seções) apontavam para "/".
-    (function () {
-      var h = location.hash.slice(1), q = new URLSearchParams(location.search), p = new URLSearchParams(h);
-      var painel = ["visao", "vendas", "equipe", "servicos", "simulador", "eventos", "vendas/catalogo", "vendas/simulador"];
-      if (p.has("access_token") || p.has("error_code") || p.has("token_hash") || q.has("code") || q.has("token_hash")
-        || h.indexOf("cenario/") === 0 || painel.indexOf(h) !== -1) {
-        location.replace("painel/" + location.search + location.hash);
-      }
-    })();
-  </script>
+  <meta name="description" content="Aprenda Design, Copy, Marketing, Landing Pages, Infoprodutos e Vendas com IA. Mais espaço para criar. Mais tempo para viver.">
+  <title>IA para TDAH — Formação</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=DM+Sans:wght@300;400;500;700;800&display=swap" rel="stylesheet">
@@ -27,33 +16,33 @@
   <div class="cursor" id="cursor" aria-hidden="true"><span class="cursor-icon"></span></div>
 
   <header class="nav" id="nav">
-    <a class="brand" href="#start" data-cursor="up" aria-label="Mutirão da Mentoria, início">
+    <a class="brand" href="#start" data-cursor="up" aria-label="IA para TDAH, início">
       <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-      <span class="brand-name">Mutirão</span>
+      <span class="brand-name">IA para TDAH</span>
     </a>
     <nav class="nav-links" aria-label="Navegação principal">
       <a href="#showcase">Como funciona</a>
-      <a href="#catalogo">Serviços</a>
-      <a href="#capacidades">A meta</a>
+      <a href="#conteudo">Conteúdo</a>
+      <a href="#objetivo">O objetivo</a>
       <a href="#faq">FAQ</a>
     </nav>
     <div class="nav-end">
-      <a class="btn btn-cta" href="painel/">Entrar no painel</a>
+      <a class="btn btn-cta" href="#final">Quero fazer parte</a>
       <button class="nav-menu" id="nav-menu" type="button" aria-expanded="false" aria-controls="nav-sheet" aria-label="Abrir menu" data-cursor="menu">
         <span></span><span></span>
       </button>
     </div>
     <div class="nav-sheet" id="nav-sheet" hidden>
       <a href="#showcase">Como funciona</a>
-      <a href="#catalogo">Serviços</a>
-      <a href="#capacidades">A meta</a>
+      <a href="#conteudo">Conteúdo</a>
+      <a href="#objetivo">O objetivo</a>
       <a href="#faq">FAQ</a>
-      <a href="painel/">Painel</a>
+      <a href="#final">Quero fazer parte</a>
     </div>
   </header>
 
   <main>
-    <!-- Camadas fixas: brilho WebGL do topo e túnel de serviços -->
+    <!-- Camadas fixas: brilho WebGL do topo e túnel 3D -->
     <div class="layer-neuro" id="layer-neuro" aria-hidden="true"><canvas id="neuro"></canvas></div>
     <div class="layer-gallery" id="layer-gallery" aria-hidden="true">
       <canvas id="gallery"></canvas>
@@ -63,21 +52,21 @@
     <section class="hero" id="start" aria-labelledby="hero-title">
       <div class="hero-inner">
         <h1 id="hero-title" class="hero-title"></h1>
-        <p class="hero-sub hero-in">Um grupo de profissionais criativos fazendo design, copy, vídeo e estratégia para chegar junto à mentoria.</p>
+        <p class="hero-sub hero-in">Aprenda Design, Copy, Marketing, Landing Pages, Infoprodutos e Vendas com IA. Mais espaço para criar. Mais tempo para viver.</p>
         <form class="hero-prompt" id="prompt-form" role="search">
           <div class="hero-prompt__content">
-            <label class="sr-only" for="prompt-input">Descreva o que você precisa</label>
+            <label class="sr-only" for="prompt-input">O que você quer aprender?</label>
             <input id="prompt-input" name="q" autocomplete="off" data-cursor="text">
             <span class="typed" id="typed" aria-hidden="true"></span>
           </div>
-          <button class="hero-prompt__send hero-prompt__content" type="submit" aria-label="Encontrar serviços" data-cursor="send">
+          <button class="hero-prompt__send hero-prompt__content" type="submit" aria-label="Explorar conteúdos" title="Explorar conteúdos" data-cursor="send">
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M3 11.5 21 4l-7.5 18-2.2-8.3z" fill="currentColor"/></svg>
           </button>
         </form>
       </div>
     </section>
 
-    <section class="picker" id="templates" aria-label="Áreas de serviço">
+    <section class="picker" id="templates" aria-label="Áreas de formação">
       <div class="picker__rail" id="picker-rail">
         <div class="picker__panel" id="picker-panel">
           <div class="picker__viewport" id="picker-viewport">
@@ -102,11 +91,11 @@
       <div class="showcase__sticky">
         <div class="tb-layer" id="tb-layer">
           <div class="tb-cards" aria-hidden="true"><div class="tb-wheel" id="tb-wheel"></div></div>
-          <h2 class="sr-only" id="showcase-title">Se você precisa, a gente cria.</h2>
+          <h2 class="sr-only" id="showcase-title">Da ideia à realização, com IA ao seu lado.</h2>
           <ol class="sr-only">
-            <li><h3>Passo 1 — Descreva</h3><p>Conte o que você precisa com as suas palavras. A gente encontra o serviço certo no catálogo.</p></li>
-            <li><h3>Passo 2 — Combine</h3><p>Escopo, prazo e preço acertados antes de começar, a partir dos valores de referência.</p></li>
-            <li><h3>Passo 3 — Receba</h3><p>A entrega chega pronta para usar. E cada venda soma na meta coletiva do grupo.</p></li>
+            <li><h3>01 — Aprenda</h3><p>Entenda a tecnologia e desenvolva novas habilidades.</p></li>
+            <li><h3>02 — Crie</h3><p>Aplique Design, Copy, Marketing e ferramentas em projetos.</p></li>
+            <li><h3>03 — Coloque no mundo</h3><p>Estruture, divulgue e aprenda a vender.</p></li>
           </ol>
           <div class="tb-headline" id="tb-headline" aria-hidden="true">
             <p class="tb-line"></p>
@@ -116,54 +105,53 @@
       </div>
     </section>
 
-    <section class="catalog" id="catalogo" aria-labelledby="catalog-title">
-      <span class="chip">Serviços</span>
-      <h2 id="catalog-title" class="display">O catálogo inteiro, com preço de referência</h2>
-      <p class="sub" id="catalog-status">Valores médios de referência. O preço final é combinado com você.</p>
-      <div class="filters" role="group" aria-label="Filtrar por área" id="catalog-filters"></div>
+    <section class="catalog" id="conteudo" aria-labelledby="catalog-title">
+      <span class="chip">Conteúdo</span>
+      <h2 id="catalog-title" class="display">Tudo para criar e vender com IA.</h2>
+      <p class="sub" id="catalog-status">5 trilhas. 17 módulos. Um projeto final.</p>
+      <div class="filters" role="group" aria-label="Filtrar por trilha" id="catalog-filters"></div>
       <ul class="service-list" id="service-list"></ul>
     </section>
 
-    <section class="capabilities" id="capacidades" aria-label="A meta">
+    <section class="capabilities" id="objetivo" aria-label="O objetivo">
       <div class="cap-pin" id="cap-pin">
         <div class="cap-sticky">
           <header class="cap-head">
             <div class="cap-notch">
-              <span class="chip">A meta</span>
+              <span class="chip">O objetivo</span>
               <div class="cap-titles" id="cap-titles">
-                <div class="cap-title"><h2 class="display">Uma data, uma meta</h2><p>Todo o grupo trabalha até 30 de novembro de 2026 para garantir a entrada na mentoria.</p></div>
-                <div class="cap-title"><h2 class="display">Cada venda conta</h2><p>Propostas, vendas fechadas e valores recebidos entram no painel e atualizam o ritmo diário da meta.</p></div>
-                <div class="cap-title"><h2 class="display">Tudo no painel</h2><p>Simulador de ofertas, catálogo, equipe e eventos num só lugar, para quem faz parte do grupo.</p></div>
+                <div class="cap-title"><h2 class="display">01 — Aprenda para criar</h2><p>Habilidades criativas e comerciais com IA.</p></div>
+                <div class="cap-title"><h2 class="display">02 — Crie para realizar</h2><p>Conecte tudo em um projeto seu.</p></div>
+                <div class="cap-title"><h2 class="display">03 — Viva além da tela</h2><p>Menos operacional, mais espaço para o que importa.</p></div>
               </div>
             </div>
           </header>
           <div class="cap-card" style="--a:#24502f;--b:#d8f386;--c:#0c1511">
             <div class="cap-window">
-              <div class="cap-bar"><span class="brand-mark sm" aria-hidden="true"><i></i><i></i><i></i></span><strong>Mutirão da Mentoria</strong><span class="cap-live"><i></i>Meta</span></div>
+              <div class="cap-bar"><span class="brand-mark sm" aria-hidden="true"><i></i><i></i><i></i></span><strong>IA para TDAH</strong><span class="cap-live"><i></i>Trilhas</span></div>
               <div class="cap-body cap-metrics">
-                <div class="metric big"><small>Prazo final</small><strong id="days-left">—</strong><span>até 30/11/2026</span></div>
-                <div class="metric"><small>6 meses de curso</small><strong>R$ 1.497</strong><span>por participante</span></div>
-                <div class="metric"><small>1 ano de curso</small><strong>R$ 2.997</strong><span>por participante</span></div>
+                <div class="metric big"><small>Trilhas completas</small><strong>5</strong><span>trilhas integradas</span></div>
+                <div class="metric"><small>Conteúdo prático</small><strong>17</strong><span>módulos guiados</span></div>
+                <div class="metric"><small>Aplicação real</small><strong>Final</strong><span>projeto no mundo</span></div>
               </div>
             </div>
           </div>
           <div class="cap-card" style="--a:#d8f386;--b:#4c9b6a;--c:#183d30">
             <div class="cap-window">
-              <div class="cap-bar"><span class="brand-mark sm" aria-hidden="true"><i></i><i></i><i></i></span><strong>Vendas</strong><span class="cap-live"><i></i>Ao vivo</span></div>
+              <div class="cap-bar"><span class="brand-mark sm" aria-hidden="true"><i></i><i></i><i></i></span><strong>Jornada</strong><span class="cap-live"><i></i>Etapas</span></div>
               <div class="cap-body cap-sales">
-                <div class="sale"><span class="pill">Proposta</span><i></i><i></i></div>
-                <div class="sale"><span class="pill pill-mid">Fechado</span><i></i><i></i></div>
-                <div class="sale"><span class="pill pill-ok">Recebido</span><i></i><i></i></div>
-                <div class="sale"><span class="pill pill-ok">Recebido</span><i></i><i></i></div>
-                <p class="cap-note">Cada valor recebido até 30/11 entra na meta.</p>
+                <div class="sale"><span class="pill">01</span><i></i><i></i></div>
+                <div class="sale"><span class="pill pill-mid">02</span><i></i><i></i></div>
+                <div class="sale"><span class="pill pill-ok">03</span><i></i><i></i></div>
+                <p class="cap-note">Ideia · Criação · Lançamento</p>
               </div>
             </div>
           </div>
           <div class="cap-card" style="--a:#4c9b6a;--b:#183d30;--c:#d8f386">
             <div class="cap-window">
-              <div class="cap-bar"><span class="brand-mark sm" aria-hidden="true"><i></i><i></i><i></i></span><strong>Painel</strong><span class="cap-live"><i></i>Equipe</span></div>
+              <div class="cap-bar"><span class="brand-mark sm" aria-hidden="true"><i></i><i></i><i></i></span><strong>Método</strong><span class="cap-live"><i></i>Prática</span></div>
               <div class="cap-body cap-panel">
-                <nav class="cap-rail"><b>Visão geral</b><span>Vendas</span><span>Equipe</span><span>Catálogo</span><span>Simulador</span><span>Eventos</span></nav>
+                <nav class="cap-rail"><b>Aprender</b><span>Praticar</span><span>Entregar</span></nav>
                 <div class="cap-grid" id="cap-grid"></div>
               </div>
             </div>
@@ -175,8 +163,8 @@
     <section class="why" aria-labelledby="why-title">
       <div class="why-head">
         <div>
-          <span class="chip">Por que o mutirão</span>
-          <h2 id="why-title" class="display">Muitas mãos, um só objetivo</h2>
+          <span class="chip">Por que a formação</span>
+          <h2 id="why-title" class="display">Sua criatividade continua no centro.</h2>
         </div>
         <div class="why-nav">
           <button class="round-btn" type="button" id="why-prev" aria-label="Anterior" data-cursor="back"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -185,10 +173,10 @@
       </div>
       <div class="swiper why-swiper" id="why-swiper" data-cursor="arrows">
         <div class="swiper-wrapper">
-          <article class="swiper-slide why-card"><small>Feito em grupo</small><div><h3>Mais áreas. Menos fornecedores.</h3><p>Design, vídeo, copy, estratégia e gestão com o mesmo grupo, sem precisar procurar cada pessoa.</p></div></article>
-          <article class="swiper-slide why-card"><small>Preço às claras</small><div><h3>Mais clareza. Menos surpresa.</h3><p>Cada serviço tem um valor de referência publicado. O preço final é combinado antes de começar.</p></div></article>
-          <article class="swiper-slide why-card"><small>Propósito comum</small><div><h3>Mais empenho. Menos pressa.</h3><p>Quem entrega está construindo o próprio caminho na mentoria, e isso aparece no cuidado com o trabalho.</p></div></article>
-          <article class="swiper-slide why-card"><small>Prazo marcado</small><div><h3>Mais foco. Menos espera.</h3><p>O grupo tem até 30 de novembro de 2026 para bater a meta, e organiza a agenda a partir disso.</p></div></article>
+          <article class="swiper-slide why-card"><small>Habilidades</small><div><h3>Mais habilidades. Menos limites.</h3><p>Design, Copy, Web, Marketing e Vendas.</p></div></article>
+          <article class="swiper-slide why-card"><small>Prática</small><div><h3>Mais prática. Menos teoria solta.</h3><p>Aprenda criando projetos reais.</p></div></article>
+          <article class="swiper-slide why-card"><small>Autonomia</small><div><h3>Mais autonomia. Menos dependência.</h3><p>IA para potencializar suas habilidades.</p></div></article>
+          <article class="swiper-slide why-card"><small>Qualidade de vida</small><div><h3>Mais vida. Menos operacional.</h3><p>Tempo para criar e ser humano.</p></div></article>
         </div>
       </div>
     </section>
@@ -205,33 +193,33 @@
         </svg>
       </div>
       <ul class="faq-list" id="faq-list">
-        <li><button type="button" class="faq-q" aria-expanded="false" data-cursor="plus"><span class="n">01</span><span class="q">O que é o Mutirão da Mentoria?</span><span class="plus" aria-hidden="true"></span></button><div class="faq-a" role="region"><div><p>Um grupo de profissionais criativos que oferece serviços e infoprodutos para, juntos, levantar o valor de entrada de cada participante na mentoria.</p></div></div></li>
-        <li><button type="button" class="faq-q" aria-expanded="false" data-cursor="plus"><span class="n">02</span><span class="q">Quais serviços vocês fazem?</span><span class="plus" aria-hidden="true"></span></button><div class="faq-a" role="region"><div><p>Design, landing pages, fotos com IA, edição de vídeo, copy e roteiro, estratégia de conteúdo e gestão de redes e tráfego. A lista completa, com valores de referência, está no catálogo.</p></div></div></li>
-        <li><button type="button" class="faq-q" aria-expanded="false" data-cursor="plus"><span class="n">03</span><span class="q">Quanto custa?</span><span class="plus" aria-hidden="true"></span></button><div class="faq-a" role="region"><div><p>Cada serviço tem um preço médio de referência no catálogo. O valor final depende do escopo e é combinado com você antes do trabalho começar.</p></div></div></li>
-        <li><button type="button" class="faq-q" aria-expanded="false" data-cursor="plus"><span class="n">04</span><span class="q">Para onde vai o dinheiro?</span><span class="plus" aria-hidden="true"></span></button><div class="faq-a" role="region"><div><p>Para a meta coletiva do grupo: R$ 1.497 por participante para 6 meses de curso ou R$ 2.997 para 1 ano, com prazo até 30 de novembro de 2026.</p></div></div></li>
-        <li><button type="button" class="faq-q" aria-expanded="false" data-cursor="plus"><span class="n">05</span><span class="q">Faço parte do grupo. Como entro no painel?</span><span class="plus" aria-hidden="true"></span></button><div class="faq-a" role="region"><div><p>Clique em <a href="painel/">Entrar no painel</a>, crie sua conta com e-mail e senha e aguarde a aprovação do administrador.</p></div></div></li>
+        <li><button type="button" class="faq-q" aria-expanded="false" data-cursor="plus"><span class="n">01</span><span class="q">O que é a formação?</span><span class="plus" aria-hidden="true"></span></button><div class="faq-a" role="region"><div><p>Uma formação prática de criatividade e negócios digitais com IA.</p></div></div></li>
+        <li><button type="button" class="faq-q" aria-expanded="false" data-cursor="plus"><span class="n">02</span><span class="q">O que vou aprender?</span><span class="plus" aria-hidden="true"></span></button><div class="faq-a" role="region"><div><p>Design, Copy, Marketing, Web, Infoprodutos, Lançamentos, Vendas e processos.</p></div></div></li>
+        <li><button type="button" class="faq-q" aria-expanded="false" data-cursor="plus"><span class="n">03</span><span class="q">Preciso saber usar IA?</span><span class="plus" aria-hidden="true"></span></button><div class="faq-a" role="region"><div><p>Não. Começamos pelos fundamentos.</p></div></div></li>
+        <li><button type="button" class="faq-q" aria-expanded="false" data-cursor="plus"><span class="n">04</span><span class="q">É só para quem tem TDAH?</span><span class="plus" aria-hidden="true"></span></button><div class="faq-a" role="region"><div><p>Foi pensada para pessoas com TDAH, mas outros criativos também podem aprender.</p></div></div></li>
+        <li><button type="button" class="faq-q" aria-expanded="false" data-cursor="plus"><span class="n">05</span><span class="q">Vou criar um projeto?</span><span class="plus" aria-hidden="true"></span></button><div class="faq-a" role="region"><div><p>Sim. Você aplica o aprendizado em um projeto próprio ou orientado.</p></div></div></li>
       </ul>
     </section>
 
-    <section class="final" aria-labelledby="final-title">
+    <section class="final" id="final" aria-labelledby="final-title">
       <canvas class="binary" id="binary" aria-hidden="true"></canvas>
       <div class="final-vignette" aria-hidden="true"></div>
       <div class="final-inner">
-        <h2 id="final-title" class="display">O seu próximo projeto começa com uma frase</h2>
-        <p>Descreva o que você precisa e veja quais serviços do mutirão resolvem isso.</p>
-        <a class="btn btn-cta btn-lg" href="#start" id="final-cta" data-cursor="sparkle">Descrever meu projeto</a>
+        <h2 id="final-title" class="display">Sua próxima ideia merece ganhar o mundo.</h2>
+        <p>Aprenda a criar, divulgar e vender com IA — sem abrir mão da sua criatividade.</p>
+        <a class="btn btn-cta btn-lg" href="#start" id="final-cta" data-cursor="sparkle">Quero fazer parte</a>
       </div>
     </section>
   </main>
 
   <footer class="footer">
     <div class="footer-top">
-      <p class="display">Juntos, a gente chega lá.</p>
-      <a class="brand" href="#start" data-cursor="up" aria-label="Voltar ao topo"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-name">Mutirão da Mentoria</span></a>
+      <p class="display">Mais espaço para criar. Mais tempo para viver.</p>
+      <a class="brand" href="#start" data-cursor="up" aria-label="Voltar ao topo"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span class="brand-name">IA para TDAH</span></a>
     </div>
     <div class="footer-bottom">
-      <span>© 2026 Mutirão da Mentoria</span>
-      <nav aria-label="Links do rodapé"><a href="#catalogo">Serviços</a><a href="#faq">FAQ</a><a href="painel/">Painel</a></nav>
+      <span>© 2026 IA para TDAH</span>
+      <nav aria-label="Links do rodapé"><a href="#conteudo">Conteúdo</a><a href="#faq">FAQ</a><a href="#final">Inscrição</a></nav>
     </div>
   </footer>
 

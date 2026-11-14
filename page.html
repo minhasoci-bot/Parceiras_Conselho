@@ -4,42 +4,45 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#fbfcf8">
-  <meta name="description" content="Acompanhe a meta coletiva e planeje as ofertas do Mutirão da Mentoria.">
-  <title>Mutirão da Mentoria</title>
+  <meta name="description" content="Acompanhe a meta e planeje as ofertas da IA para TDAH.">
+  <title>IA para TDAH — Painel</title>
   <style>/* STYLE */</style>
 </head>
 <body>
   <aside class="rail">
-    <a class="brand" href="#visao" aria-label="Mutirão da Mentoria, visão geral">
+    <a class="brand" href="#visao" aria-label="IA para TDAH, visão geral">
       <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-      <span><strong>Mutirão</strong><small>da Mentoria</small></span>
+      <span><strong>IA</strong><small>para TDAH</small></span>
     </a>
     <nav aria-label="Seções do painel">
       <a href="#visao"><i class="icon grid-icon" aria-hidden="true"></i> Visão geral</a>
       <a href="#vendas/catalogo" id="sales-nav-link"><i class="icon catalog-icon" aria-hidden="true"></i> Vendas</a>
       <a href="#equipe" id="team-nav-link" data-member-access hidden><i class="icon people-icon" aria-hidden="true"></i> Equipe<span class="badge team-nav-badge" id="team-nav-badge" aria-hidden="true" hidden></span></a>
       <a href="#eventos" data-member-access hidden><i class="icon calendar-icon" aria-hidden="true"></i> Eventos</a>
+      <a href="#infoprodutos" data-member-access data-machine-nav hidden><i class="icon machine-icon" aria-hidden="true"></i> Infoprodutos</a>
+      <a href="#timeline" data-member-access hidden><i class="icon timeline-icon" aria-hidden="true"></i> Timeline</a>
     </nav>
+    <div class="rail-footer" id="rail-footer">
+      <div class="user-badge" id="user-badge" hidden>
+        <span class="user-avatar" id="user-avatar" aria-hidden="true">U</span>
+        <div class="user-info">
+          <span class="user-email" id="user-email"></span>
+          <span class="pill user-role-pill" id="user-role-pill">Participante</span>
+        </div>
+        <button class="button small auth-logout" type="button" id="auth-logout-btn" title="Encerrar sessão">Sair</button>
+      </div>
+    </div>
   </aside>
 
   <div class="workspace">
     <header class="masthead">
-      <a class="brand masthead-brand" href="#visao" aria-label="Mutirão da Mentoria, visão geral">
+      <a class="brand masthead-brand" href="#visao" aria-label="IA para TDAH, visão geral">
         <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span class="brand-text"><strong>Mutirão</strong><small>da Mentoria</small></span>
+        <span class="brand-text"><strong>IA</strong><small>para TDAH</small></span>
       </a>
       <span id="breadcrumb">Visão geral</span>
       <div class="top-actions">
-        <div class="user-badge" id="user-badge" hidden>
-          <span class="user-avatar" id="user-avatar" aria-hidden="true">U</span>
-          <div class="user-info">
-            <span class="user-email" id="user-email"></span>
-            <span class="pill user-role-pill" id="user-role-pill">Participante</span>
-          </div>
-          <button class="button small auth-logout" type="button" id="auth-logout-btn" title="Encerrar sessão">Sair</button>
-        </div>
         <button class="button" type="button" id="auth-action" hidden>Entrar</button>
-        <span class="date-chip"><i class="calendar-icon icon" aria-hidden="true"></i><span id="header-countdown" role="timer" aria-label="Tempo restante para a meta">—</span></span>
       </div>
     </header>
     <main id="main">
@@ -47,8 +50,8 @@
 
       <section id="visao" class="view" aria-labelledby="overview-heading">
         <div class="view-heading overview-heading">
-          <div><p class="eyebrow"><span></span> MUTIRÃO DA MENTORIA</p><h1 id="overview-heading">Painel de metas</h1>
-          <p>Acompanhe a arrecadação para a entrada do grupo na mentoria.</p></div>
+          <div><p class="eyebrow"><span></span> IA PARA TDAH</p><h1 id="overview-heading">Painel de metas</h1>
+          <p>Acompanhe a arrecadação e os resultados da plataforma.</p></div>
           <a class="button" href="#vendas/simulador">Simular uma oferta <span aria-hidden="true">↗</span></a>
         </div>
 
@@ -74,8 +77,8 @@
           <section class="card overview-card">
             <div class="section-header">
               <div>
-                <h2>Equipe do mutirão</h2>
-                <p>Participantes confirmados no mutirão.</p>
+                <h2>Equipe da plataforma</h2>
+                <p>Participantes confirmados na IA para TDAH.</p>
               </div>
               <div class="card-header-actions">
                 <a class="text-link" href="#equipe" id="manage-access" hidden>Solicitações <span class="badge" id="overview-pending-badge" hidden>0</span></a>
@@ -100,7 +103,7 @@
         </nav>
 
         <section class="card roomy" data-sales-view="vendas" aria-labelledby="sales-ledger-heading" hidden>
-          <div class="section-header"><div><h2 id="sales-ledger-heading">Registro de vendas</h2><p>Use o valor líquido que entra no caixa do mutirão.</p></div><button class="button primary" type="button" data-action="new-sale" data-sales-access hidden>＋ Registrar venda</button></div>
+          <div class="section-header"><div><h2 id="sales-ledger-heading">Registro de vendas</h2><p>Use o valor líquido que entra no caixa da plataforma.</p></div><button class="button primary" type="button" data-action="new-sale" data-sales-access hidden>＋ Registrar venda</button></div>
           <div class="filters"><label>Status <select id="status-filter"><option value="">Todos</option><option value="proposta">Proposta</option><option value="fechado">Fechado</option><option value="recebido">Recebido</option></select></label></div>
           <p id="late-note" class="inline-note" hidden></p><div id="sales-list"></div>
         </section>
@@ -121,6 +124,7 @@
             <form id="sim-form" class="card roomy">
               <div class="section-header"><h3>Montar cenário</h3><button type="button" class="text-link" data-action="reset-sim">Novo cenário</button></div>
               <label>Nome do cenário <input name="title" required maxlength="120" placeholder="Ex.: Serviços e workshop de novembro"></label>
+              <p id="scenario-machine-status" class="inline-note" role="status" hidden></p>
               <div id="scenario-items" class="scenario-items"></div>
               <div class="scenario-tools">
                 <button class="button" type="button" data-action="add-service">＋ Serviço</button>
@@ -148,7 +152,7 @@
       </section>
 
       <section id="equipe" class="view" aria-labelledby="team-heading" hidden>
-        <div class="view-heading"><div><h1 id="team-heading">Equipe do mutirão</h1><p>Veja quem participa e qual é a função de cada pessoa.</p></div></div>
+        <div class="view-heading"><div><h1 id="team-heading">Equipe da plataforma</h1><p>Veja quem participa e qual é a função de cada pessoa.</p></div></div>
         <section class="roomy card" aria-labelledby="team-members-heading">
           <div class="section-header"><h2 id="team-members-heading">Participantes aprovados</h2></div>
           <div id="members-list"></div>
@@ -180,17 +184,19 @@
           </div>
         </section>
         <div id="event-workspace" hidden>
-          <section class="event-hero" aria-labelledby="event-current-title">
-            <div><span id="event-current-status" class="pill"></span><h2 id="event-current-title"></h2><p id="event-current-date"></p></div>
-            <div id="event-overview-metrics" class="event-overview-metrics"></div>
-          </section>
-          <nav class="event-tabs" aria-label="Planejamento do evento" id="event-sections">
-            <button class="button" type="button" data-event-section="brief" aria-pressed="true">Estratégia</button>
-            <button class="button" type="button" data-event-section="task" aria-pressed="false">Tarefas</button>
-            <button class="button" type="button" data-event-section="message" aria-pressed="false">Comunicação</button>
-            <button class="button" type="button" data-event-section="agenda" aria-pressed="false">Roteiro do dia</button>
-            <button class="button" type="button" data-event-section="link" aria-pressed="false">Links</button>
-          </nav>
+          <div class="planning-header">
+            <section class="event-hero" aria-labelledby="event-current-title">
+              <div><span id="event-current-status" class="pill"></span><h2 id="event-current-title"></h2><p id="event-current-date"></p></div>
+              <div id="event-overview-metrics" class="event-overview-metrics"></div>
+            </section>
+            <nav class="planning-tabs" aria-label="Planejamento do evento" id="event-sections">
+              <button class="button" type="button" data-event-section="brief" aria-pressed="true">Estratégia</button>
+              <button class="button" type="button" data-event-section="task" aria-pressed="false">Tarefas</button>
+              <button class="button" type="button" data-event-section="message" aria-pressed="false">Comunicação</button>
+              <button class="button" type="button" data-event-section="agenda" aria-pressed="false">Roteiro do dia</button>
+              <button class="button" type="button" data-event-section="link" aria-pressed="false">Links</button>
+            </nav>
+          </div>
           <section class="card roomy event-panel" aria-labelledby="event-panel-heading">
             <div class="section-header">
               <div><h3 id="event-panel-heading"></h3><p id="event-panel-description"></p></div>
@@ -205,6 +211,79 @@
           </section>
         </div>
       </section>
+      <section id="infoprodutos" class="view" aria-labelledby="machine-heading" hidden>
+        <div class="view-heading">
+          <div><h1 id="machine-heading">Máquina de Infoprodutos</h1><p>Planeje a primeira venda e as próximas ofertas a partir da jornada do cliente.</p></div>
+          <button class="button primary" id="machine-new" type="button">＋ Nova máquina</button>
+        </div>
+        <p id="machine-feedback" class="machine-feedback" role="status" hidden></p>
+        <section id="machine-gallery" aria-labelledby="machine-gallery-heading">
+          <div class="machine-toolbar">
+            <h2 id="machine-gallery-heading" tabindex="-1">Máquinas criadas</h2>
+            <button class="button" id="machine-refresh" type="button">Atualizar</button>
+          </div>
+          <p id="machine-loading" role="status" hidden>Carregando máquinas…</p>
+          <div class="event-gallery-grid" id="machine-cards"></div>
+          <div class="card roomy machine-empty" id="machine-empty" hidden>
+            <h3>Crie sua primeira máquina</h3><p>Comece com um projeto guiado ou explore o exemplo preenchido.</p>
+          </div>
+        </section>
+        <div id="machine-workspace" hidden>
+          <div class="machine-toolbar">
+            <button class="button" id="machine-back" type="button">← Voltar à galeria</button>
+            <div class="machine-actions">
+              <button class="button" id="machine-settings" type="button">Editar projeto</button>
+              <button class="button" id="machine-export" type="button">Baixar plano</button>
+            </div>
+          </div>
+          <div class="planning-header">
+            <section class="machine-hero" aria-labelledby="machine-title">
+              <div><span class="pill" id="machine-state"></span><h2 id="machine-title" tabindex="-1"></h2></div>
+              <button class="machine-hero-progress" id="machine-checklist-link" type="button" aria-controls="machine-panel">
+                <span>Checklist <span aria-hidden="true">↗</span></span><strong id="machine-progress-text"></strong>
+                <progress id="machine-progress" max="8" value="0" aria-label="Preparação para ir ao ar"></progress>
+              </button>
+            </section>
+            <nav class="planning-tabs" id="machine-tabs" aria-label="Etapas da máquina"></nav>
+          </div>
+          <section class="card roomy machine-panel" aria-labelledby="machine-panel-heading" id="machine-panel"></section>
+        </div>
+      </section>
+      <!-- ===== TIMELINE / GANTT ===== -->
+      <section id="timeline" class="view" aria-labelledby="timeline-heading" hidden>
+        <div class="view-heading">
+          <div>
+            <h1 id="timeline-heading">Timeline</h1>
+            <p>Gantt de todos os projetos e eventos da plataforma.</p>
+          </div>
+          <div class="timeline-controls">
+            <button class="button" id="timeline-today" type="button">Hoje</button>
+            <button class="button" id="timeline-zoom-out" type="button" aria-label="Diminuir zoom">−</button>
+            <button class="button" id="timeline-zoom-in" type="button" aria-label="Aumentar zoom">+</button>
+          </div>
+        </div>
+        <p id="timeline-feedback" class="form-error" role="alert" hidden></p>
+        <p id="timeline-loading" role="status" hidden>Carregando timeline…</p>
+        <div id="timeline-empty" class="card roomy" hidden>
+          <h3>Nenhuma tarefa com data encontrada</h3>
+          <p>Adicione datas às tarefas nos Eventos e Infoprodutos para vê-las aqui.</p>
+        </div>
+        <div id="timeline-container" class="timeline-container" hidden>
+          <div id="timeline-sidebar" class="timeline-sidebar"></div>
+          <div id="timeline-scroll" class="timeline-scroll">
+            <div id="timeline-header" class="timeline-header"></div>
+            <div id="timeline-rows" class="timeline-rows"></div>
+          </div>
+        </div>
+        <aside id="timeline-detail" class="timeline-detail" hidden aria-label="Detalhes da tarefa">
+          <div class="timeline-detail-header">
+            <h3 id="timeline-detail-title"></h3>
+            <button class="icon-button" id="timeline-detail-close" type="button" aria-label="Fechar">×</button>
+          </div>
+          <div id="timeline-detail-body"></div>
+          <div class="form-footer" id="timeline-detail-actions"></div>
+        </aside>
+      </section>
     </main>
   </div>
 
@@ -215,7 +294,7 @@
         <label>Tipo <select name="type"><option value="servico">Serviço</option><option value="infoproduto">Infoproduto</option></select></label>
         <button class="text-link danger" type="button" data-action="remove-item">Remover</button>
       </div>
-      <label>Item do catálogo <select name="item-title" required></select></label>
+      <label><span class="offer-select-label">Item do catálogo</span><select name="item-title" required></select></label>
       <div class="form-grid">
         <label>Preço unitário (R$) <input name="price" type="number" min=".01" max="1000000" step=".01" required placeholder="0,00"></label>
         <label>Quantidade de vendas <input name="quantity" type="number" min="1" max="10000" step="1" required value="1"></label>
@@ -304,6 +383,17 @@
       <div class="form-footer">
         <button class="button danger outline" id="event-remove-item" type="button" hidden>Excluir item</button>
         <button class="button primary" id="event-save" type="submit">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="machine-dialog" aria-labelledby="machine-dialog-heading">
+    <form id="machine-form" class="dialog-form">
+      <div class="section-header"><h2 id="machine-dialog-heading"></h2><button class="icon-button" id="machine-close" type="button" data-close="machine-dialog" aria-label="Fechar">×</button></div>
+      <div class="machine-edit" id="machine-form-fields"></div>
+      <p class="form-error auth-field" role="alert" hidden></p>
+      <div class="form-footer">
+        <button class="button" id="machine-cancel" type="button" data-close="machine-dialog" hidden>Cancelar</button>
+        <button class="button primary" id="machine-submit" type="submit">Salvar</button>
       </div>
     </form>
   </dialog>

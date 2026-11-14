@@ -7,21 +7,26 @@
   const linkStates = { pendente: "Pendente", pronto: "Validado" };
   const teams = { estrategia: "Estratégia", comercial: "Comercial", design: "Design", copy: "Copy", video: "Vídeo", dev: "Dev" };
   const panel = {
-    brief: { name: "Estratégia", verb: "Editar planejamento", description: "Defina o objetivo, o público e a oferta que vão orientar a equipe." },
+    brief: { name: "Estratégia do evento", verb: "Editar dados do evento", description: "Alinhe o resultado que a equipe busca, com quem vai falar e o que vai oferecer." },
     task: { name: "Tarefas", verb: "Nova tarefa", description: "Acompanhe responsáveis, prazos e entregas por fase.", states: progress },
     message: { name: "Calendário de comunicação", verb: "Nova mensagem", description: "Planeje a copy e acompanhe a publicação nos grupos e canais privados.", states: messageStates },
     agenda: { name: "Roteiro do dia", verb: "Novo bloco", description: "Organize a ordem, a duração e a condução de cada bloco.", states: progress },
     link: { name: "Links da operação", verb: "Novo link", description: "Centralize páginas, grupos, pesquisas, materiais e checkout.", states: linkStates },
   };
-  const briefFields = [
-    ["logistics", "Formato, local ou plataforma"],
-    ["goal", "Objetivo e indicadores de sucesso"],
-    ["audience", "Público e lista VIP"],
-    ["narrative", "Narrativa, tese e mensagens aprovadas"],
-    ["offer", "Oferta, entregáveis e bônus"],
-    ["identity", "Identidade visual e materiais"],
-    ["followup", "Regras de venda e pós-evento"],
-  ];
+  const briefGroups = {
+    direction: {
+      title: "Objetivo e público",
+      fields: [["goal", "Objetivo e indicadores de sucesso"], ["audience", "Público e lista VIP"]],
+    },
+    communication: {
+      title: "Mensagem e oferta",
+      fields: [["narrative", "Narrativa, tese e mensagens aprovadas"], ["offer", "Oferta, entregáveis e bônus"]],
+    },
+    operation: {
+      title: "Operação e pós-evento",
+      fields: [["logistics", "Formato, local ou plataforma"], ["identity", "Identidade visual e materiais"], ["followup", "Regras de venda e pós-evento"]],
+    },
+  };
   const dialog = $("#event-dialog");
   const form = $("#event-form");
   const closeEditor = $("[data-close='event-dialog']", dialog);
@@ -412,8 +417,17 @@
     $("#event-filters").hidden = section === "brief";
     $("#event-channel-filter").hidden = section !== "message";
     if (section === "brief") {
-      panelContent.innerHTML = `<div class="event-brief">${briefFields.map(([key, label]) =>
-        `<article><h4>${label}</h4><p>${esc(event.plan.brief[key] || "A definir")}</p></article>`).join("")}</div>`;
+      const brief = event.plan.brief;
+      panelContent.innerHTML = `<div class="planning-stack">${Object.entries(briefGroups).map(([key, { title, fields }]) =>
+        `<section class="planning-block" aria-labelledby="event-brief-${key}">
+          <header class="planning-block-header">
+            <h4 id="event-brief-${key}">${title}</h4>
+            <button class="button small" type="button" data-event-brief="${key}" aria-label="Editar ${title}">Editar</button>
+          </header>
+          <dl class="planning-facts">${fields.map(([name, label]) =>
+            `<div${name === "followup" ? ' class="planning-highlight"' : ""}><dt>${label}</dt>
+              <dd${brief[name] ? "" : ' class="planning-missing"'}>${esc(brief[name] || "A definir")}</dd></div>`).join("")}</dl>
+        </section>`).join("")}</div>`;
       return;
     }
     const all = itemsFor(event, section);
@@ -453,7 +467,7 @@
     const managing = ["rename", "duplicate", "delete"].includes(kind);
     const event = managing ? item : active();
     if (kind !== "new" && !event) return;
-    editor = { kind, event, item: managing ? null : item };
+    editor = { kind, event, item: managing || kind === "brief-group" ? null : item, group: kind === "brief-group" ? item : null };
     const fields = $("#event-form-fields");
     const names = { task: "tarefa", message: "mensagem", agenda: "bloco", link: "link" };
     const status = (states) => select("status", "Status", states);
@@ -466,13 +480,17 @@
       if (kind === "rename") field(form, "title").value = event.title;
       if (kind === "duplicate") field(form, "title").value = event.title.slice(0, 112).trimEnd() + " (cópia)";
     } else if (kind === "new" || kind === "brief") {
-      $("#event-dialog-heading").textContent = kind === "new" ? "Novo evento" : "Editar planejamento";
+      $("#event-dialog-heading").textContent = kind === "new" ? "Novo evento" : "Editar dados do evento";
       fields.innerHTML = input("title", "Nome do evento", "text", "required maxlength=120")
         + pair(input("event_date", "Data de lançamento do evento", "date"), status(eventStates))
         + (kind === "new"
           ? select("template", "Começar com", { launch: "Modelo de lançamento", blank: "Evento em branco" })
             + '<p class="event-template-hint">Informe o dia do evento. O modelo usa essa data para montar o cronograma de tarefas, mensagens, roteiro e validação de links.</p>'
-          : briefFields.map(([key, label]) => area(key, label)).join(""));
+          : "");
+    } else if (kind === "brief-group") {
+      const { title, fields: groupFields } = briefGroups[item];
+      $("#event-dialog-heading").textContent = "Editar " + title;
+      fields.innerHTML = groupFields.map(([key, label]) => area(key, label)).join("");
     } else {
       $("#event-dialog-heading").textContent = (item ? "Editar " : "Adicionar ") + names[kind];
       const date = input("date", kind === "task" ? "Prazo" : kind === "link" ? "Prazo para validar o link" : "Data", "date");
@@ -506,7 +524,7 @@
         }
       }
     }
-    const values = kind === "brief" ? { ...event, ...event.plan.brief } : item || {};
+    const values = kind === "brief" ? event : kind === "brief-group" ? event.plan.brief : item || {};
     for (const inputField of fields.querySelectorAll("[name]")) {
       const value = values[inputField.name];
       if (value != null) inputField.value = value;
@@ -534,18 +552,18 @@
     saveButton.classList.toggle("primary", kind !== "delete");
     formError(form, "");
     dialog.showModal();
-    (field(form, "title") || closeEditor).focus();
+    (field(form, "title") || $("textarea", fields) || closeEditor).focus();
   }
 
   function getEdits() {
     const values = Object.fromEntries(Array.from(new FormData(form), ([key, value]) => [key, value.trim()]));
-    if (!values.title) throw new Error("Preencha o título.");
+    if (Object.hasOwn(values, "title") && !values.title) throw new Error("Preencha o título.");
     return values;
   }
 
   async function saveEvent(payload, event) {
     if (saving || !allowed()) return;
-    const { kind } = editor;
+    const { kind, group } = editor;
     const generation = accessGeneration;
     const saveButton = $("#event-save");
     const deleteButton = $("#event-remove-item");
@@ -578,6 +596,7 @@
       else {
         renderEvent();
         if (kind === "rename" || kind === "duplicate" || deleting) focusEventCard(response[0].id);
+        if (kind === "brief-group") $(`[data-event-brief="${group}"]`, panelContent)?.focus({ preventScroll: true });
       }
       setFeedback("");
       const messages = { new: "Evento criado.", rename: "Evento renomeado.", duplicate: "Evento duplicado.", delete: "Evento apagado." };
@@ -617,10 +636,16 @@
         if (kind === "new" && values.template === "launch" && !isDate(values.event_date)) {
           throw new Error("Informe uma data de lançamento válida para montar o cronograma.");
         }
-        const plan = kind === "new"
-          ? (values.template === "launch" ? templatePlan(values.event_date) : { brief: {}, items: [] })
-          : { ...current.plan, brief: Object.fromEntries(briefFields.map(([key]) => [key, values[key]])) };
-        saveEvent({ title: values.title, event_date: values.event_date || null, status: values.status, plan }, kind === "new" ? null : current);
+        const metadata = { title: values.title, event_date: values.event_date || null, status: values.status };
+        if (kind === "brief") saveEvent(metadata, current);
+        else saveEvent({
+          ...metadata,
+          plan: values.template === "launch" ? templatePlan(values.event_date) : { brief: {}, items: [] },
+        }, null);
+        return;
+      }
+      if (kind === "brief-group") {
+        saveEvent({ plan: { ...current.plan, brief: { ...current.plan.brief, ...values } } }, current);
         return;
       }
       if (values.url && !safeUrl(values.url)) throw new Error("Informe um endereço válido que comece com http:// ou https://.");
@@ -677,10 +702,17 @@
   });
   $("#event-sections").addEventListener("click", (event) => {
     const button = event.target.closest("[data-event-section]");
-    if (button) selectSection(button.dataset.eventSection);
+    if (!button || button.dataset.eventSection === section) return;
+    selectSection(button.dataset.eventSection);
+    revealPlanningPanel(panelContent.closest(".event-panel"));
   });
   $("#event-filters").addEventListener("change", renderPanel);
   panelContent.addEventListener("click", (event) => {
+    const brief = event.target.closest("[data-event-brief]");
+    if (brief) {
+      edit("brief-group", brief.dataset.eventBrief);
+      return;
+    }
     const button = event.target.closest("[data-event-edit]");
     const current = active();
     if (!button || !current) return;

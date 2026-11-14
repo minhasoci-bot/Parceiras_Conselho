@@ -5,10 +5,24 @@ const decimal = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
 const money = (cents) => moneyFormat.format(cents / 100);
 const cents = (reais) => Math.round(Number(reais) * 100);
 const esc = (value) => String(value).replace(/[&<>"']/g, (part) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[part]);
+
+const planningHeaderObserver = new ResizeObserver((entries) => {
+  for (const { target } of entries) {
+    target.parentElement.style.setProperty("--planning-header-height", target.offsetHeight + "px");
+  }
+});
+for (const header of document.querySelectorAll(".planning-header")) planningHeaderObserver.observe(header);
+
+function revealPlanningPanel(panel) {
+  const header = panel.previousElementSibling;
+  if (panel.getBoundingClientRect().top < header.getBoundingClientRect().bottom) {
+    panel.scrollIntoView({ block: "start" });
+  }
+}
 const statusLabel = { proposta: "Proposta", fechado: "Fechado", recebido: "Recebido" };
 const views = {
-  visao: "Visão geral", vendas: "Vendas", equipe: "Equipe", eventos: "Eventos",
-  "vendas/catalogo": "Vendas / Catálogo", "vendas/simulador": "Vendas / Simulador",
+  visao: "Visão geral", vendas: "Vendas", equipe: "Equipe", eventos: "Eventos", infoprodutos: "Máquina de Infoprodutos",
+  "vendas/catalogo": "Vendas / Catálogo", "vendas/simulador": "Vendas / Simulador", timeline: "Timeline",
 };
 const legacySalesRoutes = { servicos: "vendas/catalogo", simulador: "vendas/simulador" };
 const memberPositions = { estrategia: "Estratégia", comercial: "Comercial", design: "Design", copy: "Copy", video: "Vídeo", dev: "Dev" };
@@ -298,7 +312,7 @@ function renderConfirmedMembers(members) {
   if (!container) return;
 
   if (count === 0) {
-    container.innerHTML = empty("Nenhum usuário confirmado ainda. Os participantes confirmados aparecerão aqui conforme entrarem no mutirão.");
+    container.innerHTML = empty("Nenhum usuário confirmado ainda. Os participantes confirmados aparecerão aqui conforme entrarem na plataforma.");
     return;
   }
   if (!hasMemberAccess) {
@@ -414,7 +428,7 @@ async function connect() {
   route();
   render();
   refreshConfirmedMembers();
-  notice(wasPending ? "Acesso liberado! Bem-vindo(a) ao painel do mutirão." : "");
+  notice(wasPending ? "Acesso liberado! Bem-vindo(a) ao painel da IA para TDAH." : "");
 }
 
 function requireAccess() {
@@ -441,7 +455,7 @@ function route(fromHashChange = false) {
   const hash = location.hash.slice(1);
   const destination = Object.hasOwn(legacySalesRoutes, hash) ? legacySalesRoutes[hash] : hash;
   const fragment = scenarioId ? "vendas/simulador" : destination;
-  const privateView = fragment === "vendas" || fragment === "equipe" || fragment === "eventos";
+  const privateView = ["vendas", "equipe", "eventos", "timeline"].includes(fragment) || (shared && fragment === "infoprodutos");
   const blocked = privateView && (!ready || !session);
   const view = !blocked && Object.hasOwn(views, fragment) ? fragment : "visao";
   if (blocked && !checkingInitialAccess) history.replaceState(history.state, "", "#visao");
@@ -512,7 +526,7 @@ async function shareScenario(button, id) {
   const label = button.textContent;
   try {
     if (navigator.share && matchMedia("(pointer: coarse)").matches) {
-      await navigator.share({ title: scenario?.title ?? "Cenário do Mutirão", url });
+      await navigator.share({ title: scenario?.title ?? "Cenário — IA para TDAH", url });
       return;
     }
     await navigator.clipboard.writeText(url);
@@ -580,10 +594,11 @@ function render() {
 }
 
 function updateHeaderCountdown() {
+  const countdown = $("#header-countdown");
+  if (!countdown) return;
   // O prazo inclui o dia 30 inteiro em São Paulo.
   const end = Date.parse(DEADLINE + "T23:59:59.999-03:00");
   const seconds = Math.max(0, Math.ceil((end - Date.now()) / 1000));
-  const countdown = $("#header-countdown");
   if (!seconds) {
     countdown.textContent = "Prazo encerrado";
     return;
@@ -628,10 +643,21 @@ function renderCatalog() {
   }).join("") : empty("Nenhum serviço encontrado.");
 }
 
+let scenarioMachineOffers = [];
+
+function setScenarioMachineOffers(offers) {
+  scenarioMachineOffers = offers;
+  for (const row of itemList.children) {
+    const { type, title, machineId } = readOffer(row);
+    if (type === "infoproduto") setOfferOptions(row, type, title, machineId);
+  }
+}
+
 function readOffer(row) {
   const value = (name) => $(`[name="${name}"]`, row).value.trim();
+  const { machineId, title } = $('[name="item-title"]', row).selectedOptions[0]?.dataset ?? {};
   return {
-    type: value("type"), title: value("item-title"),
+    type: value("type"), title: title ?? value("item-title"), ...(machineId ? { machineId } : {}),
     audience: value("audience"), promise: value("promise"), delivery: value("delivery"),
     price: cents(value("price")), cost: cents(value("cost")), fee: cents(value("fee")),
     quantity: Number(value("quantity")), days: Number(value("days")),
@@ -660,7 +686,7 @@ function renderProjection() {
   for (const { row, item, valid } of offers) {
     const result = $(".offer-result", row);
     result.classList.remove("warning");
-    if (!item.title) result.textContent = "Selecione um item do catálogo.";
+    if (!item.title) result.textContent = "Selecione uma oferta.";
     else result.textContent = valid ? "" : "Preencha preço, quantidade e prazo para calcular.";
   }
   for (const [index, { row }] of included.entries()) {
@@ -802,22 +828,46 @@ function fillScenarioDetails(scenario) {
   $("#scenario-dialog-share").dataset.id = scenario.id;
 }
 
-function setOfferOptions(row, type, title = "") {
+function setOfferOptions(row, type, title = "", machineId) {
   const select = $('[name="item-title"]', row);
+  $(".offer-select-label", row).textContent = type === "servico" ? "Serviço do catálogo" : "Infoproduto";
   const placeholder = new Option("Selecione " + (type === "servico" ? "um serviço" : "um infoproduto"), "");
   placeholder.disabled = true;
   const options = catalogOffers[type].map((item) => new Option(item.title, item.title));
-  if (title && !options.some((option) => option.value === title)) {
-    options.unshift(new Option(title + " (item salvo)", title));
+  select.replaceChildren(placeholder);
+  if (type === "servico") {
+    if (title && !options.some((option) => option.value === title)) options.unshift(new Option(title + " (item salvo)", title));
+    select.append(...options);
+  } else {
+    const machineGroup = document.createElement("optgroup");
+    machineGroup.label = "Criados em Infoprodutos";
+    for (const item of scenarioMachineOffers) {
+      const option = new Option(item.title, "machine:" + item.id);
+      option.dataset.machineId = item.id;
+      option.dataset.title = item.id === machineId ? title : item.title;
+      machineGroup.append(option);
+    }
+    if (machineId && !scenarioMachineOffers.some((item) => item.id === machineId)) {
+      const option = new Option(title + " (item salvo)", "machine:" + machineId);
+      option.dataset.machineId = machineId;
+      option.dataset.title = title;
+      option.disabled = true;
+      machineGroup.prepend(option);
+    }
+    if (machineGroup.children.length) select.append(machineGroup);
+    const catalogGroup = document.createElement("optgroup");
+    catalogGroup.label = "Catálogo";
+    if (!machineId && title && !options.some((option) => option.value === title)) options.unshift(new Option(title + " (item salvo)", title));
+    catalogGroup.append(...options);
+    select.append(catalogGroup);
   }
-  select.replaceChildren(placeholder, ...options);
-  select.value = title;
+  select.value = machineId ? "machine:" + machineId : title;
 }
 
 function appendOffer(item) {
   const row = $("#scenario-item-template").content.firstElementChild.cloneNode(true);
   $('[name="type"]', row).value = item.type;
-  setOfferOptions(row, item.type, item.title);
+  setOfferOptions(row, item.type, item.title, item.machineId);
   for (const key of ["quantity", "days", "audience", "promise", "delivery"]) {
     if (item[key] !== undefined) $(`[name="${key}"]`, row).value = item[key];
   }
@@ -950,8 +1000,8 @@ function authErrorMessage(error) {
   if (error.code === "weak_password") return "Escolha uma senha mais forte (mínimo de 8 caracteres).";
   if (error.code === "invalid_credentials") return "E-mail ou senha incorretos.";
   if (error.code === "email_not_confirmed") return "Confirme o e-mail da sua conta para entrar.";
-  if (error.code === "signup_disabled") return "O cadastro está desativado. Fale com a pessoa responsável pelo mutirão.";
-  if (error.code === "email_address_not_authorized") return "O envio para este endereço está indisponível. Fale com a pessoa responsável pelo mutirão.";
+  if (error.code === "signup_disabled") return "O cadastro está desativado. Fale com a pessoa responsável pela plataforma.";
+  if (error.code === "email_address_not_authorized") return "O envio para este endereço está indisponível. Fale com a pessoa responsável pela plataforma.";
   if (error.code === "user_already_exists" || error.code === "email_exists") return "Já existe uma conta com este e-mail. Volte para Entrar ou use Esqueci minha senha.";
   if (error.code === "over_email_send_rate_limit") return "O serviço de e-mail do painel atingiu o limite de envio. Aguarde antes de pedir um novo link.";
   if (error.status === 429) return "O Supabase limitou temporariamente esta solicitação. Aguarde antes de tentar novamente.";
@@ -1242,9 +1292,12 @@ simForm.addEventListener("change", (event) => {
   const row = event.target.closest(".scenario-item");
   const type = $('[name="type"]', row).value;
   if (event.target.name === "type") setOfferOptions(row, type);
-  const title = $('[name="item-title"]', row).value;
-  const item = catalogOffers[type].find((offer) => offer.title === title);
-  $('[name="price"]', row).value = item ? item.price / 100 : "";
+  const select = $('[name="item-title"]', row);
+  const option = select.selectedOptions[0];
+  const machine = scenarioMachineOffers.find(({ id }) => id === option?.dataset.machineId);
+  const item = machine || catalogOffers[type].find((offer) => offer.title === select.value);
+  if (machine) option.dataset.title = machine.title;
+  $('[name="price"]', row).value = item?.price ? item.price / 100 : "";
   for (const key of ["audience", "promise", "delivery"]) {
     $(`[name="${key}"]`, row).value = item?.[key] ?? "";
   }
@@ -1296,8 +1349,10 @@ route();
 renderCatalog();
 updateItems();
 render();
-updateHeaderCountdown();
-setInterval(updateHeaderCountdown, 1000);
+if ($("#header-countdown")) {
+  updateHeaderCountdown();
+  setInterval(updateHeaderCountdown, 1000);
+}
 if (shared) setInterval(() => {
   if (!document.hidden) updatePendingBadge();
 }, 15000);
