@@ -12,6 +12,7 @@
   const formFields = $("#machine-form-fields");
   const submit = $("#machine-submit");
   const close = $("#machine-close");
+  const cancel = $("#machine-cancel");
   const localKey = "mutirao-infoproduct-machines";
   const allowed = () => !shared || (ready && !!session && ["member", "admin"].includes(accessRole));
   const currency = (value) => moneyFormat.format(value);
@@ -108,6 +109,12 @@
           <span class="event-card-track" aria-hidden="true"><span style="width:${complete / checklist.length * 100}%"></span></span>
           <span class="event-card-link">Abrir planejamento <span aria-hidden="true">→</span></span>
         </button>
+        <div class="event-card-actions" role="group" aria-label="Ações para ${esc(machine.title)}">
+          <button class="button small" type="button" data-machine-manage="rename" data-id="${esc(machine.id)}">Renomear</button>
+          <button class="button small" type="button" data-machine-manage="duplicate" data-id="${esc(machine.id)}">Duplicar</button>
+          <button class="button small" type="button" data-machine-manage="settings" data-id="${esc(machine.id)}">Editar status</button>
+          <button class="button small danger" type="button" data-machine-manage="delete" data-id="${esc(machine.id)}">Apagar</button>
+        </div>
       </article>`;
     }).join("");
   }
@@ -267,18 +274,22 @@
     return `<fieldset class="machine-edit-group"><legend>${title}</legend><div>${fields.join("")}</div></fieldset>`;
   }
 
-  function showEditor(kind, key, groupIndex) {
+  function showEditor(kind, { key, groupIndex, machine = active(), trigger } = {}) {
     if (!allowed() || pendingSave || dialog.open) return;
-    const machine = active();
     if (kind !== "new" && !machine) return;
-    editor = { kind, key, groupIndex, machine };
+    const fromGallery = !!trigger;
+    editor = { kind, key, groupIndex, machine, fromGallery };
     let title, fields;
-    if (kind === "new" || kind === "settings") {
-      title = kind === "new" ? "Nova máquina" : "Editar projeto";
-      fields = field("title", "Nome do projeto", "Ex.: Kit de portfólio para Social Media", "input", machine?.title);
-      fields += kind === "new"
-        ? field("template", "Como começar", "", [["blank", "Projeto guiado em branco"], ["sample", "Exemplo preenchido · Portfólio Social Media"]], "blank")
-        : field("status", "Status do projeto", "", Object.entries(states), machine.status);
+    if (kind === "delete") {
+      title = "Apagar projeto";
+      fields = `<p>Apagar <strong>${esc(machine.title)}</strong> e todo o seu planejamento? A exclusão é definitiva.</p>`;
+    } else if (["new", "settings", "rename", "duplicate"].includes(kind)) {
+      title = { new: "Nova máquina", settings: fromGallery ? "Editar status" : "Editar projeto", rename: "Renomear projeto", duplicate: "Duplicar projeto" }[kind];
+      const name = kind === "duplicate" ? machine.title.slice(0, 112).trimEnd() + " (cópia)" : machine?.title;
+      fields = fromGallery && kind === "settings" ? "" : field("title", "Nome do projeto", "Ex.: Kit de portfólio para Social Media", "input", name);
+      if (kind === "new") fields += field("template", "Como começar", "", [["blank", "Projeto guiado em branco"], ["sample", "Exemplo preenchido · Portfólio Social Media"]], "blank");
+      if (kind === "settings") fields += field("status", "Status do projeto", "", Object.entries(states), machine.status);
+      if (kind === "duplicate") fields += '<p class="machine-edit-hint">A cópia começa como rascunho e traz o planejamento, o checklist e as premissas do original.</p>';
     } else if (kind === "task") {
       const task = machine.plan.checklist[key] || {};
       const [, taskTitle, description] = checklist.find(([id]) => id === key);
@@ -305,17 +316,23 @@
     }
     $("#machine-dialog-heading").textContent = title;
     formFields.innerHTML = fields;
+    submit.textContent = { delete: "Apagar projeto", duplicate: "Duplicar", rename: "Renomear" }[kind] || "Salvar";
+    submit.classList.toggle("primary", kind !== "delete");
+    submit.classList.toggle("danger", kind === "delete");
+    cancel.hidden = kind !== "delete";
     formError(form, "");
     dialog.showModal();
-    formFields.querySelector("input,select,textarea")?.focus();
+    (kind === "delete" ? cancel : formFields.querySelector("input,select,textarea"))?.focus();
   }
 
   function payload({ kind, key, machine }) {
+    if (kind === "delete") return undefined;
     const data = Object.fromEntries(Array.from(new FormData(form), ([name, value]) => [name, value.trim()]));
-    if (kind === "new" || kind === "settings") {
-      if (!data.title) throw new Error("Informe um nome para o projeto.");
-      if (kind === "settings") return { title: data.title, status: data.status };
-      return { title: data.title, status: "rascunho", plan: data.template === "sample" ? samplePlan() : emptyPlan() };
+    if (Object.hasOwn(data, "title") && !data.title) throw new Error("Informe um nome para o projeto.");
+    if (kind === "settings" || kind === "rename") return data;
+    if (kind === "duplicate" || kind === "new") {
+      const plan = kind === "duplicate" ? machine.plan : (data.template === "sample" ? samplePlan() : emptyPlan());
+      return { title: data.title, status: "rascunho", plan };
     }
     if (kind === "task") {
       if (data.url && !safeLink(data.url)) throw new Error("Informe um link com http:// ou https://.");
@@ -333,12 +350,12 @@
     return { plan: { ...machine.plan, [key]: section } };
   }
 
-  async function persist(data, machine) {
+  async function persist(data, machine, deleting) {
     if (shared) {
       const filter = machine ? `id=eq.${machine.id}&revision=eq.${machine.revision}&` : "";
-      const rows = await supabaseRequest(route + "?" + filter + "select=" + columns, {
-        method: machine ? "PATCH" : "POST",
-        body: machine ? { ...data, revision: machine.revision + 1 } : data,
+      const rows = await supabaseRequest(route + "?" + filter + "select=" + (deleting ? "id" : columns), {
+        method: deleting ? "DELETE" : machine ? "PATCH" : "POST",
+        body: deleting ? undefined : machine ? { ...data, revision: machine.revision + 1 } : data,
         token: await accessToken(), representation: true,
       });
       return rows?.[0];
@@ -346,6 +363,11 @@
     const rows = readLocal();
     const index = machine && rows.findIndex(({ id, revision }) => id === machine.id && revision === machine.revision);
     if (index === -1) return null;
+    if (deleting) {
+      const [removed] = rows.splice(index, 1);
+      localStorage.setItem(localKey, JSON.stringify(rows));
+      return removed;
+    }
     const saved = machine
       ? { ...rows[index], ...data, revision: machine.revision + 1 }
       : { ...data, id: crypto.randomUUID(), revision: 0 };
@@ -359,44 +381,50 @@
     event.preventDefault();
     if (!allowed() || !editor || pendingSave) return;
     const edit = editor;
+    const deleting = edit.kind === "delete";
     const operation = Symbol();
     let stale = false;
     pendingSave = operation;
     request += 1;
     $("#machine-refresh").disabled = false;
     $("#machine-loading").hidden = true;
-    submit.disabled = close.disabled = true;
+    submit.disabled = close.disabled = cancel.disabled = true;
     formError(form, "");
     try {
-      const saved = await persist(payload(edit), edit.machine);
+      const saved = await persist(payload(edit), edit.kind === "duplicate" ? null : edit.machine, deleting);
       if (pendingSave !== operation || !allowed()) return;
       if (!saved) {
         stale = true;
-        formError(form, "Outra pessoa atualizou este projeto. Seus campos continuam aqui para copiar. Feche o formulário para carregar a versão atual.");
+        formError(form, "O projeto mudou em outra sessão. Feche esta janela para atualizar a galeria.");
         submit.disabled = true;
         return;
       }
-      const machine = normalized(saved);
-      machines = [machine, ...machines.filter(({ id }) => id !== machine.id)];
+      const index = machines.findIndex(({ id }) => id === saved.id);
+      if (deleting) machines = machines.filter(({ id }) => id !== saved.id);
+      else if (index < 0) machines.unshift(normalized(saved));
+      else machines[index] = normalized(saved);
       dialog.close();
-      currentId = machine.id;
+      currentId = edit.fromGallery ? null : saved.id;
       if (edit.kind === "new") stage = "produto";
       render();
       if (edit.kind === "new") {
         $("#machine-title").focus();
         window.scrollTo(0, 0);
+      } else if (edit.fromGallery) {
+        const card = $(`[data-machine-open="${saved.id}"]`, cards);
+        (card || $("#machine-gallery-heading")).focus();
       } else if (edit.kind === "task") {
         $(`[data-machine-task="${edit.key}"]`, panel)?.focus({ preventScroll: true });
       } else if (edit.kind === "section") {
         $(`[data-machine-edit="${edit.groupIndex ?? ""}"]`, panel)?.focus({ preventScroll: true });
       }
-      feedback(edit.kind === "new" ? "Máquina criada." : "Alterações salvas.");
+      feedback({ new: "Máquina criada.", rename: "Projeto renomeado.", duplicate: "Projeto duplicado.", delete: "Projeto apagado." }[edit.kind] || "Alterações salvas.");
     } catch (error) {
       if (pendingSave === operation && allowed()) formError(form, errorMessage(error));
     } finally {
       if (pendingSave === operation) {
         pendingSave = null;
-        close.disabled = false;
+        close.disabled = cancel.disabled = false;
         submit.disabled = stale;
         if (stale) edit.stale = true;
       }
@@ -469,8 +497,15 @@
     ($(`[data-machine-open="${previous}"]`, cards) || $("#machine-gallery-heading")).focus({ preventScroll: true });
   });
   cards.addEventListener("click", (event) => {
+    if (!allowed() || pendingSave) return;
+    const action = event.target.closest("[data-machine-manage]");
+    if (action) {
+      const machine = machines.find(({ id }) => id === action.dataset.id);
+      if (machine) showEditor(action.dataset.machineManage, { machine, trigger: action });
+      return;
+    }
     const button = event.target.closest("[data-machine-open]");
-    if (!button || !allowed() || pendingSave) return;
+    if (!button) return;
     currentId = button.dataset.machineOpen;
     stage = "produto";
     feedback();
@@ -499,8 +534,8 @@
     }
     const task = event.target.closest("[data-machine-task]");
     const edit = event.target.closest("[data-machine-edit]");
-    if (task) showEditor("task", task.dataset.machineTask);
-    else if (edit) showEditor("section", stage, edit.dataset.machineEdit);
+    if (task) showEditor("task", { key: task.dataset.machineTask });
+    else if (edit) showEditor("section", { key: stage, groupIndex: edit.dataset.machineEdit });
   });
   form.addEventListener("submit", save);
   dialog.addEventListener("cancel", (event) => { if (pendingSave) event.preventDefault(); });
@@ -524,7 +559,7 @@
     machines = [];
     currentId = null;
     loaded = false;
-    close.disabled = submit.disabled = false;
+    close.disabled = submit.disabled = cancel.disabled = false;
     if (dialog.open) dialog.close();
     editor = null;
     formFields.replaceChildren();

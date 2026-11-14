@@ -354,7 +354,10 @@
       <div class="section-header"><h2 id="machine-dialog-heading"></h2><button class="icon-button" id="machine-close" type="button" data-close="machine-dialog" aria-label="Fechar">×</button></div>
       <div class="machine-edit" id="machine-form-fields"></div>
       <p class="form-error auth-field" role="alert" hidden></p>
-      <div class="form-footer"><button class="button primary" id="machine-submit" type="submit">Salvar</button></div>
+      <div class="form-footer">
+        <button class="button" id="machine-cancel" type="button" data-close="machine-dialog" hidden>Cancelar</button>
+        <button class="button primary" id="machine-submit" type="submit">Salvar</button>
+      </div>
     </form>
   </dialog>
   <script>/* SCRIPTS */</script>
