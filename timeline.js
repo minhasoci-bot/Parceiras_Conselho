@@ -280,10 +280,14 @@
 
     for (const row of allRows) {
       const isGroup = row.type === "group";
-      const rowClass = isGroup ? "timeline-sidebar-row group" : "timeline-sidebar-row";
+      const isSelected = detailRow?.id === row.id;
 
       // Sidebar
-      sidebarHtml += `<div class="${rowClass}" title="${escHtml(row.label)}">${escHtml(row.label)}</div>`;
+      if (isGroup) {
+        sidebarHtml += `<div class="timeline-sidebar-row group" title="${escHtml(row.label)}">${escHtml(row.label)}</div>`;
+      } else {
+        sidebarHtml += `<div class="timeline-sidebar-row${isSelected ? " is-selected" : ""}" data-row-id="${escHtml(row.id)}" title="${escHtml(row.label)}">${escHtml(row.label)}</div>`;
+      }
 
       // Bar
       if (!isGroup && row.date) {
@@ -295,7 +299,7 @@
         const ownerText = row.ownerLabel ? escHtml(row.ownerLabel) : "";
 
         rowsHtml += `<div class="timeline-row" data-row-id="${escHtml(row.id)}">` +
-          `<div class="timeline-bar" data-status="${statusAttr}" data-row-id="${escHtml(row.id)}" ` +
+          `<div class="timeline-bar${isSelected ? " is-selected" : ""}" data-status="${statusAttr}" data-row-id="${escHtml(row.id)}" ` +
           `style="left:${left}px;width:${width}px" title="${escHtml(row.label)}${ownerText ? " · " + row.ownerLabel : ""}">${escHtml(row.label)}</div>` +
           `</div>`;
       } else {
@@ -309,15 +313,24 @@
 
   }
 
-  // ===== Eventos nas barras (anexados uma única vez) =====
-  rowsEl.addEventListener("click", onBarClick);
+  // ===== Eventos nas barras e na lista da esquerda =====
+  sidebarEl.addEventListener("click", onSidebarClick);
+  rowsEl.addEventListener("click", onRowsClick);
   rowsEl.addEventListener("pointerdown", onBarPointerDown);
 
-  function onBarClick(e) {
-    const bar = e.target.closest(".timeline-bar");
-    if (!bar) return;
+  function onSidebarClick(e) {
+    const item = e.target.closest(".timeline-sidebar-row:not(.group)");
+    if (!item) return;
+    const rowId = item.dataset.rowId;
+    const row = allRows.find((r) => r.id === rowId);
+    if (row) openDetail(row);
+  }
+
+  function onRowsClick(e) {
     if (dragState?.moved) return; // foi drag, não click
-    const rowId = bar.dataset.rowId;
+    const target = e.target.closest(".timeline-bar, .timeline-row:not(.group-row)");
+    if (!target) return;
+    const rowId = target.dataset.rowId;
     const row = allRows.find((r) => r.id === rowId);
     if (row) openDetail(row);
   }
@@ -525,6 +538,15 @@
     `;
 
     detailEl.hidden = false;
+    container.classList.add("has-detail");
+
+    // Destaque visual da tarefa ativa
+    for (const el of sidebarEl.querySelectorAll(".timeline-sidebar-row:not(.group)")) {
+      el.classList.toggle("is-selected", el.dataset.rowId === row.id);
+    }
+    for (const el of rowsEl.querySelectorAll(".timeline-bar")) {
+      el.classList.toggle("is-selected", el.dataset.rowId === row.id);
+    }
 
     // Listener de data
     const dateInput = detailEl.querySelector("#detail-date-input");
@@ -552,10 +574,15 @@
     });
   }
 
-  document.getElementById("timeline-detail-close").addEventListener("click", () => {
+  function closeDetail() {
     detailEl.hidden = true;
+    container.classList.remove("has-detail");
     detailRow = null;
-  });
+    for (const el of sidebarEl.querySelectorAll(".timeline-sidebar-row")) el.classList.remove("is-selected");
+    for (const el of rowsEl.querySelectorAll(".timeline-bar")) el.classList.remove("is-selected");
+  }
+
+  document.getElementById("timeline-detail-close").addEventListener("click", closeDetail);
 
   // ===== Controles de zoom e navegação =====
   document.getElementById("timeline-zoom-in").addEventListener("click", () => {
@@ -605,8 +632,7 @@
     container.hidden = true;
     emptyEl.hidden = true;
     loadingEl.hidden = true;
-    detailEl.hidden = true;
-    detailRow = null;
+    closeDetail();
     showFeedback("");
   });
 })();
