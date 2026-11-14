@@ -10,7 +10,7 @@
     // Links antigos (confirmação de e-mail, recuperação de senha, cenários e seções) apontavam para "/".
     (function () {
       var h = location.hash.slice(1), q = new URLSearchParams(location.search), p = new URLSearchParams(h);
-      var painel = ["visao", "vendas", "equipe", "servicos", "simulador", "eventos"];
+      var painel = ["visao", "vendas", "equipe", "servicos", "simulador", "eventos", "vendas/catalogo", "vendas/simulador"];
       if (p.has("access_token") || p.has("error_code") || p.has("token_hash") || q.has("code") || q.has("token_hash")
         || h.indexOf("cenario/") === 0 || painel.indexOf(h) !== -1) {
         location.replace("painel/" + location.search + location.hash);

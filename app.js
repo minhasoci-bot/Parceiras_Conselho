@@ -6,7 +6,11 @@ const money = (cents) => moneyFormat.format(cents / 100);
 const cents = (reais) => Math.round(Number(reais) * 100);
 const esc = (value) => String(value).replace(/[&<>"']/g, (part) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[part]);
 const statusLabel = { proposta: "Proposta", fechado: "Fechado", recebido: "Recebido" };
-const views = { visao: "Visão geral", vendas: "Vendas", equipe: "Equipe", servicos: "Catálogo", simulador: "Simulador", eventos: "Eventos" };
+const views = {
+  visao: "Visão geral", vendas: "Vendas", equipe: "Equipe", eventos: "Eventos",
+  "vendas/catalogo": "Vendas / Catálogo", "vendas/simulador": "Vendas / Simulador",
+};
+const legacySalesRoutes = { servicos: "vendas/catalogo", simulador: "vendas/simulador" };
 const memberPositions = { estrategia: "Estratégia", comercial: "Comercial", design: "Design", copy: "Copy", video: "Vídeo", dev: "Dev" };
 const shared = !!supabaseConfig;
 const storageKey = "mutirao-mentoria-nov-2026";
@@ -172,9 +176,11 @@ function renderAccess() {
   const isAdmin = accessRole === "admin";
   const user = currentSessionUser();
   const isLoggedIn = !!session && !!user;
+  const hasAccess = ready && !!session;
   for (const element of document.querySelectorAll("[data-sales-access], [data-member-access]")) {
-    element.hidden = !ready || !session;
+    element.hidden = !hasAccess;
   }
+  $("#sales-nav-link").hash = hasAccess ? "vendas" : "vendas/catalogo";
   $("#pending-section").hidden = !isAdmin || !ready;
 
   const authAction = $("#auth-action");
@@ -432,7 +438,9 @@ function routedScenarioId() {
 
 function route(fromHashChange = false) {
   const scenarioId = routedScenarioId();
-  const fragment = scenarioId ? "simulador" : location.hash.slice(1);
+  const hash = location.hash.slice(1);
+  const destination = Object.hasOwn(legacySalesRoutes, hash) ? legacySalesRoutes[hash] : hash;
+  const fragment = scenarioId ? "vendas/simulador" : destination;
   const privateView = fragment === "vendas" || fragment === "equipe" || fragment === "eventos";
   const blocked = privateView && (!ready || !session);
   const view = !blocked && Object.hasOwn(views, fragment) ? fragment : "visao";
@@ -468,7 +476,7 @@ async function syncScenarioRoute(id, fromHashChange) {
 }
 
 function scenarioNotFound() {
-  history.replaceState(history.state, "", "#simulador");
+  history.replaceState(history.state, "", "#vendas/simulador");
   notice("Não encontramos esse cenário. Ele pode ter sido excluído ou o link está incompleto.", true);
 }
 
@@ -493,7 +501,7 @@ scenarioDialog.addEventListener("close", () => {
   // Volta para onde a pessoa estava; quem chegou pelo link fica no simulador.
   if (scenarioEnteredInApp) history.back();
   else {
-    history.replaceState(history.state, "", "#simulador");
+    history.replaceState(history.state, "", "#vendas/simulador");
     route();
   }
 });
@@ -521,10 +529,17 @@ function showView(view) {
   if (view === activeView) return;
   const changed = activeView !== "";
   activeView = view;
-  for (const section of document.querySelectorAll(".view")) section.hidden = section.id !== view;
-  for (const link of document.querySelectorAll("nav a")) {
-    if (link.hash === "#" + view) link.setAttribute("aria-current", "page");
-    else link.removeAttribute("aria-current");
+  const inSales = view === "vendas" || view.startsWith("vendas/");
+  for (const section of document.querySelectorAll(".view")) section.hidden = section.id !== (inSales ? "vendas" : view);
+  for (const section of document.querySelectorAll("[data-sales-view]")) section.hidden = section.dataset.salesView !== view;
+  for (const link of document.querySelectorAll(".rail nav a, .sales-nav a")) {
+    if (link.id === "sales-nav-link" && inSales) {
+      link.setAttribute("aria-current", "true");
+    } else if (link.hash === "#" + view) {
+      link.setAttribute("aria-current", "page");
+    } else {
+      link.removeAttribute("aria-current");
+    }
   }
   $("#breadcrumb").textContent = views[view];
   if (view === "equipe") {
@@ -600,7 +615,7 @@ function renderCatalog() {
     const matches = products.map((item, index) => ({ item, index }))
       .filter(({ item }) => searchKey([item.title, item.category, item.delivery].join(" ")).includes(query));
     $("#catalog-list").innerHTML = matches.length ? matches.map(({ item, index }) =>
-      `<article class="card roomy catalog-card"><span class="category">${esc(item.category)}</span><h2>${esc(item.title)}</h2><p>${esc(item.delivery)}</p><button class="ref" type="button" data-action="use-product" data-index="${index}" aria-label="Adicionar ${esc(item.title)} ao cenário"><span>Preço para simular</span><span><strong>${money(item.price)}</strong><span aria-hidden="true">＋</span></span></button></article>`
+      `<article class="card roomy catalog-card"><span class="category">${esc(item.category)}</span><h3>${esc(item.title)}</h3><p>${esc(item.delivery)}</p><button class="ref" type="button" data-action="use-product" data-index="${index}" aria-label="Adicionar ${esc(item.title)} ao cenário"><span>Preço para simular</span><span><strong>${money(item.price)}</strong><span aria-hidden="true">＋</span></span></button></article>`
     ).join("") : empty("Nenhum infoproduto encontrado.");
     return;
   }
@@ -609,7 +624,7 @@ function renderCatalog() {
   $("#catalog-list").innerHTML = matches.length ? matches.map(({ item, index }) => {
     const [category, name, , detail, unit = ""] = item;
     const price = compactMoney.format(catalogOffers.servico[index].price / 100) + (unit ? " " + unit : "");
-    return `<article class="card roomy catalog-card"><span class="category">${esc(category)}</span><h2>${esc(name)}</h2><p>${esc(detail)}</p><button class="ref" type="button" data-action="use-price" data-index="${index}" aria-label="Adicionar ${esc(name)} ao cenário"><span>Adicionar ao cenário</span><span><strong>${price}</strong><span aria-hidden="true">＋</span></span></button></article>`;
+    return `<article class="card roomy catalog-card"><span class="category">${esc(category)}</span><h3>${esc(name)}</h3><p>${esc(detail)}</p><button class="ref" type="button" data-action="use-price" data-index="${index}" aria-label="Adicionar ${esc(name)} ao cenário"><span>Adicionar ao cenário</span><span><strong>${price}</strong><span aria-hidden="true">＋</span></span></button></article>`;
   }).join("") : empty("Nenhum serviço encontrado.");
 }
 
@@ -838,7 +853,7 @@ function fillScenario(scenario) {
 
 function showScenario(scenario) {
   fillScenario(scenario);
-  location.hash = "simulador";
+  location.hash = "vendas/simulador";
   route();
   window.scrollTo(0, 0);
   field(simForm, "title").focus({ preventScroll: true });

@@ -31,17 +31,16 @@ strong,dd,output { font-variant-numeric:tabular-nums; }
 .rail nav { margin-top:40px; display:grid; gap:5px; }
 .rail nav a { display:flex; align-items:center; gap:11px; padding:12px 13px; font-size:14px; font-weight:600; color:var(--muted); border-radius:8px; }
 .rail nav a:hover { background:#eef3eb; }
-.rail nav a[aria-current="page"] { color:#1e563d; background:#e6efe3; font-weight:700; }
+.rail nav a[aria-current] { color:#1e563d; background:#e6efe3; font-weight:700; }
 .eyebrow span { width:7px; height:7px; border-radius:50%; flex:none; background:#4c9b6a; }
 .icon { width:16px; height:16px; position:relative; display:inline-block; flex:none; }
 .grid-icon { background:linear-gradient(currentColor,currentColor) 50% 0/1.5px 100%,linear-gradient(currentColor,currentColor) 0 50%/100% 1.5px; background-repeat:no-repeat; border:1.5px solid; border-radius:3px; }
-.people-icon::before,.people-icon::after,.catalog-icon::after,.sim-icon::after,.calendar-icon::after { content:""; position:absolute; }
+.people-icon::before,.people-icon::after,.catalog-icon::after,.calendar-icon::after { content:""; position:absolute; }
 .people-icon::before { width:6px; height:6px; border:1.5px solid; border-radius:50%; top:0; left:5px; }
 .people-icon::after { width:14px; height:6px; border:1.5px solid; border-radius:7px 7px 3px 3px; left:1px; bottom:0; }
-.catalog-icon,.sim-icon,.calendar-icon { border:1.5px solid; border-radius:3px; }
+.catalog-icon,.calendar-icon { border:1.5px solid; border-radius:3px; }
 .catalog-icon { height:12px; margin-top:3px; }
 .catalog-icon::after { border:1.5px solid; border-bottom:0; border-radius:2px 2px 0 0; left:4px; right:4px; height:3px; top:-5px; }
-.sim-icon::after { content:"±"; inset:-4px 0 0; text-align:center; font:700 14px/18px system-ui; }
 .calendar-icon::after { left:0; right:0; top:4px; border-top:1.5px solid; }
 .workspace { margin-left:224px; }
 .masthead { position:sticky; top:0; z-index:3; display:flex; justify-content:space-between; align-items:center; gap:12px; height:var(--masthead-height); padding:0 36px; background:#fbfcf8; border-bottom:1px solid var(--line); }
@@ -58,6 +57,15 @@ main { max-width:1470px; padding:36px 36px 54px; margin:auto; }
 .view-heading h1 { margin:0 0 8px; font-size:clamp(32px,4vw,48px); letter-spacing:-.062em; line-height:1.08; font-weight:800; }
 .view-heading p,.section-header p { color:var(--muted); font-size:14px; line-height:1.55; }
 .view-heading .eyebrow { display:flex; align-items:center; gap:8px; font-size:10px; font-weight:800; color:#35614c; letter-spacing:.14em; margin-bottom:10px; }
+#vendas > .view-heading { margin-bottom:12px; }
+#sales-heading { margin:0; }
+.sales-nav { display:flex; flex-wrap:wrap; gap:4px 20px; margin-bottom:24px; border-bottom:1px solid #dce3d9; }
+.sales-nav a { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:8px 2px; border-bottom:2px solid transparent; color:var(--muted); font-size:13px; font-weight:700; white-space:nowrap; }
+.sales-nav a:hover,.sales-nav a[aria-current] { color:var(--green); }
+.sales-nav a[aria-current] { border-color:var(--green); }
+.sales-section-heading { display:flex; flex-wrap:wrap; align-items:end; justify-content:space-between; gap:12px; margin-bottom:18px; }
+.sales-section-heading h2 { margin-bottom:4px; font-size:clamp(22px,3vw,28px); letter-spacing:-.04em; line-height:1.15; }
+.sales-section-heading p { color:var(--muted); font-size:14px; line-height:1.55; }
 .goal { min-height:258px; position:relative; overflow:hidden; isolation:isolate; padding:26px 29px 25px; border-radius:15px; background:#17382d; color:#f8fff2; }
 .goal-content { position:relative; z-index:1; width:min(64%,630px); }
 .goal-label { display:flex; align-items:center; gap:9px; color:#e3eedc; font-size:14px; font-weight:700; }
@@ -95,7 +103,7 @@ progress::-moz-progress-bar { background:var(--lime); border-radius:30px; }
 .overview-card,.roomy { padding:20px; min-width:0; }
 .overview-card { min-height:170px; }
 .section-header { display:flex; align-items:start; justify-content:space-between; gap:14px; margin-bottom:15px; }
-.section-header h2,.projection h2 { font-size:19px; font-weight:800; letter-spacing:-.04em; line-height:1.2; }
+.section-header h2,.sim-grid .section-header h3,.projection h3,.scenario-gallery .section-header h3 { font-size:19px; font-weight:800; letter-spacing:-.04em; line-height:1.2; }
 .section-header p { margin-top:5px; font-size:12px; }
 .text-link { color:#295f44; padding:0; border:0; background:none; font-size:13px; font-weight:800; text-align:left; }
 .text-link:hover { text-decoration:underline; }
@@ -119,7 +127,7 @@ progress::-moz-progress-bar { background:var(--lime); border-radius:30px; }
 .filters label { min-width:130px; }
 .catalog-filters label:first-child { flex:1; }
 .catalog-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-.catalog-card h2 { font-size:18px; margin:5px 0; letter-spacing:-.035em; }
+.catalog-card h3 { font-size:18px; margin:5px 0; letter-spacing:-.035em; }
 .catalog-card p { color:var(--muted); font-size:12px; }
 .category { font-weight:800; color:#38624a; font-size:11px; }
 .ref { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center; width:100%; text-align:left; background:#f7faf5; padding:9px 10px; margin-top:8px; border:1px solid var(--line); border-radius:7px; color:#284d3b; font-size:12px; }
@@ -310,7 +318,6 @@ dialog::backdrop { background:#152b21a0; }
   .rail > .brand { display:none; }
   .rail nav { display:flex; flex-wrap:nowrap; gap:4px; height:var(--tabbar-height); margin:0; padding:6px 0; }
   .rail nav a { flex:1 1 0; min-width:0; flex-direction:column; justify-content:center; gap:5px; padding:4px 2px; font-size:11px; line-height:1.1; white-space:nowrap; border-radius:10px; }
-  .rail nav a[aria-current="page"] { font-weight:700; }
   .rail nav .icon { width:17px; height:17px; }
   .rail nav .catalog-icon { height:13px; margin:4px 0 0; }
 
@@ -326,6 +333,7 @@ dialog::backdrop { background:#152b21a0; }
   .masthead:has(#user-badge:not([hidden])) .brand-text { display:none; }
 
   main { padding:20px var(--gutter) 28px; }
+  .sales-nav { gap:4px 14px; margin-bottom:18px; }
   .view-heading { display:grid; align-items:start; gap:12px; margin-bottom:17px; }
   .view-heading .button { justify-self:start; }
   .goal { padding:17px; min-height:0; }

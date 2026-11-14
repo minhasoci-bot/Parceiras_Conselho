@@ -16,10 +16,8 @@
     </a>
     <nav aria-label="Seções do painel">
       <a href="#visao"><i class="icon grid-icon" aria-hidden="true"></i> Visão geral</a>
-      <a href="#vendas" data-sales-access hidden><i class="icon people-icon" aria-hidden="true"></i> Vendas</a>
+      <a href="#vendas/catalogo" id="sales-nav-link"><i class="icon catalog-icon" aria-hidden="true"></i> Vendas</a>
       <a href="#equipe" id="team-nav-link" data-member-access hidden><i class="icon people-icon" aria-hidden="true"></i> Equipe<span class="badge team-nav-badge" id="team-nav-badge" aria-hidden="true" hidden></span></a>
-      <a href="#servicos"><i class="icon catalog-icon" aria-hidden="true"></i> Catálogo</a>
-      <a href="#simulador"><i class="icon sim-icon" aria-hidden="true"></i> Simulador</a>
       <a href="#eventos" data-member-access hidden><i class="icon calendar-icon" aria-hidden="true"></i> Eventos</a>
     </nav>
   </aside>
@@ -51,7 +49,7 @@
         <div class="view-heading overview-heading">
           <div><p class="eyebrow"><span></span> MUTIRÃO DA MENTORIA</p><h1 id="overview-heading">Painel de metas</h1>
           <p>Acompanhe a arrecadação para a entrada do grupo na mentoria.</p></div>
-          <a class="button" href="#simulador">Simular uma oferta <span aria-hidden="true">↗</span></a>
+          <a class="button" href="#vendas/simulador">Simular uma oferta <span aria-hidden="true">↗</span></a>
         </div>
 
         <div class="goal">
@@ -94,22 +92,59 @@
       </section>
 
       <section id="vendas" class="view" aria-labelledby="sales-heading" hidden>
-        <div class="view-heading"><div><h1 id="sales-heading">Vendas do mutirão</h1><p>Acompanhe as propostas e os pagamentos do caixa coletivo.</p></div></div>
-        <section class="card roomy">
-          <div class="section-header"><div><h2>Registro de vendas</h2><p>Use o valor líquido que entra no caixa do mutirão.</p></div><button class="button primary" type="button" data-action="new-sale" data-sales-access hidden>＋ Registrar venda</button></div>
+        <div class="view-heading"><h1 id="sales-heading">Vendas</h1></div>
+        <nav class="sales-nav" aria-label="Seções de vendas">
+          <a href="#vendas" data-sales-access hidden>Registro de vendas</a>
+          <a href="#vendas/catalogo">Catálogo</a>
+          <a href="#vendas/simulador">Simulador</a>
+        </nav>
+
+        <section class="card roomy" data-sales-view="vendas" aria-labelledby="sales-ledger-heading" hidden>
+          <div class="section-header"><div><h2 id="sales-ledger-heading">Registro de vendas</h2><p>Use o valor líquido que entra no caixa do mutirão.</p></div><button class="button primary" type="button" data-action="new-sale" data-sales-access hidden>＋ Registrar venda</button></div>
           <div class="filters"><label>Status <select id="status-filter"><option value="">Todos</option><option value="proposta">Proposta</option><option value="fechado">Fechado</option><option value="recebido">Recebido</option></select></label></div>
           <p id="late-note" class="inline-note" hidden></p><div id="sales-list"></div>
         </section>
-      </section>
 
-      <section id="servicos" class="view" aria-labelledby="catalog-heading" hidden>
-        <div class="view-heading"><div><h1 id="catalog-heading">Catálogo de serviços e infoprodutos</h1><p>Escolha os itens que você quer adicionar ao cenário.</p></div><a class="button" href="#simulador">Ver cenário <span aria-hidden="true">↗</span></a></div>
-        <div class="catalog-switch" role="group" aria-label="Tipo de oferta">
-          <button class="button" type="button" data-action="catalog-services" aria-pressed="true">Serviços</button>
-          <button class="button" type="button" data-action="catalog-products" aria-pressed="false">Infoprodutos</button>
-        </div>
-        <div class="filters catalog-filters"><label>Buscar <input id="catalog-search" type="search" placeholder="Ex.: Reels ou estratégia"></label><label id="catalog-category">Categoria <select id="category-filter"><option value="">Todas</option></select></label></div>
-        <div id="catalog-list" class="catalog-list"></div>
+        <section data-sales-view="vendas/catalogo" aria-labelledby="catalog-heading" hidden>
+          <div class="sales-section-heading"><div><h2 id="catalog-heading">Serviços e infoprodutos</h2><p>Escolha os itens que você quer adicionar ao cenário.</p></div><a class="button" href="#vendas/simulador">Ver cenário <span aria-hidden="true">↗</span></a></div>
+          <div class="catalog-switch" role="group" aria-label="Tipo de oferta">
+            <button class="button" type="button" data-action="catalog-services" aria-pressed="true">Serviços</button>
+            <button class="button" type="button" data-action="catalog-products" aria-pressed="false">Infoprodutos</button>
+          </div>
+          <div class="filters catalog-filters"><label>Buscar <input id="catalog-search" type="search" placeholder="Ex.: Reels ou estratégia"></label><label id="catalog-category">Categoria <select id="category-filter"><option value="">Todas</option></select></label></div>
+          <div id="catalog-list" class="catalog-list"></div>
+        </section>
+
+        <section data-sales-view="vendas/simulador" aria-labelledby="sim-heading" hidden>
+          <div class="sales-section-heading"><div><h2 id="sim-heading">Simulador de ofertas</h2><p>Combine serviços e infoprodutos em um cenário e veja quanto pode entrar até o prazo.</p></div></div>
+          <div class="sim-grid">
+            <form id="sim-form" class="card roomy">
+              <div class="section-header"><h3>Montar cenário</h3><button type="button" class="text-link" data-action="reset-sim">Novo cenário</button></div>
+              <label>Nome do cenário <input name="title" required maxlength="120" placeholder="Ex.: Serviços e workshop de novembro"></label>
+              <div id="scenario-items" class="scenario-items"></div>
+              <div class="scenario-tools">
+                <button class="button" type="button" data-action="add-service">＋ Serviço</button>
+                <button class="button" type="button" data-action="add-product">＋ Infoproduto</button>
+                <a class="text-link" href="#vendas/catalogo">Adicionar do catálogo ↗</a>
+              </div>
+              <div class="form-footer"><button id="save-sim" class="button primary" type="submit">Salvar cenário</button></div>
+            </form>
+            <section class="card roomy projection" aria-labelledby="projection-heading">
+              <h3 id="projection-heading">Projeção</h3>
+              <p class="projection-balance">Falta para a meta coletiva <strong id="projection-balance">R$ 0,00</strong></p>
+              <div class="projection-value"><span>Líquido estimado até 30 de novembro</span><strong id="estimate">R$ 0,00</strong></div>
+              <dl><div><dt>Faturamento bruto total</dt><dd id="gross">R$ 0,00</dd></div><div><dt>Líquido total</dt><dd id="net-total">R$ 0,00</dd></div><div><dt>Vendas planejadas</dt><dd id="planned-sales">—</dd></div><div><dt>Cobertura do saldo</dt><dd id="coverage">—</dd></div><div><dt>Saldo após o cenário</dt><dd id="projected-balance">R$ 0,00</dd></div></dl>
+              <p class="inline-note">Cada item é projetado a partir de hoje. O valor entra na meta quando o prazo inteiro cabe até 30 de novembro.</p>
+              <p class="projection-note" id="projection-note" aria-live="polite"></p>
+            </section>
+          </div>
+          <section class="scenario-gallery" aria-labelledby="saved-scenarios-heading">
+            <div class="section-header">
+              <div><h3 id="saved-scenarios-heading">Cenários salvos</h3><p>Compare as ofertas e o valor previsto até o prazo.</p></div>
+            </div>
+            <div id="saved-scenarios" class="scenario-gallery-grid"></div>
+          </section>
+        </section>
       </section>
 
       <section id="equipe" class="view" aria-labelledby="team-heading" hidden>
@@ -123,37 +158,6 @@
           <div class="section-header"><h2 id="pending-heading">Solicitações de acesso <span class="badge" id="tab-pending-badge" hidden>0</span></h2></div>
           <div id="access-list" aria-live="polite"></div>
           <p id="access-error" class="form-error auth-field" role="alert" hidden></p>
-        </section>
-      </section>
-
-      <section id="simulador" class="view" aria-labelledby="sim-heading" hidden>
-        <div class="view-heading"><div><h1 id="sim-heading">Simulador de ofertas</h1><p>Combine serviços e infoprodutos em um cenário e veja quanto pode entrar até o prazo.</p></div></div>
-        <div class="sim-grid">
-          <form id="sim-form" class="card roomy">
-            <div class="section-header"><h2>Montar cenário</h2><button type="button" class="text-link" data-action="reset-sim">Novo cenário</button></div>
-            <label>Nome do cenário <input name="title" required maxlength="120" placeholder="Ex.: Serviços e workshop de novembro"></label>
-            <div id="scenario-items" class="scenario-items"></div>
-            <div class="scenario-tools">
-              <button class="button" type="button" data-action="add-service">＋ Serviço</button>
-              <button class="button" type="button" data-action="add-product">＋ Infoproduto</button>
-              <a class="text-link" href="#servicos">Adicionar do catálogo ↗</a>
-            </div>
-            <div class="form-footer"><button id="save-sim" class="button primary" type="submit">Salvar cenário</button></div>
-          </form>
-          <section class="card roomy projection" aria-labelledby="projection-heading">
-            <h2 id="projection-heading">Projeção</h2>
-            <p class="projection-balance">Falta para a meta coletiva <strong id="projection-balance">R$ 0,00</strong></p>
-            <div class="projection-value"><span>Líquido estimado até 30 de novembro</span><strong id="estimate">R$ 0,00</strong></div>
-            <dl><div><dt>Faturamento bruto total</dt><dd id="gross">R$ 0,00</dd></div><div><dt>Líquido total</dt><dd id="net-total">R$ 0,00</dd></div><div><dt>Vendas planejadas</dt><dd id="planned-sales">—</dd></div><div><dt>Cobertura do saldo</dt><dd id="coverage">—</dd></div><div><dt>Saldo após o cenário</dt><dd id="projected-balance">R$ 0,00</dd></div></dl>
-            <p class="inline-note">Cada item é projetado a partir de hoje. O valor entra na meta quando o prazo inteiro cabe até 30 de novembro.</p>
-            <p class="projection-note" id="projection-note" aria-live="polite"></p>
-          </section>
-        </div>
-        <section class="scenario-gallery" aria-labelledby="saved-scenarios-heading">
-          <div class="section-header">
-            <div><h2 id="saved-scenarios-heading">Cenários salvos</h2><p>Compare as ofertas e o valor previsto até o prazo.</p></div>
-          </div>
-          <div id="saved-scenarios" class="scenario-gallery-grid"></div>
         </section>
       </section>
       <section id="eventos" class="view" aria-labelledby="events-heading" hidden>
