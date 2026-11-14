@@ -128,6 +128,9 @@ progress::-moz-progress-bar { background:var(--lime); border-radius:30px; }
 label { display:grid; gap:6px; align-content:start; color:#35463e; font-size:12px; font-weight:700; min-width:0; }
 input,select,textarea { min-height:40px; border:1px solid #cfd9ce; border-radius:7px; background:#fff; color:var(--ink); padding:8px 10px; width:100%; min-width:0; font-size:14px; }
 textarea { resize:vertical; }
+@supports (field-sizing:content) {
+  textarea { field-sizing:content; resize:none; }
+}
 input::placeholder,textarea::placeholder { color:#6a776f; opacity:1; }
 .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:12px 0; }
 details { padding:10px 0; border-top:1px solid var(--line); }
@@ -426,7 +429,6 @@ dialog::backdrop { background:#152b21a0; }
 #event-dialog { width:min(680px,calc(100% - 24px)); max-height:calc(100dvh - 32px); }
 .event-form-fields,.event-field-pair { display:grid; gap:12px; }
 .event-field-pair { grid-template-columns:repeat(2,minmax(0,1fr)); }
-.event-form-fields textarea { min-height:80px; }
 .copy-editor { min-width:0; border:1px solid var(--line); border-radius:10px; background:#fff; }
 .copy-editor-label { padding:12px 14px 8px; font-size:13px; font-weight:700; }
 .copy-editor-tools { display:flex; flex-wrap:wrap; gap:6px; padding:0 14px 10px; border-bottom:1px solid var(--line); }
