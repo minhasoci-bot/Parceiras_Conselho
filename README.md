@@ -114,3 +114,13 @@ O mapa do Hotseat Conselho Head organiza a máquina em oito ramos.
 | Próximo passo | A mentoria apresentada no mapa ilustra uma oferta de acompanhamento. O painel transforma diagnóstico, direção, implementação e feedback em campos reutilizáveis para cada projeto. |
 
 O simulador calcula o CPA usando compradores atribuídos à mídia paga. O CPA de equilíbrio inicial usa a contribuição da primeira compra após taxas e custo variável. No LTV bruto, as taxas de ascensão são condicionais ao nível anterior da mesma coorte.
+
+## Swipe File de Conteúdo
+
+Acesse **Swipe File** no painel ou acesse `/painel/#swipe`. A ferramenta permite à equipe curar e arquivar referências estratégicas de publicações do Instagram (Carrosséis, Vídeos/Reels, Posts Estáticos e outros formatos):
+- **Envio de links do Instagram:** Suporta links de publicações (`/p/`), Reels (`/reel/`, `/reels/`) e vídeos (`/tv/`), com limpeza automática de parâmetros de rastreamento.
+- **Galeria visual:** Exibe a mídia interativa (embeds do Instagram para folhear carrosséis ou dar play em vídeos) e thumbnails.
+- **Legenda completa & Cópia rápida:** Guarda a legenda na íntegra com botão de 1 clique para copiar o texto e modelar a copy.
+- **Notas de modelagem & Assistente:** Registra o que modelar (gancho, desenvolvimento, CTA) e gera um briefing estruturado pronto para criar novos conteúdos inspirados na referência.
+- **Filtros e busca:** Filtre por formato (Carrossel, Vídeo, Estático), por objetivo de funil (Atração, Retenção, Conversão, Storytelling, Design, Tutorial, Gancho) ou busque por palavras-chave na legenda.
+- **Armazenamento:** Integrado com Supabase via [migração do swipe file](supabase/migrations/20261115130000_swipe_file.sql) com RLS para a equipe aprovada e fallback automático para armazenamento local no navegador.

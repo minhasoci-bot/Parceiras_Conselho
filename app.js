@@ -22,7 +22,7 @@ function revealPlanningPanel(panel) {
 const statusLabel = { proposta: "Proposta", fechado: "Fechado", recebido: "Recebido" };
 const views = {
   visao: "Visão geral", vendas: "Vendas", equipe: "Equipe", eventos: "Eventos", infoprodutos: "Máquina de Infoprodutos",
-  "vendas/catalogo": "Vendas / Catálogo", "vendas/simulador": "Vendas / Simulador", timeline: "Timeline",
+  "vendas/catalogo": "Vendas / Catálogo", "vendas/simulador": "Vendas / Simulador", timeline: "Timeline", swipe: "Swipe File",
 };
 const legacySalesRoutes = { servicos: "vendas/catalogo", simulador: "vendas/simulador" };
 const memberPositions = { estrategia: "Estratégia", comercial: "Comercial", design: "Design", copy: "Copy", video: "Vídeo", dev: "Dev" };
@@ -455,7 +455,7 @@ function route(fromHashChange = false) {
   const hash = location.hash.slice(1);
   const destination = Object.hasOwn(legacySalesRoutes, hash) ? legacySalesRoutes[hash] : hash;
   const fragment = scenarioId ? "vendas/simulador" : destination;
-  const privateView = ["vendas", "equipe", "eventos", "timeline"].includes(fragment) || (shared && fragment === "infoprodutos");
+  const privateView = ["vendas", "equipe", "eventos", "timeline", "swipe"].includes(fragment) || (shared && fragment === "infoprodutos");
   const blocked = privateView && (!ready || !session);
   const view = !blocked && Object.hasOwn(views, fragment) ? fragment : "visao";
   if (blocked && !checkingInitialAccess) history.replaceState(history.state, "", "#visao");

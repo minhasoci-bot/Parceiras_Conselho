@@ -21,6 +21,7 @@
       <a href="#eventos" data-member-access hidden><i class="icon calendar-icon" aria-hidden="true"></i> Eventos</a>
       <a href="#infoprodutos" data-member-access data-machine-nav hidden><i class="icon machine-icon" aria-hidden="true"></i> Infoprodutos</a>
       <a href="#timeline" data-member-access hidden><i class="icon timeline-icon" aria-hidden="true"></i> Timeline</a>
+      <a href="#swipe" data-member-access hidden><i class="icon swipe-icon" aria-hidden="true"></i> Swipe File</a>
     </nav>
     <div class="rail-footer" id="rail-footer">
       <div class="user-badge" id="user-badge" hidden>
@@ -284,6 +285,70 @@
           </aside>
         </div>
       </section>
+      <!-- ===== SWIPE FILE ===== -->
+      <section id="swipe" class="view" aria-labelledby="swipe-heading" hidden>
+        <div class="view-heading">
+          <div>
+            <h1 id="swipe-heading">Swipe File</h1>
+            <p>Galeria de referências de posts, carrosséis e vídeos do Instagram para modelar novos conteúdos.</p>
+          </div>
+          <div class="swipe-header-actions">
+            <button class="button primary" id="swipe-new-btn" type="button">＋ Salvar publicação</button>
+          </div>
+        </div>
+
+        <div class="swipe-toolbar card">
+          <div class="swipe-toolbar-search">
+            <input type="search" id="swipe-search-input" placeholder="Buscar por tema, legenda, notas ou autor…">
+          </div>
+          <div class="swipe-toolbar-filters">
+            <label>
+              Formato
+              <select id="swipe-filter-format">
+                <option value="">Todos os formatos</option>
+                <option value="carrossel">🎠 Carrossel</option>
+                <option value="video">🎬 Vídeo / Reels</option>
+                <option value="estatico">🖼️ Post Estático</option>
+                <option value="outro">💡 Outro formato</option>
+              </select>
+            </label>
+            <label>
+              Pilar / Objetivo
+              <select id="swipe-filter-category">
+                <option value="">Todos os pilares</option>
+                <option value="atracao">🎯 Atração / Topo de Funil</option>
+                <option value="retencao">🧠 Autoridade / Retenção</option>
+                <option value="conversao">💰 Conversão / Vendas</option>
+                <option value="storytelling">📖 Storytelling & Conexão</option>
+                <option value="design">🎨 Direção de Arte & Visual</option>
+                <option value="tutorial">🛠️ Tutorial & Passo a passo</option>
+                <option value="gancho">⚡ Quebra de Padrão / Gancho</option>
+                <option value="geral">Geral / Referência livre</option>
+              </select>
+            </label>
+            <button class="button" id="swipe-refresh-btn" type="button" title="Atualizar galeria">Atualizar</button>
+          </div>
+        </div>
+
+        <div class="swipe-stats-bar" id="swipe-stats-bar">
+          <span id="swipe-count-label">Carregando referências…</span>
+        </div>
+
+        <p id="swipe-feedback" class="machine-feedback" role="status" hidden></p>
+        <p id="swipe-loading" role="status" hidden>Carregando galeria do Swipe File…</p>
+
+        <div id="swipe-empty" class="card roomy swipe-empty" hidden>
+          <div class="swipe-empty-icon" aria-hidden="true">📑</div>
+          <h3>Nenhuma referência salva ainda</h3>
+          <p>Cole links do Instagram (carrossel, reels ou imagem estática) para salvar os posts com preview visual e legenda completa.</p>
+          <div class="swipe-empty-actions">
+            <button class="button primary" id="swipe-empty-new-btn" type="button">＋ Salvar primeira publicação</button>
+            <button class="button" id="swipe-load-samples-btn" type="button">Carregar referências de exemplo</button>
+          </div>
+        </div>
+
+        <div id="swipe-gallery-grid" class="swipe-gallery-grid"></div>
+      </section>
     </main>
   </div>
 
@@ -396,6 +461,146 @@
         <button class="button primary" id="machine-submit" type="submit">Salvar</button>
       </div>
     </form>
+  </dialog>
+  <dialog id="swipe-dialog" aria-labelledby="swipe-dialog-heading">
+    <form id="swipe-form" class="dialog-form">
+      <div class="section-header">
+        <div>
+          <h2 id="swipe-dialog-heading">Salvar publicação no Swipe File</h2>
+          <p>Cole o link do Instagram para guardar a mídia, legenda e notas de copy.</p>
+        </div>
+        <button class="icon-button" type="button" data-close="swipe-dialog" aria-label="Fechar">×</button>
+      </div>
+
+      <div class="swipe-form-fields">
+        <label>
+          Link do Instagram (Reel, Carrossel ou Post) *
+          <input name="url" type="url" required placeholder="https://www.instagram.com/reel/... ou /p/..." id="swipe-form-url" autocomplete="off">
+        </label>
+        <p class="inline-note swipe-url-hint">Suporta links de Reels, carrosséis e posts estáticos (limpeza de rastreamento automática).</p>
+
+        <div class="form-grid">
+          <label>
+            Título / Ângulo da referência *
+            <input name="title" required maxlength="180" placeholder="Ex.: Carrossel com gancho de contraste em 6 passos">
+          </label>
+          <label>
+            Formato *
+            <select name="format" id="swipe-form-format" required>
+              <option value="carrossel">🎠 Carrossel</option>
+              <option value="video">🎬 Vídeo / Reels</option>
+              <option value="estatico">🖼️ Post Estático</option>
+              <option value="outro">💡 Outro formato</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-grid">
+          <label>
+            Pilar / Categoria
+            <select name="category" id="swipe-form-category">
+              <option value="atracao">🎯 Atração / Topo de Funil</option>
+              <option value="retencao">🧠 Autoridade / Retenção</option>
+              <option value="conversao">💰 Conversão / Vendas</option>
+              <option value="storytelling">📖 Storytelling & Conexão</option>
+              <option value="design">🎨 Direção de Arte & Visual</option>
+              <option value="tutorial">🛠️ Tutorial & Passo a passo</option>
+              <option value="gancho">⚡ Quebra de Padrão / Gancho</option>
+              <option value="geral">Geral / Referência livre</option>
+            </select>
+          </label>
+          <label>
+            Autor / Perfil (@)
+            <input name="author" maxlength="80" placeholder="Ex.: @umcaracaramelo" id="swipe-form-author">
+          </label>
+        </div>
+
+        <label>
+          <div class="swipe-label-with-action">
+            <span>Legenda da publicação (Caption)</span>
+            <button class="text-link" type="button" id="swipe-paste-caption-btn">Colar do clipboard</button>
+          </div>
+          <textarea name="caption" id="swipe-form-caption" rows="5" maxlength="10000" placeholder="Cole aqui a legenda completa da publicação para usar como referência de copywriting..."></textarea>
+        </label>
+
+        <label>
+          O que modelar? (Anotações estratégicas da equipe)
+          <textarea name="notes" id="swipe-form-notes" rows="3" maxlength="3000" placeholder="O que chamou a atenção? Gancho de abertura, ritmo, estrutura dos slides, chamada para ação (CTA)..."></textarea>
+        </label>
+
+        <label>
+          Imagem de capa / Thumbnail alternativa (opcional)
+          <input name="thumbnail_url" type="url" placeholder="https://exemplo.com/imagem.jpg">
+        </label>
+      </div>
+
+      <p class="form-error auth-field" id="swipe-form-error" role="alert" hidden></p>
+
+      <div class="form-footer">
+        <button class="button danger outline" id="swipe-delete-btn" type="button" hidden>Excluir referência</button>
+        <button class="button" type="button" data-close="swipe-dialog">Cancelar</button>
+        <button class="button primary" id="swipe-submit-btn" type="submit">Salvar no Swipe File</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="swipe-detail-dialog" aria-labelledby="swipe-detail-title">
+    <div class="dialog-form swipe-detail-layout">
+      <div class="section-header swipe-detail-header">
+        <div class="swipe-detail-header-left">
+          <div class="swipe-detail-tags">
+            <span class="pill" id="swipe-detail-format-pill"></span>
+            <span class="pill" id="swipe-detail-category-pill"></span>
+            <span class="swipe-detail-author" id="swipe-detail-author"></span>
+          </div>
+          <h2 id="swipe-detail-title"></h2>
+        </div>
+        <div class="card-header-actions">
+          <a class="button small" id="swipe-detail-external-link" target="_blank" rel="noopener">Abrir no Instagram ↗</a>
+          <button class="icon-button" type="button" data-close="swipe-detail-dialog" aria-label="Fechar detalhes" autofocus>×</button>
+        </div>
+      </div>
+
+      <div class="swipe-detail-grid">
+        <!-- Coluna da Mídia: Embed do Instagram (Carrossel navegável ou Vídeo tocável) -->
+        <div class="swipe-detail-media-pane">
+          <div class="swipe-detail-embed-container" id="swipe-detail-embed-container">
+            <!-- Embed interativo renderizado dinamicamente -->
+          </div>
+        </div>
+
+        <!-- Coluna de Conteúdo: Legenda completa e Anotações de Copywriting -->
+        <div class="swipe-detail-info-pane">
+          <div class="swipe-detail-section">
+            <div class="swipe-section-header">
+              <h3>Legenda da publicação</h3>
+              <button class="button small" id="swipe-copy-caption-btn" type="button">📋 Copiar legenda</button>
+            </div>
+            <div class="swipe-caption-box" id="swipe-detail-caption"></div>
+          </div>
+
+          <div class="swipe-detail-section" id="swipe-detail-notes-section">
+            <div class="swipe-section-header">
+              <h3>O que modelar (Estratégia)</h3>
+            </div>
+            <div class="swipe-notes-box" id="swipe-detail-notes"></div>
+          </div>
+
+          <div class="swipe-detail-section swipe-modeling-section">
+            <div class="swipe-section-header">
+              <h3>Estrutura para novo conteúdo</h3>
+              <button class="button small" id="swipe-copy-prompt-btn" type="button">✨ Copiar briefing</button>
+            </div>
+            <p class="inline-note">Estrutura de criação extraída desta referência para você aplicar no seu nicho:</p>
+            <div class="swipe-prompt-box" id="swipe-detail-prompt"></div>
+          </div>
+
+          <div class="swipe-detail-footer-actions">
+            <button class="button" id="swipe-detail-edit-btn" type="button">Editar referência</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </dialog>
   <script>/* SCRIPTS */</script>
 </body>

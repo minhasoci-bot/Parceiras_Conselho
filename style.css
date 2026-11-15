@@ -38,10 +38,12 @@ strong,dd,output { font-variant-numeric:tabular-nums; }
 .people-icon::before,.people-icon::after,.catalog-icon::after,.calendar-icon::after { content:""; position:absolute; }
 .people-icon::before { width:6px; height:6px; border:1.5px solid; border-radius:50%; top:0; left:5px; }
 .people-icon::after { width:14px; height:6px; border:1.5px solid; border-radius:7px 7px 3px 3px; left:1px; bottom:0; }
-.catalog-icon,.calendar-icon { border:1.5px solid; border-radius:3px; }
+.catalog-icon,.calendar-icon,.swipe-icon { border:1.5px solid; border-radius:3px; }
 .catalog-icon { height:12px; margin-top:3px; }
 .catalog-icon::after { border:1.5px solid; border-bottom:0; border-radius:2px 2px 0 0; left:4px; right:4px; height:3px; top:-5px; }
 .calendar-icon::after { left:0; right:0; top:4px; border-top:1.5px solid; }
+.swipe-icon::before { content:""; position:absolute; border:1.5px solid; border-radius:2px; top:-3px; right:-3px; left:2px; bottom:2px; border-left:0; border-bottom:0; opacity:0.6; }
+.swipe-icon::after { content:""; position:absolute; top:3px; left:3px; right:3px; bottom:3px; border-top:1.5px solid; border-bottom:1.5px solid; }
 .workspace { margin-left:224px; }
 .masthead { position:sticky; top:0; z-index:3; display:flex; justify-content:space-between; align-items:center; gap:12px; height:var(--masthead-height); padding:0 36px; background:#fbfcf8; border-bottom:1px solid var(--line); }
 #breadcrumb { color:var(--muted); font-size:14px; font-weight:600; }
@@ -801,5 +803,376 @@ dialog::backdrop { background:#152b21a0; }
     border-top:1px solid var(--line);
     box-shadow:0 -8px 24px rgba(0,0,0,.15);
     z-index:30;
+  }
+}
+
+/* ==========================================================================
+   SWIPE FILE — Galeria de Referências de Conteúdo do Instagram
+   ========================================================================== */
+.swipe-header-actions { display:flex; align-items:center; gap:10px; }
+.swipe-toolbar {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 16px;
+  margin-bottom:14px;
+}
+.swipe-toolbar-search { flex:1 1 240px; min-width:200px; }
+.swipe-toolbar-search input { width:100%; margin:0; }
+.swipe-toolbar-filters { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.swipe-toolbar-filters label { margin:0; font-size:11.5px; }
+.swipe-toolbar-filters select { min-width:140px; }
+
+.swipe-stats-bar {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-size:13px;
+  color:var(--muted);
+  margin-bottom:16px;
+  padding:0 4px;
+}
+
+.swipe-empty {
+  text-align:center;
+  padding:48px 24px;
+  display:grid;
+  place-items:center;
+  gap:10px;
+}
+.swipe-empty-icon { font-size:42px; line-height:1; }
+.swipe-empty h3 { margin:4px 0 0; font-size:19px; }
+.swipe-empty p { max-width:480px; margin:0 auto; color:var(--muted); }
+.swipe-empty-actions { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:8px; }
+
+.swipe-gallery-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap:20px;
+  align-items:start;
+}
+
+.swipe-card {
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:12px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+.swipe-card:hover {
+  border-color:#b4c7b2;
+  box-shadow:0 6px 20px rgba(0,0,0,.06);
+}
+
+.swipe-card-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:10px 14px;
+  border-bottom:1px solid var(--line);
+  background:#fcfdfb;
+  font-size:12px;
+}
+.swipe-card-badges { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.swipe-card-author {
+  font-weight:700;
+  color:var(--green);
+  text-decoration:none;
+  font-size:12px;
+  max-width:140px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.swipe-card-author:hover { text-decoration:underline; }
+
+.swipe-card-media {
+  position:relative;
+  width:100%;
+  background:#f4f7f2;
+  min-height:220px;
+  max-height:480px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  border-bottom:1px solid var(--line);
+}
+.swipe-card-media img.swipe-thumb {
+  width:100%;
+  height:240px;
+  object-fit:cover;
+  display:block;
+  cursor:pointer;
+  transition:transform .2s ease;
+}
+.swipe-card-media img.swipe-thumb:hover { transform:scale(1.02); }
+
+.swipe-card-embed-preview {
+  width:100%;
+  padding:8px 8px 0;
+  display:flex;
+  justify-content:center;
+  overflow:hidden;
+}
+.swipe-card-embed-preview iframe {
+  border:0 !important;
+  border-radius:8px !important;
+  max-width:100% !important;
+}
+
+.swipe-card-media-placeholder {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  padding:32px 16px;
+  text-align:center;
+  color:var(--muted);
+  width:100%;
+}
+.swipe-card-media-placeholder .swipe-format-big-icon {
+  font-size:38px;
+  line-height:1;
+}
+
+.swipe-card-body {
+  padding:14px;
+  display:grid;
+  gap:10px;
+  flex:1;
+}
+.swipe-card-title {
+  font-size:15px;
+  font-weight:700;
+  line-height:1.35;
+  color:var(--ink);
+  margin:0;
+  word-break:break-word;
+  cursor:pointer;
+}
+.swipe-card-title:hover { color:var(--green); }
+
+.swipe-card-caption-snippet {
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.5;
+  display:-webkit-box;
+  -webkit-line-clamp:3;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  word-break:break-word;
+  background:#f9faf7;
+  padding:8px 10px;
+  border-radius:6px;
+  border:1px solid #edf2ea;
+  white-space:pre-wrap;
+}
+
+.swipe-card-notes-snippet {
+  font-size:11.5px;
+  color:#234433;
+  background:#eef5ec;
+  padding:7px 10px;
+  border-radius:6px;
+  border-left:3px solid #649978;
+  line-height:1.45;
+  word-break:break-word;
+}
+.swipe-card-notes-snippet strong { color:#183627; }
+
+.swipe-card-footer {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  padding:10px 14px;
+  border-top:1px solid var(--line);
+  background:#fcfdfb;
+}
+.swipe-card-actions { display:flex; align-items:center; gap:6px; }
+
+/* Pills de Formato e Pilares */
+.pill.format-carrossel { background:#e8f4e5; color:#1c5236; }
+.pill.format-video { background:#e0f2fe; color:#0369a1; }
+.pill.format-estatico { background:#fef3c7; color:#92400e; }
+.pill.format-outro { background:#f3e8ff; color:#6b21a8; }
+
+.pill.cat-atracao { background:#fef2f2; color:#991b1b; }
+.pill.cat-retencao { background:#eff6ff; color:#1d4ed8; }
+.pill.cat-conversao { background:#f0fdf4; color:#166534; }
+.pill.cat-storytelling { background:#fffbeb; color:#92400e; }
+.pill.cat-design { background:#fdf4ff; color:#86198f; }
+.pill.cat-tutorial { background:#f0fdfa; color:#115e59; }
+.pill.cat-gancho { background:#fff7ed; color:#9a3412; }
+.pill.cat-geral { background:#f3f4f6; color:#374151; }
+
+/* Modais */
+#swipe-dialog {
+  width:min(680px, calc(100% - 24px));
+  max-height:calc(100dvh - 32px);
+  overflow-y:auto;
+}
+.swipe-form-fields { display:grid; gap:13px; }
+.swipe-label-with-action { display:flex; justify-content:space-between; align-items:center; }
+.swipe-url-hint { margin-top:-6px; font-size:11.5px; color:var(--muted); }
+
+/* Modal de Visualização Imersiva & Modelagem */
+#swipe-detail-dialog {
+  width:min(1100px, calc(100% - 24px));
+  max-height:calc(100dvh - 32px);
+  overflow:hidden;
+}
+.swipe-detail-layout {
+  display:flex;
+  flex-direction:column;
+  max-height:calc(100dvh - 32px);
+  box-sizing:border-box;
+  padding:22px;
+}
+.swipe-detail-header {
+  margin-bottom:16px;
+  flex-shrink:0;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
+.swipe-detail-tags { display:flex; flex-wrap:wrap; align-items:center; gap:7px; margin-bottom:6px; }
+.swipe-detail-author { font-size:13px; font-weight:700; color:var(--green); }
+.swipe-detail-header-left h2 { margin:0; font-size:21px; line-height:1.25; word-break:break-word; }
+
+.swipe-detail-grid {
+  display:grid;
+  grid-template-columns:minmax(330px, 460px) minmax(0, 1fr);
+  gap:22px;
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+}
+.swipe-detail-media-pane {
+  overflow-y:auto;
+  background:#f8faf6;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:14px;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+}
+.swipe-detail-embed-container {
+  width:100%;
+  max-width:440px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.swipe-detail-embed-container iframe {
+  width:100% !important;
+  max-width:100% !important;
+  border-radius:8px !important;
+  border:0 !important;
+}
+
+.swipe-detail-info-pane {
+  overflow-y:auto;
+  display:grid;
+  gap:16px;
+  align-content:start;
+  padding-right:4px;
+}
+.swipe-detail-section {
+  background:#fcfdfb;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:14px;
+  display:grid;
+  gap:10px;
+}
+.swipe-section-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+.swipe-section-header h3 {
+  font-size:14px;
+  font-weight:700;
+  margin:0;
+  color:var(--ink);
+}
+
+.swipe-caption-box {
+  font-size:13px;
+  line-height:1.65;
+  color:var(--ink);
+  white-space:pre-wrap;
+  max-height:260px;
+  overflow-y:auto;
+  background:var(--paper);
+  padding:12px;
+  border-radius:7px;
+  border:1px solid var(--line);
+  word-break:break-word;
+}
+
+.swipe-notes-box {
+  font-size:13px;
+  line-height:1.6;
+  color:#20402f;
+  white-space:pre-wrap;
+  background:#f3f8f1;
+  padding:12px;
+  border-radius:7px;
+  border-left:3px solid #5a916e;
+  word-break:break-word;
+}
+
+.swipe-modeling-section {
+  background:#f5fbf7;
+  border-color:#cfdfd3;
+}
+.swipe-prompt-box {
+  font-size:12.5px;
+  line-height:1.6;
+  color:#173d28;
+  white-space:pre-wrap;
+  background:#ffffff;
+  padding:12px;
+  border-radius:7px;
+  border:1px dashed #92bfa0;
+  word-break:break-word;
+}
+
+.swipe-detail-footer-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:6px;
+}
+
+@media (max-width:840px) {
+  #swipe-detail-dialog {
+    width:100%;
+    max-height:calc(100dvh - 16px);
+  }
+  .swipe-detail-layout {
+    overflow-y:auto;
+    height:auto;
+    max-height:none;
+  }
+  .swipe-detail-grid {
+    grid-template-columns:1fr;
+    overflow:visible;
+  }
+  .swipe-detail-media-pane {
+    max-height:480px;
   }
 }
