@@ -307,7 +307,7 @@
       }
     }
 
-    sidebarEl.innerHTML = sidebarHtml;
+    sidebarEl.innerHTML = `<div class="timeline-sidebar-header"><span>Projeto / Tarefa</span></div><div class="timeline-sidebar-rows">${sidebarHtml}</div>`;
     rowsEl.style.width = totalWidth + "px";
     rowsEl.innerHTML = `${weekendBg}${todayLineStyle}${rowsHtml}`;
 

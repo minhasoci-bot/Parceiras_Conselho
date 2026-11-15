@@ -8,6 +8,10 @@ create table public.mutirao_mentoria_swipe_items (
   caption text not null default '',
   notes text not null default '',
   thumbnail_url text not null default '',
+  likes integer not null default 0,
+  comments integer not null default 0,
+  shares integer not null default 0,
+  views integer not null default 0,
   revision integer not null default 0 check (revision >= 0),
   created_at timestamptz not null default now(),
   created_by uuid references auth.users(id) default auth.uid()

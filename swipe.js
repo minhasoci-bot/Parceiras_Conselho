@@ -31,6 +31,10 @@
       caption: `Você não tem um problema de tráfego. Você tem um problema de oferta.\n\nQuando a oferta é genérica, você precisa de 10x mais pessoas para vender 1 unidade. Quando a oferta tem um mecanismo proprietário, 10 pessoas bastam para fazer o primeiro caixa.\n\nArrasta para o lado e veja as 7 etapas que usamos no Laboratório para transformar ideias soltas em infoprodutos e serviços com valor percebido inquestionável.\n\nSalve este post para consultar quando for precificar sua próxima mentoria.`,
       notes: `GANCHO: Começa quebrando a crença mais comum ("tráfego" vs "oferta").\nESTRUTURA: 7 lâminas limpas, com 1 ideia por slide, tipografia pesada e respiro visual.\nCTA: Comando para salvar e aplicar na precificação de mentoria.`,
       thumbnail_url: "",
+      likes: 14820,
+      comments: 428,
+      shares: 1850,
+      views: 0,
       revision: 0,
       created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
     },
@@ -44,6 +48,10 @@
       caption: `Se os 3 primeiros segundos do seu vídeo não provocam uma pergunta na cabeça de quem assiste, o scroll leva embora todo o seu esforço.\n\n3 formas de abrir seu Reels hoje:\n1. Ação no meio da cena (in media res)\n2. O contraste entre o que todo mundo faz e o que dá resultado\n3. Uma confissão honesta sobre um erro que custou caro\n\nQual dessas você vai testar no próximo vídeo?`,
       notes: `VÍDEO / REELS: Movimento contínuo de câmera, legenda sincronizada com palavras-chave destacadas.\nRITMO: Troca de enquadramento a cada 2.5s para reter atenção.\nCTA: Pergunta final nos comentários gerando engajamento direto.`,
       thumbnail_url: "",
+      likes: 8420,
+      comments: 310,
+      shares: 2450,
+      views: 92400,
       revision: 0,
       created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
     },
@@ -57,10 +65,49 @@
       caption: `Parar de acumular ferramentas é o primeiro passo para ter clareza.\n\nUma esteira bem desenhada em um papel em branco vende mais do que 15 softwares desintegrados que ninguém da sua equipe consegue operar.\n\nMarca não é só o que você diz. É o que ela faz você fazer.`,
       notes: `DESIGN & COPY CONCISA: Contraste cromático forte (#101014 x #FFF4E8), tipografia grotesca marcante e frase que vira axioma da marca.\nExcelente para topo de funil de autoridade.`,
       thumbnail_url: "",
+      likes: 5120,
+      comments: 215,
+      shares: 980,
+      views: 0,
       revision: 0,
       created_at: new Date(Date.now() - 86400000 * 8).toISOString(),
     },
   ];
+
+  function formatMetric(val) {
+    const n = Number(val) || 0;
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(".0", "").replace(".", ",") + "M";
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(".0", "").replace(".", ",") + "k";
+    return n.toLocaleString("pt-BR");
+  }
+
+  function parseMetricInput(val) {
+    if (typeof val === "number") return Math.max(0, Math.floor(val));
+    if (!val || typeof val !== "string") return 0;
+    const s = val.trim().toLowerCase().replace(",", ".");
+    if (s.endsWith("m")) {
+      return Math.max(0, Math.round(parseFloat(s.slice(0, -1)) * 1000000) || 0);
+    }
+    if (s.endsWith("k")) {
+      return Math.max(0, Math.round(parseFloat(s.slice(0, -1)) * 1000) || 0);
+    }
+    const clean = s.replace(/\s+/g, "").replace(/\./g, "");
+    return Math.max(0, parseInt(clean, 10) || 0);
+  }
+
+  function getEngagementStatus(likes = 0, comments = 0, shares = 0, views = 0) {
+    const total = (Number(likes) || 0) + (Number(comments) || 0) * 2 + (Number(shares) || 0) * 3 + (Number(views) || 0) * 0.1;
+    if (total >= 10000 || shares >= 1000 || views >= 50000) {
+      return { label: "Alta Viralidade 🔥", badgeClass: "viral" };
+    }
+    if (total >= 2000 || comments >= 150 || shares >= 300) {
+      return { label: "Forte Engajamento ⭐", badgeClass: "high" };
+    }
+    if (total > 0) {
+      return { label: "Validado ✓", badgeClass: "" };
+    }
+    return { label: "Referência", badgeClass: "" };
+  }
 
   const allowed = () => !shared || (ready && !!session && ["member", "admin"].includes(accessRole));
 
@@ -70,6 +117,7 @@
   let searchTerm = "";
   let formatFilter = "";
   let categoryFilter = "";
+  let sortBy = "recent";
   let loading = false;
   let requestCounter = 0;
 
@@ -82,6 +130,7 @@
   const searchInput = $("#swipe-search-input");
   const formatSelect = $("#swipe-filter-format");
   const categorySelect = $("#swipe-filter-category");
+  const sortSelect = $("#swipe-sort-select");
   const statsLabel = $("#swipe-count-label");
   const feedbackEl = $("#swipe-feedback");
   const loadingEl = $("#swipe-loading");
@@ -101,6 +150,10 @@
   const authorInput = $("#swipe-form-author");
   const captionInput = $("#swipe-form-caption");
   const notesInput = $("#swipe-form-notes");
+  const likesInput = $("#swipe-form-likes");
+  const commentsInput = $("#swipe-form-comments");
+  const sharesInput = $("#swipe-form-shares");
+  const viewsInput = $("#swipe-form-views");
   const pasteCaptionBtn = $("#swipe-paste-caption-btn");
 
   // Diálogo de Detalhes / Inspeção
@@ -115,6 +168,12 @@
   const detailNotes = $("#swipe-detail-notes");
   const detailNotesSection = $("#swipe-detail-notes-section");
   const detailPrompt = $("#swipe-detail-prompt");
+  const detailLikes = $("#swipe-detail-likes");
+  const detailComments = $("#swipe-detail-comments");
+  const detailShares = $("#swipe-detail-shares");
+  const detailViews = $("#swipe-detail-views");
+  const detailViewsBox = $("#swipe-detail-views-box");
+  const detailEngagementBadge = $("#swipe-detail-engagement-badge");
   const copyCaptionBtn = $("#swipe-copy-caption-btn");
   const copyPromptBtn = $("#swipe-copy-prompt-btn");
   const detailEditBtn = $("#swipe-detail-edit-btn");
@@ -183,7 +242,7 @@
       if (shared) {
         try {
           rows = await supabaseRequest(
-            route + "?select=id,url,title,format,category,author,caption,notes,thumbnail_url,revision,created_at&order=created_at.desc",
+            route + "?select=id,url,title,format,category,author,caption,notes,thumbnail_url,likes,comments,shares,views,revision,created_at&order=created_at.desc",
             { token: await accessToken() }
           );
         } catch (err) {
@@ -227,7 +286,7 @@
         if (payload.id && items.some((i) => i.id === payload.id)) {
           // Atualização
           const updated = await supabaseRequest(
-            route + "?id=eq." + payload.id + "&select=id,url,title,format,category,author,caption,notes,thumbnail_url,revision,created_at",
+            route + "?id=eq." + payload.id + "&select=id,url,title,format,category,author,caption,notes,thumbnail_url,likes,comments,shares,views,revision,created_at",
             {
               method: "PATCH",
               token: await accessToken(),
@@ -240,6 +299,10 @@
                 caption: payload.caption,
                 notes: payload.notes,
                 thumbnail_url: payload.thumbnail_url,
+                likes: Number(payload.likes) || 0,
+                comments: Number(payload.comments) || 0,
+                shares: Number(payload.shares) || 0,
+                views: Number(payload.views) || 0,
                 revision: (payload.revision || 0) + 1,
               },
               representation: true,
@@ -253,7 +316,7 @@
         } else {
           // Inserção
           const inserted = await supabaseRequest(
-            route + "?select=id,url,title,format,category,author,caption,notes,thumbnail_url,revision,created_at",
+            route + "?select=id,url,title,format,category,author,caption,notes,thumbnail_url,likes,comments,shares,views,revision,created_at",
             {
               method: "POST",
               token: await accessToken(),
@@ -266,6 +329,10 @@
                 caption: payload.caption,
                 notes: payload.notes,
                 thumbnail_url: payload.thumbnail_url,
+                likes: Number(payload.likes) || 0,
+                comments: Number(payload.comments) || 0,
+                shares: Number(payload.shares) || 0,
+                views: Number(payload.views) || 0,
               },
               representation: true,
             }
@@ -315,7 +382,7 @@
 
   function getFilteredItems() {
     const q = searchTerm.toLowerCase().trim();
-    return items.filter((item) => {
+    const result = items.filter((item) => {
       if (formatFilter && item.format !== formatFilter) return false;
       if (categoryFilter && item.category !== categoryFilter) return false;
       if (!q) return true;
@@ -325,6 +392,20 @@
       const authorMatch = item.author?.toLowerCase().includes(q);
       return titleMatch || captionMatch || notesMatch || authorMatch;
     });
+
+    if (sortBy === "likes") {
+      result.sort((a, b) => (Number(b.likes) || 0) - (Number(a.likes) || 0));
+    } else if (sortBy === "comments") {
+      result.sort((a, b) => (Number(b.comments) || 0) - (Number(a.comments) || 0));
+    } else if (sortBy === "shares") {
+      result.sort((a, b) => (Number(b.shares) || 0) - (Number(a.shares) || 0));
+    } else if (sortBy === "views") {
+      result.sort((a, b) => (Number(b.views) || 0) - (Number(a.views) || 0));
+    } else {
+      result.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    }
+
+    return result;
   }
 
   function renderGallery() {
@@ -396,6 +477,16 @@
     const captionSnippet = item.caption ? esc(item.caption.slice(0, 160)) + (item.caption.length > 160 ? "…" : "") : "";
     const notesSnippet = item.notes ? esc(item.notes.slice(0, 110)) + (item.notes.length > 110 ? "…" : "") : "";
 
+    const hasAnyMetric = (Number(item.likes) > 0) || (Number(item.comments) > 0) || (Number(item.shares) > 0) || (Number(item.views) > 0);
+    const metricsHtml = hasAnyMetric ? `
+      <div class="swipe-card-metrics" title="Métricas de engajamento da publicação">
+        ${Number(item.likes) > 0 ? `<span class="swipe-metric-chip" title="Curtidas"><i aria-hidden="true">❤️</i> ${formatMetric(item.likes)}</span>` : ""}
+        ${Number(item.comments) > 0 ? `<span class="swipe-metric-chip" title="Comentários"><i aria-hidden="true">💬</i> ${formatMetric(item.comments)}</span>` : ""}
+        ${Number(item.shares) > 0 ? `<span class="swipe-metric-chip" title="Compartilhamentos"><i aria-hidden="true">↗️</i> ${formatMetric(item.shares)}</span>` : ""}
+        ${Number(item.views) > 0 ? `<span class="swipe-metric-chip" title="Visualizações"><i aria-hidden="true">👁️</i> ${formatMetric(item.views)}</span>` : ""}
+      </div>
+    ` : "";
+
     card.innerHTML = `
       <div class="swipe-card-header">
         <div class="swipe-card-badges">
@@ -409,6 +500,7 @@
       </div>
       <div class="swipe-card-body">
         <h3 class="swipe-card-title" data-action="view-detail">${esc(item.title)}</h3>
+        ${metricsHtml}
         ${captionSnippet ? `<div class="swipe-card-caption-snippet" title="Clique para ver a legenda inteira" data-action="view-detail">${captionSnippet}</div>` : ""}
         ${notesSnippet ? `<div class="swipe-card-notes-snippet"><strong>💡 O que modelar:</strong> ${notesSnippet}</div>` : ""}
       </div>
@@ -446,6 +538,10 @@
       captionInput.value = item.caption || "";
       notesInput.value = item.notes || "";
       form.elements.namedItem("thumbnail_url").value = item.thumbnail_url || "";
+      if (likesInput) likesInput.value = item.likes ? item.likes : "";
+      if (commentsInput) commentsInput.value = item.comments ? item.comments : "";
+      if (sharesInput) sharesInput.value = item.shares ? item.shares : "";
+      if (viewsInput) viewsInput.value = item.views ? item.views : "";
     } else {
       dialogHeading.textContent = "Salvar publicação no Swipe File";
       submitBtn.textContent = "Salvar no Swipe File";
@@ -453,6 +549,10 @@
       form.reset();
       formatInput.value = "carrossel";
       categoryInput.value = "atracao";
+      if (likesInput) likesInput.value = "";
+      if (commentsInput) commentsInput.value = "";
+      if (sharesInput) sharesInput.value = "";
+      if (viewsInput) viewsInput.value = "";
     }
 
     dialog.showModal();
@@ -570,6 +670,24 @@ ${item.notes ? item.notes : "Manter ritmo enxuto, tipografia legível e contrast
         </div>`;
     }
 
+    // Métricas de engajamento
+    const likesVal = Number(item.likes) || 0;
+    const commentsVal = Number(item.comments) || 0;
+    const sharesVal = Number(item.shares) || 0;
+    const viewsVal = Number(item.views) || 0;
+
+    if (detailLikes) detailLikes.textContent = likesVal > 0 ? formatMetric(likesVal) : "—";
+    if (detailComments) detailComments.textContent = commentsVal > 0 ? formatMetric(commentsVal) : "—";
+    if (detailShares) detailShares.textContent = sharesVal > 0 ? formatMetric(sharesVal) : "—";
+    if (detailViews) detailViews.textContent = viewsVal > 0 ? formatMetric(viewsVal) : "—";
+    if (detailViewsBox) detailViewsBox.hidden = !(viewsVal > 0 || item.format === "video");
+
+    if (detailEngagementBadge) {
+      const eng = getEngagementStatus(likesVal, commentsVal, sharesVal, viewsVal);
+      detailEngagementBadge.textContent = eng.label;
+      detailEngagementBadge.className = `pill swipe-engagement-badge ${eng.badgeClass}`.trim();
+    }
+
     // Legenda
     if (item.caption) {
       detailCaption.textContent = item.caption;
@@ -684,6 +802,13 @@ ${item.notes ? item.notes : "Manter ritmo enxuto, tipografia legível e contrast
       });
     }
 
+    if (sortSelect) {
+      sortSelect.addEventListener("change", (e) => {
+        sortBy = e.target.value;
+        renderGallery();
+      });
+    }
+
     // Ações na galeria de cards
     if (galleryGrid) {
       galleryGrid.addEventListener("click", async (e) => {
@@ -720,6 +845,10 @@ ${item.notes ? item.notes : "Manter ritmo enxuto, tipografia legível e contrast
         const caption = (formData.get("caption") || "").toString().trim();
         const notes = (formData.get("notes") || "").toString().trim();
         const thumbnail_url = (formData.get("thumbnail_url") || "").toString().trim();
+        const likes = parseMetricInput(formData.get("likes"));
+        const comments = parseMetricInput(formData.get("comments"));
+        const shares = parseMetricInput(formData.get("shares"));
+        const views = parseMetricInput(formData.get("views"));
 
         if (!url) {
           setFormError("Informe o link da publicação do Instagram.");
@@ -742,6 +871,10 @@ ${item.notes ? item.notes : "Manter ritmo enxuto, tipografia legível e contrast
             caption,
             notes,
             thumbnail_url,
+            likes,
+            comments,
+            shares,
+            views,
           });
           dialog.close();
           renderGallery();

@@ -326,6 +326,16 @@
                 <option value="geral">Geral / Referência livre</option>
               </select>
             </label>
+            <label>
+              Ordenar
+              <select id="swipe-sort-select">
+                <option value="recent">Mais recentes</option>
+                <option value="likes">Mais curtidos ❤️</option>
+                <option value="comments">Mais comentados 💬</option>
+                <option value="shares">Mais compartilhados ↗️</option>
+                <option value="views">Mais visualizados 👁️</option>
+              </select>
+            </label>
             <button class="button" id="swipe-refresh-btn" type="button" title="Atualizar galeria">Atualizar</button>
           </div>
         </div>
@@ -532,6 +542,28 @@
           Imagem de capa / Thumbnail alternativa (opcional)
           <input name="thumbnail_url" type="url" placeholder="https://exemplo.com/imagem.jpg">
         </label>
+
+        <div class="swipe-form-group-title">Métricas de engajamento da publicação (opcional)</div>
+        <div class="form-grid">
+          <label>
+            ❤️ Curtidas (Likes)
+            <input name="likes" type="text" placeholder="Ex.: 14.2k ou 14200" id="swipe-form-likes">
+          </label>
+          <label>
+            💬 Comentários
+            <input name="comments" type="text" placeholder="Ex.: 380" id="swipe-form-comments">
+          </label>
+        </div>
+        <div class="form-grid">
+          <label>
+            ↗️ Compartilhamentos
+            <input name="shares" type="text" placeholder="Ex.: 1.2k" id="swipe-form-shares">
+          </label>
+          <label>
+            👁️ Visualizações / Plays
+            <input name="views" type="text" placeholder="Ex.: 85k (Vídeo/Reels)" id="swipe-form-views">
+          </label>
+        </div>
       </div>
 
       <p class="form-error auth-field" id="swipe-form-error" role="alert" hidden></p>
@@ -571,6 +603,43 @@
 
         <!-- Coluna de Conteúdo: Legenda completa e Anotações de Copywriting -->
         <div class="swipe-detail-info-pane">
+          <div class="swipe-detail-section swipe-metrics-section">
+            <div class="swipe-section-header">
+              <h3>Métricas da publicação</h3>
+              <span class="pill swipe-engagement-badge" id="swipe-detail-engagement-badge">Engajamento</span>
+            </div>
+            <div class="swipe-metrics-grid">
+              <div class="swipe-metric-box">
+                <span class="swipe-metric-icon" aria-hidden="true">❤️</span>
+                <div class="swipe-metric-text">
+                  <strong id="swipe-detail-likes">—</strong>
+                  <span>Curtidas</span>
+                </div>
+              </div>
+              <div class="swipe-metric-box">
+                <span class="swipe-metric-icon" aria-hidden="true">💬</span>
+                <div class="swipe-metric-text">
+                  <strong id="swipe-detail-comments">—</strong>
+                  <span>Comentários</span>
+                </div>
+              </div>
+              <div class="swipe-metric-box">
+                <span class="swipe-metric-icon" aria-hidden="true">↗️</span>
+                <div class="swipe-metric-text">
+                  <strong id="swipe-detail-shares">—</strong>
+                  <span>Compartilhamentos</span>
+                </div>
+              </div>
+              <div class="swipe-metric-box" id="swipe-detail-views-box">
+                <span class="swipe-metric-icon" aria-hidden="true">👁️</span>
+                <div class="swipe-metric-text">
+                  <strong id="swipe-detail-views">—</strong>
+                  <span>Visualizações</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="swipe-detail-section">
             <div class="swipe-section-header">
               <h3>Legenda da publicação</h3>
