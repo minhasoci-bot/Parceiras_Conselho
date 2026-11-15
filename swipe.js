@@ -459,23 +459,27 @@
 
     let mediaHtml = "";
     if (hasThumb) {
-      mediaHtml = `<img class="swipe-thumb" src="${esc(item.thumbnail_url)}" alt="${esc(item.title)}" loading="lazy">`;
-    } else if (parsed) {
-      // Exibe um preview interativo usando iframe com lazy loading
       mediaHtml = `
-        <div class="swipe-card-embed-preview">
-          <iframe class="swipe-embed-iframe" src="${esc(parsed.embedUrl)}" width="100%" height="420" frameborder="0" scrolling="no" allowtransparency="true" loading="lazy"></iframe>
-        </div>`;
+        <img class="swipe-thumb" src="${esc(item.thumbnail_url)}" alt="${esc(item.title)}" loading="lazy">
+        <div class="swipe-card-overlay"><span>🔍 Ver post</span></div>
+      `;
+    } else if (parsed) {
+      // Exibe preview escalado para caber perfeitamente na coluna estreita de 5 cards
+      mediaHtml = `
+        <div class="swipe-card-embed-wrap">
+          <iframe class="swipe-embed-iframe" src="${esc(parsed.embedUrl)}" width="326" height="440" frameborder="0" scrolling="no" allowtransparency="true" loading="lazy" tabindex="-1"></iframe>
+        </div>
+        <div class="swipe-card-overlay"><span>🔍 Ver post</span></div>
+      `;
     } else {
       mediaHtml = `
         <div class="swipe-card-media-placeholder">
           <span class="swipe-format-big-icon" aria-hidden="true">${fmt.icon}</span>
           <span class="pill ${fmt.badgeClass}">${fmt.label}</span>
-        </div>`;
+        </div>
+        <div class="swipe-card-overlay"><span>🔍 Ver post</span></div>
+      `;
     }
-
-    const captionSnippet = item.caption ? esc(item.caption.slice(0, 160)) + (item.caption.length > 160 ? "…" : "") : "";
-    const notesSnippet = item.notes ? esc(item.notes.slice(0, 110)) + (item.notes.length > 110 ? "…" : "") : "";
 
     const hasAnyMetric = (Number(item.likes) > 0) || (Number(item.comments) > 0) || (Number(item.shares) > 0) || (Number(item.views) > 0);
     const metricsHtml = hasAnyMetric ? `
@@ -491,27 +495,27 @@
       <div class="swipe-card-header">
         <div class="swipe-card-badges">
           <span class="pill ${fmt.badgeClass}">${fmt.icon} ${fmt.label}</span>
-          <span class="pill ${cat.badgeClass}">${cat.label}</span>
         </div>
         ${item.author ? `<span class="swipe-card-author" title="${esc(item.author)}">${esc(item.author)}</span>` : ""}
       </div>
-      <div class="swipe-card-media" data-action="view-detail">
+      <div class="swipe-card-media" data-action="view-detail" title="Clique para ver a publicação completa">
         ${mediaHtml}
       </div>
       <div class="swipe-card-body">
-        <h3 class="swipe-card-title" data-action="view-detail">${esc(item.title)}</h3>
+        <h3 class="swipe-card-title" data-action="view-detail" title="${esc(item.title)}">${esc(item.title)}</h3>
         ${metricsHtml}
-        ${captionSnippet ? `<div class="swipe-card-caption-snippet" title="Clique para ver a legenda inteira" data-action="view-detail">${captionSnippet}</div>` : ""}
-        ${notesSnippet ? `<div class="swipe-card-notes-snippet"><strong>💡 O que modelar:</strong> ${notesSnippet}</div>` : ""}
+        <div class="swipe-card-tag-row">
+          <span class="pill ${cat.badgeClass}">${cat.label}</span>
+        </div>
       </div>
       <div class="swipe-card-footer">
         <div class="swipe-card-actions">
-          <button class="button small primary" type="button" data-action="view-detail">Ver publicação</button>
-          ${item.caption ? `<button class="button small" type="button" data-action="copy-caption" title="Copiar legenda para a área de transferência">📋 Copiar legenda</button>` : ""}
+          <button class="button small primary swipe-btn-view" type="button" data-action="view-detail">Ver</button>
+          ${item.caption ? `<button class="button small swipe-btn-copy" type="button" data-action="copy-caption" title="Copiar legenda">📋</button>` : ""}
         </div>
         <div class="swipe-card-actions">
           ${item.url ? `<a class="text-link" href="${esc(item.url)}" target="_blank" rel="noopener" title="Abrir link original no Instagram">↗ IG</a>` : ""}
-          <button class="text-link" type="button" data-action="edit" title="Editar referência">Editar</button>
+          <button class="text-link" type="button" data-action="edit" title="Editar referência">✎</button>
         </div>
       </div>
     `;
