@@ -27,5 +27,8 @@ const homePage = homeTemplate
   .replace("/* HOME_STYLE */", () => homeCss)
   .replace("/* HOME_SCRIPT */", () => [model, catalog, home].join("\n").replaceAll("</script", "<\\/script"));
 await mkdir(new URL("dist/painel/", root), { recursive: true });
+await mkdir(new URL("dist/apresentacao/", root), { recursive: true });
 await writeFile(new URL("dist/index.html", root), homePage);
 await writeFile(new URL("dist/painel/index.html", root), page);
+const apresentacao = await read("apresentacao.html");
+await writeFile(new URL("dist/apresentacao/index.html", root), apresentacao);

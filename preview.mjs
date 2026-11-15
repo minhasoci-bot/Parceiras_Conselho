@@ -4,6 +4,8 @@ import { readFile } from "node:fs/promises";
 const pages = {
   "/": new URL("./dist/index.html", import.meta.url),
   "/painel/": new URL("./dist/painel/index.html", import.meta.url),
+  "/apresentacao/": new URL("./dist/apresentacao/index.html", import.meta.url),
+  "/apresentacao": new URL("./dist/apresentacao/index.html", import.meta.url),
 };
 const port = Number(process.env.MUTIRAO_PORT || 4188);
 

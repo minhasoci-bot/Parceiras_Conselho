@@ -1,0 +1,2161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Apresentação estratégica interativa da operação A Virada — planejamento, equipe, propostas, metas e simuladores financeiros.">
+<title>A VIRADA | Apresentação Estratégica & Simuladores (16:9)</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..800;1,9..40,300..800&family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --bg: #070908;
+  --surface: #0f1411;
+  --surface-2: #161e19;
+  --surface-3: #1e2822;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --ink: #f6f7f2;
+  --muted: rgba(246, 247, 242, 0.65);
+  --faint: rgba(246, 247, 242, 0.35);
+  
+  /* Identidade do site IA para TDAH / Mutirão */
+  --lime: #d8f386;
+  --lime-ink: #0f1f17;
+  --forest: #183d30;
+  --forest-dark: #0f271e;
+  --mid: #4c9b6a;
+  --mint: #a7f3d0;
+  --coral: #ff7d70;
+  --amber: #f5b041;
+  
+  --serif: "Fraunces", Georgia, serif;
+  --sans: "DM Sans", system-ui, -apple-system, sans-serif;
+  --display: "Instrument Sans", var(--sans);
+  --r: 16px;
+  --ease: cubic-bezier(.22, .61, .36, 1);
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select { font: inherit; }
+a { color: var(--lime); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { cursor: pointer; border: 0; background: none; }
+
+::selection {
+  background: var(--lime);
+  color: var(--lime-ink);
+}
+
+/* Container de enquadramento 16:9 absoluto sem rolagem */
+.deck-viewport {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+}
+
+.stage {
+  position: relative;
+  width: 1600px;
+  height: 900px;
+  max-width: 1600px;
+  max-height: 900px;
+  flex: none;
+  background: var(--bg);
+  overflow: hidden;
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.8), 0 0 0 1px var(--line);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Efeitos de fundo e glow da identidade visual */
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 88% 12%, rgba(76, 155, 106, 0.14), transparent 42%),
+    radial-gradient(ellipse at 12% 88%, rgba(216, 243, 134, 0.08), transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(24, 61, 48, 0.06), transparent 60%);
+  z-index: 0;
+}
+
+/* HEADER SUPERIOR (64px) */
+.top {
+  position: relative;
+  z-index: 10;
+  height: 64px;
+  flex: 0 0 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(7, 9, 8, 0.82);
+  backdrop-filter: blur(16px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--forest);
+  border: 1px solid rgba(216, 243, 134, 0.25);
+  flex: none;
+}
+.brand-mark i {
+  position: absolute;
+  width: 16px;
+  height: 6.5px;
+  border: 1.5px solid var(--lime);
+  border-radius: 50%;
+  transform: rotate(45deg);
+}
+.brand-mark i:nth-child(2) { transform: rotate(-45deg); }
+.brand-mark i:nth-child(3) { width: 3.5px; height: 3.5px; background: var(--lime); border: 0; border-radius: 50%; }
+
+.brand-name {
+  font-family: var(--display);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-size: 19px;
+  color: var(--ink);
+}
+.brand-name span { color: var(--lime); }
+.brand-name em {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0;
+  margin-left: 8px;
+}
+
+.top-mid {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.top-mid .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mid);
+}
+
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top-tag {
+  background: rgba(216, 243, 134, 0.1);
+  border: 1px solid rgba(216, 243, 134, 0.28);
+  border-radius: 30px;
+  color: var(--lime);
+  padding: 5px 12px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.smallbtn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  transition: all .2s var(--ease);
+}
+.smallbtn:hover {
+  background: var(--surface-3);
+  border-color: var(--lime);
+  color: var(--lime);
+}
+
+/* ÁREA DE SLIDES (780px) */
+main {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  height: 780px;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: none;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden; /* STRICT: sem rolagem */
+}
+
+.slide.active {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+  animation: slideFade .32s var(--ease) forwards;
+}
+
+@keyframes slideFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.frame {
+  width: 100%;
+  height: 100%;
+  padding: 44px 64px 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+.frame.topalign {
+  justify-content: flex-start;
+  padding-top: 40px;
+}
+
+/* TYPOGRAPHY */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--lime);
+  letter-spacing: 0.2em;
+  font-size: 11px;
+  margin-bottom: 12px;
+}
+.eyebrow::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mid);
+}
+.eyebrow.coral { color: var(--coral); }
+.eyebrow.coral::before { background: var(--coral); }
+
+h1, h2, h3, p { margin-top: 0; }
+h1, h2 {
+  font-family: var(--display);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+h1 {
+  font-size: 84px;
+  font-weight: 800;
+  margin-bottom: 18px;
+}
+h2 {
+  font-size: 48px;
+  font-weight: 800;
+  margin: 0 0 16px;
+  max-width: 1150px;
+  line-height: 1.1;
+}
+h3 {
+  font-family: var(--display);
+  font-size: 21px;
+  margin-bottom: 8px;
+  letter-spacing: -0.025em;
+  font-weight: 700;
+}
+
+.lead {
+  font-size: 20px;
+  color: #d6dcd7;
+  line-height: 1.48;
+  max-width: 980px;
+  font-weight: 400;
+}
+.lead-serif {
+  font-family: var(--serif);
+  font-size: 23px;
+  color: #e4ece6;
+  line-height: 1.45;
+  font-variation-settings: "opsz" 144;
+}
+
+.muted { color: var(--muted); }
+.small { font-size: 13.5px; line-height: 1.5; color: var(--muted); }
+.mini { font-size: 11.5px; line-height: 1.45; color: var(--faint); }
+.big { font-family: var(--display); font-size: 42px; letter-spacing: -0.04em; font-weight: 800; }
+.highlight { color: var(--lime); }
+.coral { color: var(--coral); }
+.mint { color: var(--mint); }
+.forest { color: var(--mid); }
+.big-num {
+  font-family: var(--display);
+  font-size: 64px;
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+
+/* GRIDS */
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.grid5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.spacer { height: 16px; }
+.spacer-sm { height: 10px; }
+
+/* CARDS */
+.card {
+  background: linear-gradient(135deg, rgba(22, 30, 25, 0.82), rgba(15, 20, 17, 0.88));
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 22px 24px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+  position: relative;
+  overflow: hidden;
+}
+.card.hot {
+  border-color: rgba(216, 243, 134, 0.32);
+  background: linear-gradient(135deg, rgba(216, 243, 134, 0.08), rgba(24, 61, 48, 0.25));
+}
+.card.rose {
+  border-color: rgba(255, 125, 112, 0.3);
+  background: linear-gradient(135deg, rgba(255, 125, 112, 0.08), rgba(22, 30, 25, 0.85));
+}
+.card.mintcard {
+  border-color: rgba(76, 155, 106, 0.35);
+  background: linear-gradient(135deg, rgba(76, 155, 106, 0.1), rgba(15, 20, 17, 0.9));
+}
+.card > p:last-child { margin-bottom: 0; }
+
+.stat-label {
+  color: var(--muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+}
+.stat {
+  font-family: var(--display);
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1.1;
+  margin-top: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 6px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 40px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+}
+.chip.lime, .chip.yellow {
+  border-color: rgba(216, 243, 134, 0.35);
+  color: var(--lime);
+  background: rgba(216, 243, 134, 0.08);
+}
+.chip.coral, .chip.pink {
+  border-color: rgba(255, 125, 112, 0.35);
+  color: var(--coral);
+  background: rgba(255, 125, 112, 0.08);
+}
+.chip.forest {
+  border-color: rgba(76, 155, 106, 0.4);
+  color: var(--mint);
+  background: rgba(24, 61, 48, 0.4);
+}
+
+.callout {
+  border-left: 4px solid var(--lime);
+  padding: 10px 0 10px 20px;
+  font-size: 21px;
+  line-height: 1.45;
+  font-weight: 600;
+  max-width: 1050px;
+  background: linear-gradient(90deg, rgba(216, 243, 134, 0.06), transparent 70%);
+  border-radius: 0 12px 12px 0;
+}
+.callout.coralline, .callout.pinkline {
+  border-color: var(--coral);
+  background: linear-gradient(90deg, rgba(255, 125, 112, 0.06), transparent 70%);
+}
+
+.pill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.pill-list span {
+  border: 1px solid var(--line);
+  padding: 7px 13px;
+  border-radius: 40px;
+  color: #e6eae7;
+  background: var(--surface-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.keyline {
+  height: 1px;
+  background: var(--line);
+  margin: 16px 0;
+}
+
+.flow {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+}
+.flow > .card { flex: 1; }
+.flow .arrow {
+  flex: 0 0 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--lime);
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.numbered { counter-reset: items; }
+.numbered > div {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.numbered > div:before {
+  counter-increment: items;
+  content: counter(items, decimal-leading-zero);
+  color: var(--lime);
+  font-weight: 800;
+  font-size: 13px;
+  flex: 0 0 24px;
+  font-family: var(--display);
+}
+.numbered > div:last-child { border-bottom: 0; }
+
+.bullets {
+  margin: 0;
+  padding-left: 20px;
+  color: #d6ded8;
+  line-height: 1.6;
+  font-size: 14px;
+}
+.bullets li { margin-bottom: 6px; }
+.bullets li::marker { color: var(--lime); }
+.bullets.coral li::marker { color: var(--coral); }
+
+/* TABELA DE DADOS */
+.table-wrap {
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--surface);
+}
+.data {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 15px;
+}
+.data th {
+  padding: 14px 18px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+.data td {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.data tr:last-child td { border-bottom: 0; }
+.data td:last-child, .data th:last-child { text-align: right; }
+.data td strong { color: var(--lime); font-family: var(--display); font-size: 16px; }
+
+/* CONTROLES INTERATIVOS */
+.labelrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #e2eae4;
+}
+.inputrow {
+  display: grid;
+  grid-template-columns: 1fr 88px;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.inputrow input[type=range] {
+  width: 100%;
+  accent-color: var(--lime);
+  cursor: pointer;
+  height: 6px;
+  border-radius: 4px;
+  background: var(--surface-3);
+}
+.inputrow input[type=number] {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 6px 8px;
+  color: var(--ink);
+  background: var(--surface-2);
+  text-align: right;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--display);
+}
+.inputrow input[type=number]:focus {
+  outline: 2px solid var(--lime);
+  border-color: var(--lime);
+}
+.field { margin-bottom: 8px; }
+
+.presetline {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.preset {
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: #e2eae4;
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 8px 14px;
+  transition: all .2s var(--ease);
+}
+.preset:hover, .preset.selected {
+  background: var(--lime);
+  color: var(--lime-ink);
+  border-color: var(--lime);
+}
+
+.btn-copy {
+  border: 1px solid rgba(216, 243, 134, 0.35);
+  color: var(--lime);
+  border-radius: 8px;
+  padding: 8px 14px;
+  background: rgba(216, 243, 134, 0.08);
+  font-weight: 700;
+  font-size: 12.5px;
+  margin-left: auto;
+  transition: all .2s var(--ease);
+}
+.btn-copy:hover {
+  background: var(--lime);
+  color: var(--lime-ink);
+}
+
+.result {
+  background: linear-gradient(130deg, rgba(216, 243, 134, 0.12), rgba(24, 61, 48, 0.28));
+  border: 1px solid rgba(216, 243, 134, 0.35);
+  border-radius: 14px;
+  padding: 16px 20px;
+}
+.bigresult {
+  font-family: var(--display);
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  color: var(--lime);
+}
+.resultline {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+.counter { color: var(--lime); font-weight: 800; font-family: var(--display); }
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 8px 0;
+  font-size: 13.5px;
+}
+.metric-row:last-child { border-bottom: 0; }
+.metric-row strong { white-space: nowrap; font-family: var(--display); color: var(--ink); }
+
+.bar {
+  height: 10px;
+  background: var(--surface-3);
+  border-radius: 50px;
+  overflow: hidden;
+}
+.bar > div {
+  height: 100%;
+  background: linear-gradient(90deg, var(--mid), var(--lime));
+  border-radius: 50px;
+  transition: width .25s;
+}
+
+.graph-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 80px;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0;
+  font-size: 13px;
+}
+.graph-track {
+  height: 14px;
+  background: var(--surface-3);
+  border-radius: 30px;
+  overflow: hidden;
+}
+.graph-track .fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--mid), var(--lime));
+  border-radius: 30px;
+  transition: width .25s;
+}
+.graph-row strong { font-family: var(--display); text-align: right; }
+
+/* ORBIT ART IDÊNTICA AO MUTIRÃO DA MENTORIA */
+.orbit-art {
+  position: absolute;
+  right: -5%;
+  top: 15%;
+  width: 550px;
+  height: 550px;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.6;
+}
+.orbit-art i {
+  position: absolute;
+  right: 5%;
+  top: 15%;
+  width: 75%;
+  height: 75%;
+  border: 1px solid rgba(76, 155, 106, 0.22);
+  border-radius: 50%;
+  transform: rotate(-30deg);
+}
+.orbit-art i:nth-child(2) { transform: rotate(-45deg) scale(.86, 1.06); border-color: rgba(216, 243, 134, 0.18); }
+.orbit-art i:nth-child(3) { transform: rotate(-60deg) scale(.72, 1.12); }
+.orbit-art i:nth-child(4) { transform: rotate(-75deg) scale(.58, 1.14); border-color: rgba(76, 155, 106, 0.28); }
+.orbit-art b {
+  position: absolute;
+  right: 25%;
+  top: 48%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 14px var(--lime);
+}
+.orbit-art b:nth-of-type(2) { right: 38%; top: 78%; width: 5px; height: 5px; background: var(--mid); }
+.orbit-art b:nth-of-type(3) { right: 12%; top: 62%; width: 4px; height: 4px; background: var(--mint); }
+
+/* TIMEBOXES / TIMELINE */
+.timeline {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.timebox {
+  border-top: 4px solid var(--lime);
+  background: var(--surface);
+  padding: 18px 20px;
+  border-radius: 0 0 14px 14px;
+  border-inline: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.timebox:nth-child(2) { border-color: var(--mint); }
+.timebox:nth-child(3) { border-color: var(--mid); }
+.timebox:nth-child(4) { border-color: #76a9fa; }
+.timebox .when {
+  font-size: 11px;
+  color: var(--lime);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+  font-family: var(--display);
+}
+.timebox h3 { font-size: 19px; }
+
+/* EQUIPE */
+.team-avatar {
+  width: 52px;
+  height: 52px;
+  border: 1px solid rgba(216, 243, 134, 0.3);
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: var(--lime);
+  background: linear-gradient(145deg, var(--forest), var(--surface));
+  font-weight: 800;
+  font-size: 20px;
+  font-family: var(--display);
+  margin-bottom: 12px;
+}
+.team-card { padding: 18px 20px; }
+.team-card h3 { font-size: 19px; margin-bottom: 4px; }
+.team-card .tag-small { margin-bottom: 8px; }
+
+.tag-small {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--lime);
+  letter-spacing: 0.14em;
+  font-weight: 800;
+}
+
+/* FOTO E MOODBOARD */
+.photo-frame {
+  height: 380px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.photo-frame img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.profile-card {
+  padding: 15px 18px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.profile-card a { font-weight: 700; font-size: 13.5px; }
+.profile-card span { font-size: 12px; line-height: 1.4; color: var(--muted); }
+
+/* FOOTER NAVEGAÇÃO (56px) */
+.footer {
+  position: relative;
+  z-index: 10;
+  height: 56px;
+  flex: 0 0 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 48px;
+  border-top: 1px solid var(--line);
+  background: rgba(7, 9, 8, 0.9);
+  backdrop-filter: blur(16px);
+}
+
+.progress-bar-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.05);
+}
+.progress {
+  height: 100%;
+  background: linear-gradient(90deg, var(--forest), var(--mid), var(--lime));
+  width: 4%;
+  transition: width .25s var(--ease);
+}
+
+.footer-left {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.footer-left .badge-169 {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line);
+  padding: 2px 7px;
+  border-radius: 4px;
+  color: var(--faint);
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.footer-right span {
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  font-size: 13px;
+  color: #c9d2cc;
+}
+.mini-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+}
+
+.navbtn {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  transition: all .2s var(--ease);
+}
+.navbtn:hover:not(:disabled) {
+  background: var(--lime);
+  color: var(--lime-ink);
+  border-color: var(--lime);
+}
+.navbtn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+/* OUTLINE DRAWER */
+.outline {
+  display: none;
+  position: absolute;
+  z-index: 50;
+  top: 72px;
+  right: 48px;
+  width: 420px;
+  max-height: 720px;
+  overflow-y: auto;
+  background: rgba(15, 20, 17, 0.95);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+  border-radius: 16px;
+  padding: 12px;
+  backdrop-filter: blur(20px);
+}
+.outline.open { display: block; }
+.outline button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 9px 12px;
+  text-align: left;
+  color: #e4eae6;
+  background: transparent;
+  font-size: 13px;
+  border-radius: 8px;
+  transition: background .15s;
+}
+.outline button:hover, .outline button.current {
+  background: rgba(216, 243, 134, 0.1);
+  color: var(--lime);
+}
+.outline button span {
+  color: var(--lime);
+  font-weight: 800;
+  margin-right: 12px;
+  font-family: var(--display);
+  font-size: 11px;
+}
+
+.money { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+
+<div class="deck-viewport">
+  <div class="stage" id="stage">
+
+    <!-- CABEÇALHO FIXO -->
+    <header class="top">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <div class="brand-name">A VIRADA <span>.</span><em>• IA para TDAH</em></div>
+      </div>
+      <div class="top-mid">
+        <span class="dot"></span>
+        <span>Apresentação de alinhamento • 15 NOV 2026</span>
+      </div>
+      <div class="top-right">
+        <span class="top-tag">Proposta para discussão</span>
+        <button class="smallbtn" id="menu" title="Índice dos slides (M)" aria-label="Abrir índice">☷</button>
+        <button class="smallbtn" id="fullscreen" title="Tela cheia (F)" aria-label="Tela cheia">⛶</button>
+      </div>
+    </header>
+
+    <!-- CONTAINER DOS 24 SLIDES EM 16:9 FIXOS -->
+    <main id="deck">
+
+      <!-- SLIDE 1: ABERTURA -->
+      <section class="slide active" data-title="Abertura">
+        <div class="frame">
+          <div class="orbit-art" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b><b></b><b></b></div>
+          <div class="eyebrow">Primeira reunião • proposta de construção conjunta</div>
+          <h1>A NOSSA <span class="highlight">VIRADA.</span></h1>
+          <p class="lead-serif" style="max-width: 820px; margin-bottom: 24px;">
+            Cinco pessoas. Duas frentes de negócio. Uma meta imediata — e a oportunidade de construir algo sustentável para 2027.
+          </p>
+          <div class="pill-list" style="margin-bottom: 28px;">
+            <span class="chip lime">R$ 7.485 até 30/11</span>
+            <span class="chip forest">Serviços B2B + Educação B2C</span>
+            <span class="chip">IA Prática + Criatividade</span>
+          </div>
+          <p class="small" style="max-width: 720px; color: var(--muted);">
+            Uma proposta inicial de Luiz para Camila, Flávia, Natália e Marcos. Tudo aqui pode — e deve — ser debatido e decidido juntos.
+          </p>
+        </div>
+      </section>
+
+      <!-- SLIDE 2: POR QUE ESTAMOS AQUI -->
+      <section class="slide" data-title="Por que estamos aqui">
+        <div class="frame">
+          <div class="eyebrow">01 / O ponto de partida</div>
+          <h2>Não estamos trazendo só uma ideia.<br><span class="highlight">Já temos uma base sólida.</span></h2>
+          <p class="lead" style="margin-bottom: 28px;">
+            Temos habilidades complementares, uma plataforma funcional em código, ofertas possíveis, um canal pessoal de comunicação e um prazo que exige foco cirúrgico.
+          </p>
+          <div class="grid3">
+            <div class="card hot">
+              <div class="stat-label">Objetivo do encontro</div>
+              <h3 style="margin-top: 8px;">01. Entender</h3>
+              <p class="small">A visão geral, as ofertas desenhadas e o porquê de fazermos isso juntos como equipe.</p>
+            </div>
+            <div class="card">
+              <div class="stat-label">Objetivo do encontro</div>
+              <h3 style="margin-top: 8px;">02. Questionar</h3>
+              <p class="small">Riscos, números reais, disponibilidade efetiva e o que ainda precisa ser criado.</p>
+            </div>
+            <div class="card mintcard">
+              <div class="stat-label">Objetivo do encontro</div>
+              <h3 style="margin-top: 8px;">03. Decidir</h3>
+              <p class="small">Se faz sentido avançar, sob qual compromisso, divisão de papéis e próximos passos.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 3: META E RESTRIÇÃO -->
+      <section class="slide" data-title="Meta e restrição">
+        <div class="frame">
+          <div class="eyebrow">02 / A missão inicial</div>
+          <h2>O prazo é curto.<br><span class="highlight">O objetivo é absolutamente claro.</span></h2>
+          <div class="grid3" style="margin-top: 14px;">
+            <div class="card hot">
+              <div class="stat-label">Meta de caixa desejada</div>
+              <div class="big-num highlight" style="margin-top: 10px;">R$ 7.485</div>
+              <div class="small" style="margin-top: 12px;">Disponível em caixa até 30 de novembro de 2026.</div>
+            </div>
+            <div class="card">
+              <div class="stat-label">Janela disponível</div>
+              <div class="big-num" style="margin-top: 10px;">15 dias</div>
+              <div class="small" style="margin-top: 12px;">Contando o período de 15/11 a 30/11.</div>
+            </div>
+            <div class="card mintcard">
+              <div class="stat-label">Estratégia de obtenção</div>
+              <div class="big-num mint" style="margin-top: 10px;">2 a 3</div>
+              <div class="small" style="margin-top: 12px;">Clientes B2B são o principal caminho seguro de receita.</div>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="callout">
+            Não é hora de construir uma agência burocrática perfeita. É hora de <span class="highlight">validar vendas, colaboração e ritmo de entrega.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 4: VISÃO DO ECOSSISTEMA -->
+      <section class="slide" data-title="Visão do ecossistema">
+        <div class="frame">
+          <div class="eyebrow">03 / Modelo geral</div>
+          <h2>Uma operação.<br><span class="highlight">Três ofertas conectadas.</span></h2>
+          <div class="grid3" style="margin-top: 10px;">
+            <div class="card rose">
+              <span class="chip coral">Aquisição B2C</span>
+              <h3 style="margin-top: 16px;">A VIRADA</h3>
+              <p class="small">Imersão online de dois dias para transformar uma ideia solta em um negócio desenhado com IA. Ingressos em lotes a partir de R$ 19.</p>
+              <div class="tag-small" style="margin-top: 14px; color: var(--coral);">19–20 DE DEZEMBRO</div>
+            </div>
+            <div class="card hot">
+              <span class="chip lime">Continuidade B2C</span>
+              <h3 style="margin-top: 16px;">FORMAÇÃO IA PARA TDAH</h3>
+              <p class="small">Jornada profunda em design, copy, marketing, ferramentas, landing pages, infoprodutos e vendas com inteligência artificial.</p>
+              <div class="tag-small" style="margin-top: 14px;">OFERTADA AO FINAL DO EVENTO</div>
+            </div>
+            <div class="card mintcard">
+              <span class="chip forest">Receita B2B</span>
+              <h3 style="margin-top: 16px;">ACELERADORA COM IA</h3>
+              <p class="small">Sprints estratégicos para infoprodutores ativos que já vendem e precisam estruturar processos, copy e fluxos com IA.</p>
+              <div class="tag-small" style="margin-top: 14px; color: var(--mint);">PRIORIDADE DE NOVEMBRO</div>
+            </div>
+          </div>
+          <p class="mini" style="margin-top: 20px;">
+            O B2B financia o início e garante a meta de novembro; A Virada atrai e valida a comunidade; a Formação aprofunda a jornada e gera LTV.
+          </p>
+        </div>
+      </section>
+
+      <!-- SLIDE 5: OFERTA A VIRADA -->
+      <section class="slide" data-title="Oferta A Virada">
+        <div class="frame">
+          <div class="eyebrow">04 / Oferta de entrada</div>
+          <h2>A VIRADA.<br><span style="font-size: 0.58em; color: var(--muted); font-weight: 500;">Imersão Prática • 19 e 20 de Dezembro</span></h2>
+          <p class="lead" style="margin-bottom: 20px;">
+            Um fim de semana para profissionais criativos com TDAH saírem da paralisia e entrarem em 2027 com um plano de negócio executável.
+          </p>
+          <div class="grid2">
+            <div class="card">
+              <div class="stat-label">Dia 01 • Estratégia e Clareza</div>
+              <h3 style="margin-top: 8px;">Da ideia à oferta estruturada</h3>
+              <p class="small">Ideia central → público-alvo → posicionamento → problema real → proposta de valor única → precificação e modelo comercial.</p>
+            </div>
+            <div class="card hot">
+              <div class="stat-label">Dia 02 • Construção e IA</div>
+              <h3 style="margin-top: 8px;">Da oferta ao plano de 30 dias</h3>
+              <p class="small">Copy dos primeiros criativos → identidade básica → arquitetura da página → fluxo de conteúdo → plano de ação imediato.</p>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="pill-list">
+            <span>Lote 1: R$ 19 (validação inicial)</span>
+            <span>Lote 2: R$ 49*</span>
+            <span>Lote 3: R$ 97*</span>
+            <span>Atividades práticas em tempo real</span>
+            <span>Templates e prompts prontos</span>
+          </div>
+          <p class="mini" style="margin-top: 10px;">*Preços dos lotes 2 e 3 são hipóteses de trabalho para debate com o time.</p>
+        </div>
+      </section>
+
+      <!-- SLIDE 6: OFERTA FORMAÇÃO -->
+      <section class="slide" data-title="Oferta Formação">
+        <div class="frame">
+          <div class="eyebrow">05 / Oferta de continuidade</div>
+          <h2>O evento dá direção.<br><span class="highlight">A Formação dá repertório e autonomia.</span></h2>
+          <div class="flow" style="margin-top: 16px;">
+            <div class="card rose">
+              <div class="stat-label">A Virada (Dezembro)</div>
+              <h3 style="margin-top: 8px;">“O que vou construir?”</h3>
+              <p class="small">Clareza de posicionamento, primeiro protótipo funcional, plano de 30 dias e confiança para destravar a execução.</p>
+            </div>
+            <div class="arrow">➜</div>
+            <div class="card hot">
+              <div class="stat-label">Formação IA para TDAH</div>
+              <h3 style="margin-top: 8px;">“Como vou executar sem pirar?”</h3>
+              <p class="small">Domínio prático de design, copy, marketing, landing pages, esteira de produtos, automações e vendas com IA.</p>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="callout coralline">
+            A Formação é apresentada <strong>ao final da imersão em 20/12</strong>. Não entra no caixa de novembro — seu papel é consolidação e escala.
+          </div>
+          <p class="mini" style="margin-top: 12px;">Valor de referência da Formação nos simuladores: R$ 497 (editável no modelo).</p>
+        </div>
+      </section>
+
+      <!-- SLIDE 7: ACELERADORA B2B -->
+      <section class="slide" data-title="Aceleradora B2B">
+        <div class="frame">
+          <div class="eyebrow">06 / Fonte de caixa prioritária</div>
+          <h2>Vamos vender <span class="highlight">resultado operacional</span>,<br>não uma lista infinita de serviços soltos.</h2>
+          <div class="grid2" style="margin-top: 14px;">
+            <div class="card hot">
+              <div class="stat-label">Oferta inicial sugerida</div>
+              <div class="big-num" style="margin-top: 6px;">R$ 3.990</div>
+              <h3 style="margin-top: 12px;">Sprint de Aceleração com IA</h3>
+              <p class="small">Implantação prática com escopo fechado, duração de 10 a 15 dias úteis e foco no principal gargalo operacional do cliente.</p>
+              <div class="spacer-sm"></div>
+              <span class="chip lime">Escopo cirúrgico e validado</span>
+            </div>
+            <div class="card">
+              <div class="stat-label">As 4 entregas do Sprint</div>
+              <div class="numbered" style="margin-top: 6px;">
+                <div><div><strong>01. Diagnóstico e Prioridade</strong><div class="small">Análise de oferta, funil, conteúdo e identificação da causa raiz.</div></div></div>
+                <div><div><strong>02. Desenho do Fluxo</strong><div class="small">Eliminação de etapas manuais e organização do processo central.</div></div></div>
+                <div><div><strong>03. Dois Processos com IA</strong><div class="small">Ex.: esteira de conteúdo e qualificação de leads implementadas.</div></div></div>
+                <div><div><strong>04. Handoff e Treinamento</strong><div class="small">Entrega do material gravado e plano de voo para os próximos 30 dias.</div></div></div>
+              </div>
+            </div>
+          </div>
+          <p class="mini" style="margin-top: 12px;">
+            Regra de ouro: não prometer suporte ilimitado, tráfego pago ou desenvolvimento complexo no pacote de sprint inicial.
+          </p>
+        </div>
+      </section>
+
+      <!-- SLIDE 8: CLIENTE IDEAL -->
+      <section class="slide" data-title="Cliente ideal">
+        <div class="frame">
+          <div class="eyebrow">07 / Para quem vender</div>
+          <h2>Quem queremos como <span class="highlight">cliente do B2B</span>?</h2>
+          <div class="grid3" style="margin-top: 14px;">
+            <div class="card">
+              <div class="stat-label">Critério 01 • Tração</div>
+              <h3 style="margin-top: 8px;">Já vende ativamente</h3>
+              <p class="small">Infoprodutor ou especialista com oferta validada, audiência engajada e receita rodando. Não atendemos quem está no zero absoluto no B2B.</p>
+            </div>
+            <div class="card hot">
+              <div class="stat-label">Critério 02 • Gargalo</div>
+              <h3 style="margin-top: 8px;">Sofre com fricção</h3>
+              <p class="small">Dependência excessiva do fundador, produção de conteúdo desordenada, equipe sobrecarregada ou processos comerciais lentos.</p>
+            </div>
+            <div class="card mintcard">
+              <div class="stat-label">Critério 03 • Capacidade</div>
+              <h3 style="margin-top: 8px;">Consegue investir</h3>
+              <p class="small">Entende o ROI de automação e IA, tem autonomia de decisão financeira e disponibiliza equipe para o onboarding rápido.</p>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="pill-list">
+            <span>Educação & Cursos</span>
+            <span>Beleza, Saúde & Estética</span>
+            <span>Gastronomia</span>
+            <span>Artesanato & Hobbies</span>
+            <span>Desenvolvimento Profissional</span>
+          </div>
+          <p class="callout" style="margin-top: 18px; font-size: 18px;">
+            Para atingir a meta, precisamos de apenas <span class="highlight">2 ou 3 bons fechamentos</span>, com abordagem cirúrgica e personalizada.
+          </p>
+        </div>
+      </section>
+
+      <!-- SLIDE 9: O PERFIL PESSOAL -->
+      <section class="slide" data-title="O perfil pessoal">
+        <div class="frame">
+          <div class="eyebrow">08 / Grande diferencial de aquisição</div>
+          <h2>O principal canal não será uma marca corporativa fria.<br><span class="highlight">Será uma pessoa real e autoral.</span></h2>
+          <div class="grid2" style="margin-top: 16px;">
+            <div class="card hot">
+              <div class="stat-label">Canal de atração e autoridade</div>
+              <h3 style="margin-top: 8px; font-size: 26px;"><a href="https://www.instagram.com/hebrithaan/" target="_blank" rel="noopener noreferrer">@hebrithaan ↗</a></h3>
+              <p class="lead" style="font-size: 18px; line-height: 1.45; margin-bottom: 12px;">
+                História autêntica, visão de mundo, personalidade, repertório visual único e bastidores transparentes de construção.
+              </p>
+              <p class="small">
+                Ponto de atenção: o perfil está atualmente privado. Decidiremos juntos o momento e o cronograma editorial para abertura pública.
+              </p>
+            </div>
+            <div class="card">
+              <div class="stat-label">Os três pilares editoriais</div>
+              <div class="numbered" style="margin-top: 8px;">
+                <div><div><strong>Humano e Altamente Identificável</strong><div class="small">Nostalgia, humor inteligente, vulnerabilidade real sem vitimização.</div></div></div>
+                <div><div><strong>Criativo, Técnico e Visual</strong><div class="small">Design afiado, IA aplicada, transformações antes/depois e repertório.</div></div></div>
+                <div><div><strong>Empreendedor em Movimento</strong><div class="small">Processo aberto: ideia → decisão → execução → aprendizados práticos.</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 10: LINGUAGEM E NOSTALGIA -->
+      <section class="slide" data-title="Linguagem e nostalgia">
+        <div class="frame">
+          <div class="eyebrow">09 / Linguagem da marca</div>
+          <h2>Mais <span class="highlight">identificação autêntica</span>.<br>Menos “palestra corporativa de IA”.</h2>
+          <div class="grid2" style="grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr); gap: 24px; align-items: center;">
+            <div>
+              <p class="lead" style="margin-bottom: 16px;">
+                A foto de referência traduz nosso território: infância, nostalgia analógica, humor afiado e o contraste entre as promessas da infância e a realidade do trabalho adulto.
+              </p>
+              <div class="pill-list" style="margin-bottom: 20px;">
+                <span>Nostalgia</span>
+                <span>Humor ácido</span>
+                <span>Vida real</span>
+                <span>Contraste visual</span>
+                <span>Confissão honesta</span>
+                <span>Esperança prática</span>
+              </div>
+              <div class="callout coralline" style="font-size: 18px;">
+                Não vendemos “IA como mágica abstrata”. Vendemos <span class="highlight">autonomia, clareza mental e tempo para criar.</span>
+              </div>
+            </div>
+            <div class="photo-frame">
+              <img alt="Foto nostálgica de referência do projeto" src="data:image/webp;base64,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" id="refPhoto">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 11: REFERÊNCIAS CRIATIVAS -->
+      <section class="slide" data-title="Referências criativas">
+        <div class="frame topalign">
+          <div class="eyebrow">10 / Moodboard editorial</div>
+          <h2>Não copiar perfis genéricos.<br><span class="highlight">Combinar mecanismos validados.</span></h2>
+          <div class="grid4" style="margin-top: 14px;">
+            <div class="profile-card">
+              <a href="https://www.instagram.com/himanshubuilds/" target="_blank" rel="noopener noreferrer">@himanshubuilds ↗</a>
+              <span>Portfólio estético e demonstração visual de alto nível.</span>
+            </div>
+            <div class="profile-card">
+              <a href="https://www.instagram.com/luccas2santos/" target="_blank" rel="noopener noreferrer">@luccas2santos ↗</a>
+              <span>Empreendedorismo dinâmico e IA como esteira de aceleração.</span>
+            </div>
+            <div class="profile-card">
+              <a href="https://www.instagram.com/kolbykirschner/" target="_blank" rel="noopener noreferrer">@kolbykirschner ↗</a>
+              <span>Identificação imediata, conversas francas e conexão humana.</span>
+            </div>
+            <div class="profile-card">
+              <a href="https://www.instagram.com/igao.ia/" target="_blank" rel="noopener noreferrer">@igao.ia ↗</a>
+              <span>Bastidores de lifestyle e rotina criativa como atração.</span>
+            </div>
+            <div class="profile-card">
+              <a href="https://www.instagram.com/thepostprotocol/" target="_blank" rel="noopener noreferrer">@thepostprotocol ↗</a>
+              <span>Formatos visuais, atalhos, ferramentas e tutoriais rápidos.</span>
+            </div>
+            <div class="profile-card">
+              <a href="https://www.instagram.com/enzorocati/" target="_blank" rel="noopener noreferrer">@enzorocati ↗</a>
+              <span>Storytelling cinematográfico que conversa com o público.</span>
+            </div>
+            <div class="profile-card">
+              <a href="https://www.instagram.com/nicdanice/" target="_blank" rel="noopener noreferrer">@nicdanice ↗</a>
+              <span>Personagens e recriação criativa com inteligência artificial.</span>
+            </div>
+            <div class="profile-card" style="border-color: rgba(216, 243, 134, 0.4); background: rgba(216, 243, 134, 0.05);">
+              <strong class="highlight">A NOSSA ALQUIMIA</strong>
+              <span>Humor, memória, design refinado, IA aplicada e construção pública.</span>
+            </div>
+          </div>
+          <p class="mini" style="margin-top: 18px;">
+            Curadoria estratégica levantada para estruturar o posicionamento do ecossistema.
+          </p>
+        </div>
+      </section>
+
+      <!-- SLIDE 12: IA COMO LINGUAGEM VISUAL -->
+      <section class="slide" data-title="IA como linguagem visual">
+        <div class="frame">
+          <div class="eyebrow">11 / Diferencial de produção</div>
+          <h2>Podemos transformar memórias reais<br>em <span class="highlight">narrativas visuais proprietárias.</span></h2>
+          <div class="grid3" style="margin-top: 20px;">
+            <div class="card rose">
+              <div class="big coral">01</div>
+              <h3 style="margin-top: 6px;">Recriar momentos</h3>
+              <p class="small">Fotos antigas, lembranças e cenários reinterpretados artisticamente com modelos generativos de imagem e vídeo.</p>
+            </div>
+            <div class="card hot">
+              <div class="big highlight">02</div>
+              <h3 style="margin-top: 6px;">Construir narrativa</h3>
+              <p class="small">Colocar a criança do passado para conversar com o adulto que está empreendendo e construindo autonomia hoje.</p>
+            </div>
+            <div class="card mintcard">
+              <div class="big mint">03</div>
+              <h3 style="margin-top: 6px;">Provar competência</h3>
+              <p class="small">O próprio post funciona como demonstração viva do que a IA é capaz de fazer quando aliada a bom gosto e técnica.</p>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="callout">
+            Ética e transparência são inegociáveis: recriações e artes sintéticas têm valor pela narrativa, sem necessidade de simular registros documentais falsos.
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 13: MÁQUINA DE CONTEÚDO -->
+      <section class="slide" data-title="Máquina de conteúdo">
+        <div class="frame">
+          <div class="eyebrow">12 / Conteúdo com função</div>
+          <h2>O canal precisa trabalhar<br><span class="highlight">para duas conversões complementares.</span></h2>
+          <div class="grid2" style="margin-top: 14px;">
+            <div class="card rose">
+              <span class="chip coral">B2C • Criativos & TDAH</span>
+              <h3 style="margin-top: 12px;">Identificação & Destrave</h3>
+              <ul class="bullets coral">
+                <li>Humor, nostalgia e as dores da vida real adulta</li>
+                <li>O caos criativo e a paralisia na hora de executar</li>
+                <li>Bastidores práticos de projetos sendo feitos com IA</li>
+                <li>Convite direto para a imersão A Virada</li>
+              </ul>
+              <div class="keyline"></div>
+              <div style="font-size: 13.5px;"><strong class="coral">CTA Principal:</strong> Garantir ingresso de lote para o evento</div>
+            </div>
+            <div class="card hot">
+              <span class="chip lime">B2B • Infoprodutores Ativos</span>
+              <h3 style="margin-top: 12px;">Autoridade & Capacidade</h3>
+              <ul class="bullets">
+                <li>Demonstração antes/depois de processos e páginas</li>
+                <li>Análise cirúrgica de gargalos operacionais comuns</li>
+                <li>Demonstração de design, copy e esteiras inteligentes</li>
+                <li>Resultados concretos documentados com transparência</li>
+              </ul>
+              <div class="keyline"></div>
+              <div style="font-size: 13.5px;"><strong class="highlight">CTA Principal:</strong> Agendar diagnóstico operacional gratuito</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 14: EQUIPE E PAPÉIS -->
+      <section class="slide" data-title="Equipe e papéis">
+        <div class="frame topalign">
+          <div class="eyebrow">13 / Pessoas e responsabilidade</div>
+          <h2>As cinco habilidades complementares<br><span class="highlight">que fecham o ciclo completo.</span></h2>
+          <div class="grid5" style="margin-top: 20px;">
+            <div class="card team-card hot">
+              <div class="team-avatar">L</div>
+              <h3>Luiz</h3>
+              <div class="tag-small">Gestão & Tecnologia</div>
+              <p class="small">Orquestração geral, automações com IA, infraestrutura web, plataformas e entrega técnica.</p>
+            </div>
+            <div class="card team-card">
+              <div class="team-avatar">C</div>
+              <h3>Camila</h3>
+              <div class="tag-small">Estratégia & Copy</div>
+              <p class="small">Estruturação de ofertas, tom de voz, copywriting, páginas de venda e roteiros persuasivos.</p>
+            </div>
+            <div class="card team-card">
+              <div class="team-avatar">F</div>
+              <h3>Flávia</h3>
+              <div class="tag-small">Comercial & Vendas</div>
+              <p class="small">Prospecção ativa B2B, reuniões de diagnóstico, propostas comerciais, follow-ups e fechamento.</p>
+            </div>
+            <div class="card team-card">
+              <div class="team-avatar">N</div>
+              <h3>Natália</h3>
+              <div class="tag-small">Design & Visual</div>
+              <p class="small">Identidade visual da marca, direção de arte, layouts sociais, peças de campanha e UI refinada.</p>
+            </div>
+            <div class="card team-card">
+              <div class="team-avatar">M</div>
+              <h3>Marcos</h3>
+              <div class="tag-small">Audiovisual & Motion</div>
+              <p class="small">Produção e edição de vídeo, motion design, criativos dinâmicos e narrativa audiovisual.</p>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="callout">
+            Definição de papéis inicial: disponibilidade real de horas, formato de remuneração e modelo societário são pontos centrais da pauta desta reunião.
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 15: O QUE TEMOS -->
+      <section class="slide" data-title="O que temos">
+        <div class="frame">
+          <div class="eyebrow">14 / Diagnóstico de prontidão</div>
+          <h2>O que <span class="mint">já temos pronto</span><br>e o que precisamos validar juntos.</h2>
+          <div class="grid2" style="margin-top: 14px;">
+            <div class="card mintcard">
+              <h3 class="mint">Já construído ou encaminhado</h3>
+              <div class="numbered">
+                <div><div>Proposta estratégica detalhada das 2 frentes e do evento</div></div>
+                <div><div>Mapeamento das 5 competências complementares da equipe</div></div>
+                <div><div>Código e arquitetura da plataforma interna de gestão</div></div>
+                <div><div>Catálogo inicial de serviços e simuladores financeiros</div></div>
+                <div><div>Perfil pessoal autoral e referências de posicionamento</div></div>
+                <div><div>Metas, calendário de execução e cenários de caixa</div></div>
+              </div>
+            </div>
+            <div class="card hot">
+              <h3 class="highlight">A definir e executar no ciclo</h3>
+              <div class="numbered">
+                <div><div>Confirmação de compromisso e horas disponíveis de cada um</div></div>
+                <div><div>Modelo de remuneração, rateio de custos e divisão do caixa</div></div>
+                <div><div>Proposta comercial B2B final e materiais de apresentação</div></div>
+                <div><div>Página de vendas do evento, gateway de checkout e cronograma</div></div>
+                <div><div>Lista inicial de 50 a 60 leads para contato ativo</div></div>
+                <div><div>Ementa definitiva e precificação final da Formação</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 16: PLATAFORMA INTERNA -->
+      <section class="slide" data-title="Plataforma interna">
+        <div class="frame topalign">
+          <div class="eyebrow">15 / Infraestrutura de operação</div>
+          <h2>O sistema de trabalho da equipe<br><span class="highlight">não começa do zero.</span></h2>
+          <div class="grid4" style="margin-top: 14px;">
+            <div class="card">
+              <h3>Painel & Metas</h3>
+              <p class="small">Visão geral do caixa coletivo, indicadores em tempo real e ritmo diário necessário.</p>
+            </div>
+            <div class="card">
+              <h3>Eventos</h3>
+              <p class="small">Roteiro da imersão, cronograma das aulas, responsáveis e checklists de transmissão.</p>
+            </div>
+            <div class="card">
+              <h3>Infoprodutos</h3>
+              <p class="small">Estrutura de oferta, arquitetura de funis, esteira de continuidade e cálculos de CAC.</p>
+            </div>
+            <div class="card">
+              <h3>Timeline</h3>
+              <p class="small">Tarefas por responsável, prazos de entrega e dependências entre frentes operacionais.</p>
+            </div>
+            <div class="card">
+              <h3>Swipe File</h3>
+              <p class="small">Repositório de referências visuais, copys campeãs e banco de prompts catalogados.</p>
+            </div>
+            <div class="card">
+              <h3>Acessos & Time</h3>
+              <p class="small">Fluxo de login seguro, papéis de membros e aprovação direta pelo painel.</p>
+            </div>
+            <div class="card">
+              <h3>Catálogo</h3>
+              <p class="small">Precificação e escopos técnicos de design, copy, web, automações e estratégia.</p>
+            </div>
+            <div class="card hot">
+              <h3 class="highlight">Próxima etapa</h3>
+              <p class="small">Pipeline comercial integrado e controle de recebíveis de clientes B2B em tempo real.</p>
+            </div>
+          </div>
+          <p class="mini" style="margin-top: 16px;">
+            Plataforma em código desenvolvida para garantir sincronia, clareza de papéis e eliminação de reuniões improdutivas.
+          </p>
+        </div>
+      </section>
+
+      <!-- SLIDE 17: PROCESSO EM EQUIPE -->
+      <section class="slide" data-title="Processo em equipe">
+        <div class="frame">
+          <div class="eyebrow">16 / Como vamos trabalhar</div>
+          <h2>Menos conversas soltas no WhatsApp.<br><span class="highlight">Mais trabalho com dono e visibilidade.</span></h2>
+          <div class="flow" style="margin-top: 16px;">
+            <div class="card">
+              <span class="chip">Passo 01</span>
+              <h3 style="margin-top: 8px;">Briefing Claro</h3>
+              <p class="small">Qual é o objetivo específico? Qual o critério de sucesso? Qual o prazo final inegociável?</p>
+            </div>
+            <div class="arrow">➜</div>
+            <div class="card">
+              <span class="chip">Passo 02</span>
+              <h3 style="margin-top: 8px;">Dono Único</h3>
+              <p class="small">Uma única pessoa responde pela entrega, com colaboradores pontuais de apoio.</p>
+            </div>
+            <div class="arrow">➜</div>
+            <div class="card">
+              <span class="chip">Passo 03</span>
+              <h3 style="margin-top: 8px;">Produção Rápida</h3>
+              <p class="small">Execução focada, auxílio de ferramentas de IA para agilizar rascunhos e revisão técnica.</p>
+            </div>
+            <div class="arrow">➜</div>
+            <div class="card hot">
+              <span class="chip lime">Passo 04</span>
+              <h3 style="margin-top: 8px;">Handoff & Caixa</h3>
+              <p class="small">Entrega validada com o cliente, cobrança realizada e aprendizado documentado.</p>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="grid2">
+            <div class="card" style="padding: 16px 20px;">
+              <strong>Alinhamento diário assíncrono (10 min)</strong>
+              <p class="small">O que foi entregue ontem? O que será feito hoje? Há algum bloqueio dependente de outro membro?</p>
+            </div>
+            <div class="card hot" style="padding: 16px 20px;">
+              <strong>Ritmo comercial duas vezes por semana</strong>
+              <p class="small">Contatos feitos, reuniões agendadas, propostas na mesa e valor efetivo depositado em conta.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 18: CENÁRIOS PRONTOS -->
+      <section class="slide" data-title="Cenários prontos">
+        <div class="frame">
+          <div class="eyebrow">17 / Finanças • Referência inicial</div>
+          <h2>Quatro combinações de esforço.<br><span class="highlight">Resultados financeiros concretos.</span></h2>
+          <div class="table-wrap" style="margin-top: 10px;">
+            <table class="data">
+              <thead>
+                <tr>
+                  <th>Cenário de Vendas</th>
+                  <th>Clientes B2B (R$ 3.990)</th>
+                  <th>Ingressos Evento (L1 / L2 / L3)</th>
+                  <th>Receita Bruta Gerada</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Conservador</strong></td>
+                  <td>1 cliente</td>
+                  <td>20 x R$ 19 / 10 x R$ 49 / 0 x R$ 97</td>
+                  <td><strong>R$ 4.860</strong></td>
+                </tr>
+                <tr>
+                  <td><strong class="highlight">Base (Alvo de Novembro)</strong></td>
+                  <td>2 clientes</td>
+                  <td>20 x R$ 19 / 14 x R$ 49 / 0 x R$ 97</td>
+                  <td><strong>R$ 9.046</strong></td>
+                </tr>
+                <tr>
+                  <td><strong>Alternativo (Mais B2C)</strong></td>
+                  <td>1 cliente</td>
+                  <td>20 x R$ 19 / 30 x R$ 49 / 20 x R$ 97</td>
+                  <td><strong>R$ 7.780</strong></td>
+                </tr>
+                <tr>
+                  <td><strong class="mint">Otimista (Tração Total)</strong></td>
+                  <td>3 clientes</td>
+                  <td>20 x R$ 19 / 30 x R$ 49 / 20 x R$ 97</td>
+                  <td><strong>R$ 15.760</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="spacer"></div>
+          <div class="grid2">
+            <div class="card hot">
+              <div class="stat-label">Meta líquida de caixa</div>
+              <div class="big highlight">R$ 7.485</div>
+              <p class="small">Valor necessário disponível na conta até o dia 30/11 para cumprir a meta do grupo.</p>
+            </div>
+            <div class="card">
+              <div class="stat-label">Meta de esforço comercial bruto</div>
+              <div class="big">R$ 9.000 a 10.000+</div>
+              <p class="small">Margem de segurança saudável para cobrir taxas de gateway, parcelamentos e eventuais custos operacionais.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 19: SIMULADOR DE CAIXA -->
+      <section class="slide" data-title="Simulador de caixa">
+        <div class="frame topalign">
+          <div class="eyebrow">18 / Ferramenta interativa • Novembro</div>
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px;">
+            <h2 style="margin: 0; font-size: 34px;">Simulador de Caixa <span class="highlight">até 30/11</span></h2>
+            <div class="presetline">
+              <button class="preset" data-preset="conservative">Conservador</button>
+              <button class="preset selected" data-preset="base">Base</button>
+              <button class="preset" data-preset="optimistic">Otimista</button>
+              <button class="btn-copy" id="copyScenario">Copiar Resultado</button>
+            </div>
+          </div>
+          
+          <div class="grid2" style="gap: 16px;">
+            <!-- Controles -->
+            <div class="card" style="padding: 16px 20px;">
+              <div class="grid2" style="gap: 12px;">
+                <div class="field">
+                  <div class="labelrow"><label for="b2bClients">Clientes B2B</label><span class="counter" id="b2bClientsLabel">2</span></div>
+                  <div class="inputrow"><input id="b2bClientsRange" type="range" min="0" max="7" step="1"><input id="b2bClients" type="number" min="0" max="7" value="2"></div>
+                </div>
+                <div class="field">
+                  <div class="labelrow"><label for="sprintPrice">Preço por Sprint (R$)</label></div>
+                  <div class="inputrow"><input id="sprintPriceRange" type="range" min="990" max="7990" step="100"><input id="sprintPrice" type="number" step="50" value="3990"></div>
+                </div>
+              </div>
+
+              <div class="grid3" style="gap: 8px;">
+                <div class="field">
+                  <div class="labelrow"><label for="ticket19">Lote R$ 19</label></div>
+                  <div class="inputrow"><input id="ticket19Range" type="range" min="0" max="100"><input id="ticket19" type="number" value="20"></div>
+                </div>
+                <div class="field">
+                  <div class="labelrow"><label for="ticket49">Lote R$ 49</label></div>
+                  <div class="inputrow"><input id="ticket49Range" type="range" min="0" max="100"><input id="ticket49" type="number" value="14"></div>
+                </div>
+                <div class="field">
+                  <div class="labelrow"><label for="ticket97">Lote R$ 97</label></div>
+                  <div class="inputrow"><input id="ticket97Range" type="range" min="0" max="100"><input id="ticket97" type="number" value="0"></div>
+                </div>
+              </div>
+
+              <div class="grid2" style="gap: 12px;">
+                <div class="field">
+                  <div class="labelrow"><label for="serviceReceived">B2B recebido até 30/11 (%)</label></div>
+                  <div class="inputrow"><input id="serviceReceivedRange" type="range" min="0" max="100" step="5"><input id="serviceReceived" type="number" value="100"></div>
+                </div>
+                <div class="field">
+                  <div class="labelrow"><label for="ticketReceived">Ingressos recebidos (%)</label></div>
+                  <div class="inputrow"><input id="ticketReceivedRange" type="range" min="0" max="100" step="5"><input id="ticketReceived" type="number" value="100"></div>
+                </div>
+                <div class="field">
+                  <div class="labelrow"><label for="reservePct">Reserva custos / taxas (%)</label></div>
+                  <div class="inputrow"><input id="reservePctRange" type="range" min="0" max="30" step="1"><input id="reservePct" type="number" value="15"></div>
+                </div>
+                <div class="field">
+                  <div class="labelrow"><label for="fixedCosts">Despesas fixas (R$)</label></div>
+                  <div class="inputrow"><input id="fixedCostsRange" type="range" min="0" max="4000" step="100"><input id="fixedCosts" type="number" value="0"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resultados -->
+            <div class="card hot" style="padding: 18px 22px; display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div class="stat-label">Receita Bruta Total Gerada</div>
+                <div class="stat money highlight" id="grossOut">R$ 9.046</div>
+                <div class="keyline" style="margin: 10px 0;"></div>
+                <div class="metric-row"><span>Caixa recebido efetivo</span><strong class="money" id="receivedOut">R$ 9.046</strong></div>
+                <div class="metric-row"><span>Reserva de segurança e despesas</span><strong class="money" id="costOut">R$ 1.357</strong></div>
+              </div>
+
+              <div class="result" style="margin: 12px 0;">
+                <div class="stat-label">Caixa Líquido Disponível Estimado</div>
+                <div class="bigresult money" id="cashOut">R$ 7.689</div>
+                <div class="resultline">
+                  <span class="small" id="goalMessage" style="font-weight: 700;">R$ 204 acima da meta</span>
+                  <strong class="counter" id="goalPct">102.7%</strong>
+                </div>
+                <div class="bar" style="margin-top: 10px;"><div id="goalBar" style="width: 100%;"></div></div>
+              </div>
+
+              <div class="mini">
+                O modelo desconta a taxa de reserva sobre o recebido e deduz despesas fixas. Altere os valores livremente para testar cenários com a equipe.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 20: SIMULADOR DE PROSPECÇÃO -->
+      <section class="slide" data-title="Simulador de prospecção">
+        <div class="frame topalign">
+          <div class="eyebrow">19 / Ferramenta interativa • Comercial</div>
+          <h2 style="margin-bottom: 14px; font-size: 34px;">Quantas conversas comerciais <span class="highlight">precisam acontecer?</span></h2>
+          
+          <div class="grid2" style="gap: 18px;">
+            <div class="card" style="padding: 18px 22px;">
+              <div class="field">
+                <div class="labelrow"><label for="leads">Contatos qualificados na lista (Leads)</label></div>
+                <div class="inputrow"><input id="leadsRange" type="range" min="10" max="200" step="5"><input id="leads" type="number" value="60"></div>
+              </div>
+              <div class="field">
+                <div class="labelrow"><label for="leadToMeeting">Conversão: Contatos → Reunião (%)</label></div>
+                <div class="inputrow"><input id="leadToMeetingRange" type="range" min="5" max="60" step="1"><input id="leadToMeeting" type="number" value="18"></div>
+              </div>
+              <div class="field">
+                <div class="labelrow"><label for="meetingToProposal">Conversão: Reunião → Proposta (%)</label></div>
+                <div class="inputrow"><input id="meetingToProposalRange" type="range" min="10" max="80" step="1"><input id="meetingToProposal" type="number" value="40"></div>
+              </div>
+              <div class="field">
+                <div class="labelrow"><label for="proposalToSale">Conversão: Proposta → Contrato (%)</label></div>
+                <div class="inputrow"><input id="proposalToSaleRange" type="range" min="10" max="90" step="1"><input id="proposalToSale" type="number" value="50"></div>
+              </div>
+              <p class="mini" style="margin-top: 8px;">
+                Taxas estimadas com base em abordagem personalizada e rede de contatos próxima.
+              </p>
+            </div>
+
+            <div class="card hot" style="padding: 18px 22px;">
+              <div class="stat-label">Funil de Vendas Projetado</div>
+              <div id="funnelBars" style="margin: 12px 0;">
+                <div class="graph-row"><span>Contatos</span><div class="graph-track"><div class="fill" id="barLead"></div></div><strong id="nLead">60</strong></div>
+                <div class="graph-row"><span>Reuniões</span><div class="graph-track"><div class="fill" id="barMeet"></div></div><strong id="nMeet">10.8</strong></div>
+                <div class="graph-row"><span>Propostas</span><div class="graph-track"><div class="fill" id="barProp"></div></div><strong id="nProp">4.3</strong></div>
+                <div class="graph-row"><span style="color: var(--lime); font-weight: 700;">Contratos</span><div class="graph-track"><div class="fill" id="barDeal"></div></div><strong id="nDeal" style="color: var(--lime);">2.2</strong></div>
+              </div>
+              <div class="keyline" style="margin: 10px 0;"></div>
+              <div class="stat-label">Faturamento B2B Esperado</div>
+              <div class="bigresult money" id="funnelRevenue">R$ 8.618</div>
+              <div class="pill-list" style="margin-top: 14px;">
+                <span>Contatos mornos prioritários</span>
+                <span>Indicações diretas</span>
+                <span>Diagnóstico sem atrito</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 21: SIMULADOR DEZEMBRO -->
+      <section class="slide" data-title="Simulador dezembro">
+        <div class="frame topalign">
+          <div class="eyebrow">20 / Ferramenta interativa • Dezembro</div>
+          <h2 style="margin-bottom: 14px; font-size: 34px;">A Virada → Formação: <span class="highlight">Simule a esteira completa.</span></h2>
+          
+          <div class="grid2" style="gap: 18px;">
+            <div class="card" style="padding: 18px 22px;">
+              <div class="grid3" style="gap: 8px;">
+                <div class="field">
+                  <div class="labelrow"><label for="dec19">Lote R$ 19</label></div>
+                  <div class="inputrow"><input id="dec19Range" type="range" min="0" max="120"><input id="dec19" type="number" value="20"></div>
+                </div>
+                <div class="field">
+                  <div class="labelrow"><label for="dec49">Lote R$ 49</label></div>
+                  <div class="inputrow"><input id="dec49Range" type="range" min="0" max="120"><input id="dec49" type="number" value="30"></div>
+                </div>
+                <div class="field">
+                  <div class="labelrow"><label for="dec97">Lote R$ 97</label></div>
+                  <div class="inputrow"><input id="dec97Range" type="range" min="0" max="120"><input id="dec97" type="number" value="30"></div>
+                </div>
+              </div>
+              <div class="field">
+                <div class="labelrow"><label for="attendancePct">Taxa de presença ao vivo (%)</label></div>
+                <div class="inputrow"><input id="attendancePctRange" type="range" min="30" max="100" step="5"><input id="attendancePct" type="number" value="75"></div>
+              </div>
+              <div class="field">
+                <div class="labelrow"><label for="formationConversion">Conversão para a Formação (%)</label></div>
+                <div class="inputrow"><input id="formationConversionRange" type="range" min="2" max="30" step="1"><input id="formationConversion" type="number" value="10"></div>
+              </div>
+              <div class="field">
+                <div class="labelrow"><label for="formationPrice">Ticket proposto da Formação (R$)</label></div>
+                <div class="inputrow"><input id="formationPriceRange" type="range" min="197" max="1497" step="50"><input id="formationPrice" type="number" value="497"></div>
+              </div>
+            </div>
+
+            <div class="card hot" style="padding: 18px 22px; display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <div class="stat-label">Projeção da Jornada de Dezembro</div>
+                <div class="metric-row" style="margin-top: 6px;"><span>Ingressos totais vendidos</span><strong id="nTickets">80</strong></div>
+                <div class="metric-row"><span>Participantes ao vivo esperados</span><strong id="nAttend">60</strong></div>
+                <div class="metric-row"><span>Novos alunos na Formação</span><strong id="nStudents">6</strong></div>
+                <div class="metric-row"><span>Receita com ingressos da imersão</span><strong class="money" id="decTicketRevenue">R$ 4.760</strong></div>
+                <div class="metric-row"><span>Receita da Formação pós-evento</span><strong class="money" id="formationRevenue">R$ 2.982</strong></div>
+              </div>
+              <div class="result" style="margin-top: 10px;">
+                <div class="stat-label">Receita Bruta Combinada em Dezembro</div>
+                <div class="bigresult money" id="decTotalRevenue">R$ 7.742</div>
+              </div>
+              <div class="mini">
+                Simulação da campanha de fim de ano. Demonstra como o evento funciona como motor de atração de novos membros para a Formação.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 22: CRONOGRAMA -->
+      <section class="slide" data-title="Cronograma">
+        <div class="frame">
+          <div class="eyebrow">21 / Plano de ação</div>
+          <h2>Quinze dias de <span class="highlight">prioridades reais</span> em novembro.</h2>
+          <div class="timeline" style="margin-top: 16px;">
+            <div class="timebox">
+              <div class="when">15–17 NOV • FASE 1</div>
+              <h3>Alinhar</h3>
+              <p class="small">Equipe confirmada, escopo B2B fechado, proposta comercial pronta, checkout do lote 1 e plataforma ativa.</p>
+            </div>
+            <div class="timebox">
+              <div class="when">18–21 NOV • FASE 2</div>
+              <h3>Publicar & Listar</h3>
+              <p class="small">Início do conteúdo autoral, página do evento no ar, lista de 50 leads mapeados e primeiros contatos.</p>
+            </div>
+            <div class="timebox">
+              <div class="when">22–26 NOV • FASE 3</div>
+              <h3>Vender & Diagnosticar</h3>
+              <p class="small">Reuniões de diagnóstico, envio de propostas e fechamento do 1º cliente de aceleração B2B.</p>
+            </div>
+            <div class="timebox">
+              <div class="when">27–30 NOV • FASE 4</div>
+              <h3>Consolidar & Fechar</h3>
+              <p class="small">Assinatura do 2º contrato B2B, conferência do caixa líquido recebido e batimento da meta.</p>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="grid2">
+            <div class="card" style="padding: 16px 20px;">
+              <strong class="mint">DEZEMBRO (01 a 20/12)</strong>
+              <p class="small">Aceleração de conteúdo, vendas dos lotes 2 e 3 de A Virada, entrega do evento online nos dias 19 e 20/12.</p>
+            </div>
+            <div class="card hot" style="padding: 16px 20px;">
+              <strong class="highlight">20/12 EM DIANTE → 2027</strong>
+              <p class="small">Abertura de vagas da Formação IA para TDAH para os participantes e planejamento da esteira perene.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 23: RISCOS E REGRAS -->
+      <section class="slide" data-title="Riscos e regras">
+        <div class="frame">
+          <div class="eyebrow coral">22 / Para proteger a execução</div>
+          <h2>O maior perigo não é falta de ideias.<br><span class="coral">É a dispersão do foco.</span></h2>
+          <div class="grid2" style="margin-top: 16px;">
+            <div class="card rose">
+              <h3 class="coral">O que NÃO faremos neste ciclo</h3>
+              <ul class="bullets coral">
+                <li>Tentar reconstruir o sistema do zero antes de fechar a primeira venda</li>
+                <li>Vender pacotes abertos de escopo infinito sem limites contratuais</li>
+                <li>Ficar dependente apenas de ingressos de R$ 19 para bater o caixa</li>
+                <li>Misturar vendas de dezembro com o compromisso financeiro de novembro</li>
+                <li>Operar sem combinar regras de remuneração e horas disponíveis</li>
+              </ul>
+            </div>
+            <div class="card hot">
+              <h3 class="highlight">Regras de ouro de execução</h3>
+              <ul class="bullets">
+                <li>Todo entregável tem um responsável direto e um prazo visível</li>
+                <li>Prioridade absoluta no fluxo de caixa real depositado</li>
+                <li>Transparência radical em todas as propostas e campanhas</li>
+                <li>Uso inteligente de IA para ganhar velocidade e diminuir esforço repetitivo</li>
+                <li>Combinados claros registrados no painel da equipe</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 24: DECISÕES DA REUNIÃO & ENCERRAMENTO -->
+      <section class="slide" data-title="Decisões da reunião">
+        <div class="frame">
+          <div class="eyebrow">23 / Alinhamento de encerramento</div>
+          <h2>O que saímos daqui <span class="highlight">decididos a fazer</span>.</h2>
+          <div class="grid2" style="margin-top: 14px;">
+            <div class="card">
+              <div class="numbered">
+                <div><div><strong>01. Confirmação do Time</strong><div class="small">Disponibilidade semanal real de horas de cada um.</div></div></div>
+                <div><div><strong>02. Compromisso com a Meta</strong><div class="small">Foco coletivo no alvo de R$ 7.485 até 30/11.</div></div></div>
+                <div><div><strong>03. Oferta B2B Validada</strong><div class="small">Preço inicial de R$ 3.990 e escopo fechado aprovados.</div></div></div>
+              </div>
+            </div>
+            <div class="card hot">
+              <div class="numbered">
+                <div><div><strong>04. Modelo de Remuneração</strong><div class="small">Regras claras de rateio, custos e divisão financeira.</div></div></div>
+                <div><div><strong>05. Abertura do Perfil</strong><div class="small">Data e estratégia de transição do @hebrithaan.</div></div></div>
+                <div><div><strong>06. Primeiras 48 Horas</strong><div class="small">Quem assume as primeiras tarefas críticas no sistema.</div></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="spacer"></div>
+          <div class="callout" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 22px;">
+            <div>
+              <strong style="font-size: 20px;">A Virada começa agora.</strong>
+              <div class="small" style="margin-top: 2px;">Temos o método, a capacidade de execução e o sistema pronto para rodar.</div>
+            </div>
+            <div class="pill-list">
+              <a class="chip lime" target="_blank" rel="noopener noreferrer" href="https://chat.whatsapp.com/HyHXQnaGpmOLgGfUg7vGOU">Grupo WhatsApp ↗</a>
+              <a class="chip forest" target="_blank" rel="noopener noreferrer" href="https://www.instagram.com/hebrithaan/">Perfil @hebrithaan ↗</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- MENU OUTLINE COM A LISTA DOS 24 SLIDES -->
+    <div class="outline" id="outline" role="dialog" aria-label="Índice de slides"></div>
+
+    <!-- RODAPÉ FIXO -->
+    <footer class="footer">
+      <div class="progress-bar-wrap"><div class="progress" id="progress"></div></div>
+      <div class="footer-left">
+        <span class="badge-169">16:9</span>
+        <span>A VIRADA • ESTRUTURA PARA DISCUTIR E EXECUTAR</span>
+      </div>
+      <div class="footer-right">
+        <span id="slideIndex">01 / 24</span>
+        <div class="mini-divider"></div>
+        <button class="navbtn" id="prev" aria-label="Slide anterior" title="Slide anterior (←)">←</button>
+        <button class="navbtn" id="next" aria-label="Próximo slide" title="Próximo slide (→)">→</button>
+      </div>
+    </footer>
+
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // 1. GESTÃO DO ENQUADRAMENTO E ESCALA 16:9 PERFEITO E SEM ROLAGEM
+  const stage = document.getElementById('stage');
+  function fitStage() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    // Escala uniforme para caber exatamente dentro da viewport sem estourar
+    const scale = Math.min(w / 1600, h / 900);
+    stage.style.transform = `scale(${scale})`;
+    stage.style.transformOrigin = 'center center';
+  }
+  window.addEventListener('resize', fitStage);
+  fitStage();
+
+  // 2. GESTÃO DOS SLIDES
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const prevBtn = document.getElementById('prev');
+  const nextBtn = document.getElementById('next');
+  const progressEl = document.getElementById('progress');
+  const indexEl = document.getElementById('slideIndex');
+  const outlineEl = document.getElementById('outline');
+  let current = 0;
+
+  // Montar lista do índice
+  slides.forEach((slide, i) => {
+    const btn = document.createElement('button');
+    btn.innerHTML = `<span>${String(i + 1).padStart(2, '0')}</span> ${slide.dataset.title || 'Slide'}`;
+    btn.addEventListener('click', () => {
+      goTo(i);
+      outlineEl.classList.remove('open');
+    });
+    outlineEl.appendChild(btn);
+  });
+
+  function updateOutline() {
+    const buttons = outlineEl.querySelectorAll('button');
+    buttons.forEach((b, i) => b.classList.toggle('current', i === current));
+  }
+
+  function goTo(i) {
+    current = Math.max(0, Math.min(i, slides.length - 1));
+    slides.forEach((s, idx) => {
+      s.classList.toggle('active', idx === current);
+    });
+    indexEl.textContent = `${String(current + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+    progressEl.style.width = `${((current + 1) / slides.length) * 100}%`;
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === slides.length - 1;
+    updateOutline();
+
+    const hash = '#s' + (current + 1);
+    if (location.hash !== hash) {
+      history.replaceState(null, '', hash);
+    }
+  }
+
+  prevBtn.addEventListener('click', () => goTo(current - 1));
+  nextBtn.addEventListener('click', () => goTo(current + 1));
+  document.getElementById('menu').addEventListener('click', () => {
+    outlineEl.classList.toggle('open');
+  });
+
+  document.getElementById('fullscreen').addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.().catch(() => {});
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+      e.preventDefault();
+      goTo(current + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault();
+      goTo(current - 1);
+    } else if (e.key === 'Home') {
+      goTo(0);
+    } else if (e.key === 'End') {
+      goTo(slides.length - 1);
+    } else if (e.key.toLowerCase() === 'm') {
+      outlineEl.classList.toggle('open');
+    } else if (e.key.toLowerCase() === 'f') {
+      document.getElementById('fullscreen').click();
+    } else if (e.key === 'Escape') {
+      outlineEl.classList.remove('open');
+    }
+  });
+
+  // 3. FERRAMENTAS INTERATIVAS & SIMULADORES
+  const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+  const num = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
+  const val = (id) => Math.max(0, Number(document.getElementById(id)?.value) || 0);
+  const setTxt = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  };
+
+  const fields = [
+    'b2bClients', 'sprintPrice', 'ticket19', 'ticket49', 'ticket97',
+    'serviceReceived', 'ticketReceived', 'reservePct', 'fixedCosts',
+    'leads', 'leadToMeeting', 'meetingToProposal', 'proposalToSale',
+    'dec19', 'dec49', 'dec97', 'attendancePct', 'formationConversion', 'formationPrice'
+  ];
+
+  fields.forEach(id => {
+    const input = document.getElementById(id);
+    const range = document.getElementById(id + 'Range');
+    if (!input || !range) return;
+    range.value = input.value;
+    input.addEventListener('input', () => {
+      range.value = Math.min(Number(range.max), Math.max(Number(range.min), Number(input.value) || 0));
+      renderCalculators();
+    });
+    range.addEventListener('input', () => {
+      input.value = range.value;
+      renderCalculators();
+    });
+  });
+
+  const presets = {
+    conservative: { b2bClients: 1, sprintPrice: 3990, ticket19: 20, ticket49: 10, ticket97: 0, serviceReceived: 75, ticketReceived: 90, reservePct: 15, fixedCosts: 200 },
+    base: { b2bClients: 2, sprintPrice: 3990, ticket19: 20, ticket49: 14, ticket97: 0, serviceReceived: 100, ticketReceived: 100, reservePct: 15, fixedCosts: 0 },
+    optimistic: { b2bClients: 3, sprintPrice: 3990, ticket19: 20, ticket49: 30, ticket97: 20, serviceReceived: 100, ticketReceived: 100, reservePct: 15, fixedCosts: 0 }
+  };
+
+  function setPresetField(id, v) {
+    const el = document.getElementById(id);
+    const rg = document.getElementById(id + 'Range');
+    if (el) el.value = v;
+    if (rg) rg.value = v;
+  }
+
+  document.querySelectorAll('.preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const p = presets[btn.dataset.preset];
+      if (!p) return;
+      Object.entries(p).forEach(([k, v]) => setPresetField(k, v));
+      document.querySelectorAll('.preset').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      renderCalculators();
+    });
+  });
+
+  // A. SIMULADOR DE CAIXA (NOVEMBRO)
+  function calcCash() {
+    const sr = val('b2bClients') * val('sprintPrice');
+    const tr = val('ticket19') * 19 + val('ticket49') * 49 + val('ticket97') * 97;
+    const gross = sr + tr;
+    const received = sr * (val('serviceReceived') / 100) + tr * (val('ticketReceived') / 100);
+    const cost = received * (val('reservePct') / 100) + val('fixedCosts');
+    const cash = received - cost;
+    const delta = cash - 7485;
+
+    setTxt('grossOut', brl.format(gross));
+    setTxt('receivedOut', brl.format(received));
+    setTxt('costOut', brl.format(cost));
+    setTxt('cashOut', brl.format(cash));
+    setTxt('goalPct', num.format((cash / 7485) * 100) + '%');
+    
+    const msgEl = document.getElementById('goalMessage');
+    if (msgEl) {
+      msgEl.textContent = delta >= 0 ? `${brl.format(delta)} acima da meta` : `${brl.format(-delta)} abaixo da meta`;
+      msgEl.style.color = delta >= 0 ? 'var(--lime)' : 'var(--coral)';
+    }
+    
+    const bar = document.getElementById('goalBar');
+    if (bar) bar.style.width = Math.max(0, Math.min(100, (cash / 7485) * 100)) + '%';
+    setTxt('b2bClientsLabel', val('b2bClients'));
+
+    return { gross, received, cost, cash, delta };
+  }
+
+  // B. SIMULADOR DE FUNIL DE PROSPECÇÃO
+  function calcFunnel() {
+    const lead = val('leads');
+    const meet = lead * (val('leadToMeeting') / 100);
+    const prop = meet * (val('meetingToProposal') / 100);
+    const deal = prop * (val('proposalToSale') / 100);
+
+    [['Lead', lead], ['Meet', meet], ['Prop', prop], ['Deal', deal]].forEach(([k, v]) => {
+      setTxt('n' + k, num.format(v));
+      const el = document.getElementById('bar' + k);
+      if (el) el.style.width = (lead > 0 ? (v / lead) * 100 : 0) + '%';
+    });
+
+    setTxt('funnelRevenue', brl.format(deal * val('sprintPrice')));
+  }
+
+  // C. SIMULADOR DE DEZEMBRO
+  function calcDec() {
+    const tickets = val('dec19') + val('dec49') + val('dec97');
+    const attend = tickets * (val('attendancePct') / 100);
+    const students = attend * (val('formationConversion') / 100);
+    const ticketRevenue = val('dec19') * 19 + val('dec49') * 49 + val('dec97') * 97;
+    const formRevenue = students * val('formationPrice');
+
+    setTxt('nTickets', num.format(tickets));
+    setTxt('nAttend', num.format(attend));
+    setTxt('nStudents', num.format(students));
+    setTxt('decTicketRevenue', brl.format(ticketRevenue));
+    setTxt('formationRevenue', brl.format(formRevenue));
+    setTxt('decTotalRevenue', brl.format(ticketRevenue + formRevenue));
+  }
+
+  function renderCalculators() {
+    calcCash();
+    calcFunnel();
+    calcDec();
+  }
+
+  // Copiar cenário de caixa
+  document.getElementById('copyScenario')?.addEventListener('click', async (e) => {
+    const m = calcCash();
+    const text = `A VIRADA — SIMULAÇÃO CAIXA NOVEMBRO\n`
+      + `Clientes B2B: ${val('b2bClients')} x ${brl.format(val('sprintPrice'))}\n`
+      + `Ingressos: ${val('ticket19')}x R$ 19, ${val('ticket49')}x R$ 49, ${val('ticket97')}x R$ 97\n`
+      + `Recebimento B2B: ${val('serviceReceived')}% | Ingressos: ${val('ticketReceived')}%\n`
+      + `Reserva: ${val('reservePct')}% | Fixos: ${brl.format(val('fixedCosts'))}\n`
+      + `Receita Bruta: ${brl.format(m.gross)}\n`
+      + `Caixa Recebido Estimado: ${brl.format(m.received)}\n`
+      + `Caixa Líquido Estimado: ${brl.format(m.cash)}\n`
+      + `Comparativo vs Meta (R$ 7.485): ${m.delta >= 0 ? '+' : ''}${brl.format(m.delta)}`;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      e.target.textContent = 'Copiado ✓';
+      setTimeout(() => e.target.textContent = 'Copiar Resultado', 1800);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      e.target.textContent = 'Copiado ✓';
+      setTimeout(() => e.target.textContent = 'Copiar Resultado', 1800);
+    }
+  });
+
+  // Restaurar slide inicial por hash se houver
+  const initialHash = Number((location.hash.match(/^#s(\d+)$/) || [])[1]);
+  goTo(initialHash ? initialHash - 1 : 0);
+  renderCalculators();
+})();
+</script>
+</body>
+</html>
