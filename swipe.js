@@ -383,7 +383,7 @@
       // Exibe um preview interativo usando iframe com lazy loading
       mediaHtml = `
         <div class="swipe-card-embed-preview">
-          <iframe src="${esc(parsed.embedUrl)}" width="100%" height="340" frameborder="0" scrolling="no" allowtransparency="true" loading="lazy"></iframe>
+          <iframe class="swipe-embed-iframe" src="${esc(parsed.embedUrl)}" width="100%" height="420" frameborder="0" scrolling="no" allowtransparency="true" loading="lazy"></iframe>
         </div>`;
     } else {
       mediaHtml = `
@@ -516,12 +516,45 @@ ${item.notes ? item.notes : "Manter ritmo enxuto, tipografia legível e contrast
       const iframe = document.createElement("iframe");
       iframe.src = parsed.embedUrl;
       iframe.width = "100%";
-      iframe.height = "520";
+      iframe.height = "740";
+      iframe.style.minHeight = "640px";
+      iframe.style.height = "740px";
       iframe.frameBorder = "0";
-      iframe.scrolling = "no";
+      iframe.scrolling = "auto";
       iframe.allowFullscreen = true;
       iframe.setAttribute("allowtransparency", "true");
+      iframe.className = "swipe-detail-iframe";
       detailEmbedContainer.appendChild(iframe);
+
+      // Controles adicionais de visualização da mídia
+      const mediaFooter = document.createElement("div");
+      mediaFooter.className = "swipe-media-footer-controls";
+      let currentHeight = 740;
+      let isCaptioned = true;
+
+      mediaFooter.innerHTML = `
+        <button type="button" class="button small" data-action="expand-media" title="Aumentar altura se a imagem for longa">Aumentar altura ↕</button>
+        <button type="button" class="button small" data-action="toggle-caption-mode" title="Alternar entre modo somente mídia ou completo">Alternar modo ⇋</button>
+        <a class="button small" href="${esc(item.url)}" target="_blank" rel="noopener" title="Abrir publicação original no Instagram">Abrir no Instagram ↗</a>
+      `;
+      detailEmbedContainer.appendChild(mediaFooter);
+
+      mediaFooter.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-action]");
+        if (!btn) return;
+        const act = btn.dataset.action;
+        if (act === "expand-media") {
+          currentHeight += 180;
+          iframe.style.height = `${currentHeight}px`;
+          iframe.height = currentHeight;
+        } else if (act === "toggle-caption-mode") {
+          isCaptioned = !isCaptioned;
+          const newUrl = isCaptioned
+            ? `https://www.instagram.com/${parsed.canonicalType}/${parsed.shortcode}/embed/captioned/`
+            : `https://www.instagram.com/${parsed.canonicalType}/${parsed.shortcode}/embed/`;
+          iframe.src = newUrl;
+        }
+      });
     } else if (item.thumbnail_url) {
       const img = document.createElement("img");
       img.src = item.thumbnail_url;
@@ -760,6 +793,40 @@ ${item.notes ? item.notes : "Manter ritmo enxuto, tipografia legível e contrast
         }
       });
     }
+
+    // Auto-ajuste de altura dos embeds do Instagram via postMessage (MEASURE)
+    window.addEventListener("message", (event) => {
+      if (!event || !event.data) return;
+      let data = event.data;
+      if (typeof data === "string") {
+        try {
+          data = JSON.parse(data);
+        } catch {
+          return;
+        }
+      }
+      if (data?.type === "MEASURE" && data?.details?.height) {
+        const newHeight = Math.max(500, Math.ceil(data.details.height) + 16);
+        let matched = false;
+        for (const iframe of document.querySelectorAll("iframe")) {
+          try {
+            if (iframe.contentWindow === event.source) {
+              iframe.style.height = `${newHeight}px`;
+              iframe.height = newHeight;
+              matched = true;
+              break;
+            }
+          } catch {}
+        }
+        if (!matched && detailDialog && detailDialog.open) {
+          const detailIframe = detailEmbedContainer?.querySelector("iframe");
+          if (detailIframe) {
+            detailIframe.style.height = `${newHeight}px`;
+            detailIframe.height = newHeight;
+          }
+        }
+      }
+    });
 
     // Roteamento e Desconexão
     document.addEventListener("mutirao:route", (e) => {
